@@ -1,0 +1,165 @@
+From: <Saved by Blink>
+Snapshot-Content-Location: https://www.toptal.com/developers/gitignore/api/linux,windows,macos,emacs,agda
+Subject: 
+Date: Tue, 16 May 2023 14:40:05 -0000
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----MultipartBoundary--FGzAp96O1BwFUKKwZXz3NplHGbqMdDcgB9BHCEDmpt----"
+
+
+------MultipartBoundary--FGzAp96O1BwFUKKwZXz3NplHGbqMdDcgB9BHCEDmpt----
+Content-Type: text/html
+Content-ID: <frame-ED9425235014C1D8CC6D678E7DCDCC60@mhtml.blink>
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://www.toptal.com/developers/gitignore/api/linux,windows,macos,emacs,agda
+
+<html><head><meta http-equiv=3D"Content-Type" content=3D"text/html; charset=
+=3DUTF-8"><link rel=3D"stylesheet" type=3D"text/css" href=3D"cid:css-bd1262=
+d9-3cdb-4bf6-b9b1-35b69597b1b7@mhtml.blink" /></head><body><pre style=3D"wo=
+rd-wrap: break-word; white-space: pre-wrap;"># Created by https://www.topta=
+l.com/developers/gitignore/api/linux,windows,macos,emacs,agda
+# Edit at https://www.toptal.com/developers/gitignore?templates=3Dlinux,win=
+dows,macos,emacs,agda
+
+### Agda ###
+*.agdai
+MAlonzo/**
+
+### Emacs ###
+# -*- mode: gitignore; -*-
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Org-mode
+.org-id-locations
+*_archive
+
+# flymake-mode
+*_flymake.*
+
+# eshell files
+/eshell/history
+/eshell/lastdir
+
+# elpa packages
+/elpa/
+
+# reftex files
+*.rel
+
+# AUCTeX auto folder
+/auto/
+
+# cask packages
+.cask/
+dist/
+
+# Flycheck
+flycheck_*.el
+
+# server auth directory
+/server/
+
+# projectiles files
+.projectile
+
+# directory configuration
+.dir-locals.el
+
+# network security
+/network-security.data
+
+
+### Linux ###
+
+# temporary files which can be created if a process still has a handle open=
+ of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an open file is removed but is still being ac=
+cessed
+.nfs*
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+### macOS Patch ###
+# iCloud generated files
+*.icloud
+
+### Windows ###
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# End of https://www.toptal.com/developers/gitignore/api/linux,windows,maco=
+s,emacs,agda
+</pre></body></html>
+------MultipartBoundary--FGzAp96O1BwFUKKwZXz3NplHGbqMdDcgB9BHCEDmpt----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: cid:css-bd1262d9-3cdb-4bf6-b9b1-35b69597b1b7@mhtml.blink
+
+@charset "utf-8";
+=0A
+------MultipartBoundary--FGzAp96O1BwFUKKwZXz3NplHGbqMdDcgB9BHCEDmpt------
