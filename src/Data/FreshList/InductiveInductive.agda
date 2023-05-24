@@ -65,6 +65,7 @@ module _
                → here {x#xs = x#xs} px ≢ there q
     here≢there ()
 
+{-
     -- Concatenation of fresh lists.
     -- Requires a "gluability" condition proving that the two lists may actually be concatenated
     -- Specific choices of R might admit more ergonomic or efficient logically
@@ -83,6 +84,7 @@ module _
       snoc-fresh : ∀ {x : X} {xs : List# R} → All (λ a → R a x) xs → All (λ a → _#_ {A = X} {R} a (cons x [] [])) xs
       snoc-fresh [] = []
       snoc-fresh (px ∷ pxs) = (px ∷ []) ∷ (snoc-fresh pxs)
+-}
 
     length : List# R → ℕ
     length [] = zero
