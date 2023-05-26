@@ -4,11 +4,11 @@ open import Level hiding (zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product
 open import Data.Empty
-
+open import Function
 open import Relation.Nullary
 open import Relation.Unary using (Decidable)
 open import Relation.Binary hiding (Decidable; Irrelevant)
-open import Relation.Binary.PropositionalEquality hiding (sym)
+open import Relation.Binary.PropositionalEquality renaming (sym to ≡-sym)
 
 module Data.FreshList.InductiveInductive where
 
@@ -64,6 +64,27 @@ module _
                → {px : P x} {q : Any P xs}
                → here {x#xs = x#xs} px ≢ there q
     here≢there ()
+
+    foldr : {Y : Set} → (X → Y → Y) → Y → List# R → Y
+    foldr f e [] = e
+    foldr f e (cons x xs x#xs) = f x (foldr f e xs)
+
+    foldr-universal : {Y : Set}
+                    → (h : List# R → Y)
+                    → (f : X → Y → Y) (e : Y)
+                    → (h [] ≡ e)
+                    → (∀ x xs (fx : x # xs) → h (cons x xs fx) ≡ f x (h xs))
+                    → foldr f e ≗ h
+    foldr-universal h f e base step [] = ≡-sym base
+    foldr-universal h f e base step (cons x xs x#xs) =
+      begin
+        foldr f e (cons x xs x#xs)
+      ≡⟨ cong (f x) (foldr-universal h f e base step xs) ⟩
+        f x (h xs)
+      ≡⟨ (≡-sym $ step x xs x#xs) ⟩
+        h (cons x xs x#xs)
+      ∎ where open ≡-Reasoning
+
 
 {-
     -- Concatenation of fresh lists.

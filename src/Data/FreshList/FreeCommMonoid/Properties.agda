@@ -49,3 +49,24 @@ peel-∈-iso-fun : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
                → (∀ a → a ∈ xs → a ∈ ys)
 peel-∈-iso-fun iso a p = peel-∈-iso-fun' iso a p (to (iso a) (there p)) refl
 
+there-inj : {a x : X} {xs : SortedList} {x#xs : x # xs} {p q : a ∈ xs} → there {x = x} {xs} {x#xs} p ≡ there q → p ≡ q
+there-inj refl = refl
+
+from-to-peel' : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
+              → (iso : ∀ a → (a ∈ cons b xs b#xs) ≃ (a ∈ cons b ys b#ys))
+              → (a : X)
+              → (p : a ∈ xs)
+              → (to-there : a ∈ cons b ys b#ys)
+              → (eq : to-there ≡ to (iso a) (there p))
+              → (from-there : a ∈ cons b xs b#xs)
+              → (eq' : from-there ≡ to (≃-sym (iso a)) (there (peel-∈-iso-fun' iso a p to-there eq)))
+              → p ≡ peel-∈-iso-fun' (λ x → ≃-sym (iso x)) a (peel-∈-iso-fun' iso a p to-there eq) from-there eq'
+from-to-peel' iso a p (here a≈b) eq from-there eq' = {!to (iso a) (here a≈b)!}
+from-to-peel' iso a p (there a∈ys) eq .(to (≃-sym (iso a)) (there (peel-∈-iso-fun' iso a p (there a∈ys) eq))) refl
+  = subst (λ z → ∀ q → p ≡ peel-∈-iso-fun' (λ x → ≃-sym (iso x)) a a∈ys (from (iso a) z) q)
+          (sym eq)
+          (λ q → subst (λ z → ∀ q' → p ≡ peel-∈-iso-fun' (λ x → ≃-sym (iso x)) a a∈ys z q')
+                       (from-to (iso a) (there p))
+                       (λ _ → refl)
+                       q)
+          refl

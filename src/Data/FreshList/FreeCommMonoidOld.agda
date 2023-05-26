@@ -100,6 +100,7 @@ xs ∪ ys = union xs ys (<-wellFounded (length xs + length ys))
 -- Extensionality --
 --------------------
 
+
 -- can't find this in stdlib, but I know it's there somewhere...
 record _≃_ {n} (A B : Set n) : Set n where
   constructor MkIso
@@ -133,7 +134,6 @@ to (≃-trans p q) = to q ∘ to p
 from (≃-trans p q) = from p ∘ from q
 from-to (≃-trans p q) a = trans (from-to p a) (cong (from p) (from-to q (to p a)))
 to-from (≃-trans p q) a = trans (to-from q a) (cong (to q) (to-from p (from q a)))
-
 
 peel-∈-iso-fun' : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
                → (iso : ∀ a → (a ∈ cons b xs b#xs) ≃ (a ∈ cons b ys b#ys))

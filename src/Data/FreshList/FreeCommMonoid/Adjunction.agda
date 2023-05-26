@@ -22,7 +22,7 @@ open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡
 open import Relation.Nullary
 open import Relation.Nullary.Decidable hiding (map)
 
-module Util.SortedList.FreeCommMon where
+module Data.FreshList.FreeCommMonoid.Adjunction where
 
 open import Util.FreshListInductiveInductive
 open import Util.SortedList.WithDupes
