@@ -61,7 +61,7 @@ from-to-peel' : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
               → (from-there : a ∈ cons b xs b#xs)
               → (eq' : from-there ≡ to (≃-sym (iso a)) (there (peel-∈-iso-fun' iso a p to-there eq)))
               → p ≡ peel-∈-iso-fun' (λ x → ≃-sym (iso x)) a (peel-∈-iso-fun' iso a p to-there eq) from-there eq'
-from-to-peel' iso a p (here a≈b) eq from-there eq' = {!to (iso a) (here a≈b)!}
+from-to-peel' iso a p (here a≈b) eq from-there eq' =  ⊥-elim (here≢there (sym (to-inj (iso a) (trans (sym eq) ?))))
 from-to-peel' iso a p (there a∈ys) eq .(to (≃-sym (iso a)) (there (peel-∈-iso-fun' iso a p (there a∈ys) eq))) refl
   = subst (λ z → ∀ q → p ≡ peel-∈-iso-fun' (λ x → ≃-sym (iso x)) a a∈ys (from (iso a) z) q)
           (sym eq)
