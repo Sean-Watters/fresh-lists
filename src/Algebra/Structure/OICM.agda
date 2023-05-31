@@ -3,9 +3,11 @@ open import Algebra
 open import Data.Product
 open import Relation.Binary hiding (Irrelevant)
 
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality using ()
+open import Relation.Binary.Structures
 open import Relation.Nullary
 open import Data.Empty
+open import Data.Sum
 
 module Algebra.Structure.OICM where
 
@@ -23,6 +25,19 @@ record IsPropDecTotalOrder
 -- This is going to be such a pain
 -- irrelevant : {S : Set} {_≈_ _≤_ : S → S → Set} → Irrelevant (IsPropDecTotalOrder _≈_ _≤_)
 -- irrelevant S T = {!IsPropDecTotalOrder.≤-prop S!}
+
+record IsPropDecApartnessRelation
+  { S : Set }
+  ( _≈_ : S → S → Set )
+  (_#_ : S → S → Set )
+  : Set where
+  field
+    isEquivalence : IsEquivalence _≈_
+    isAR : IsApartnessRelation _≈_ _#_
+    prop : ∀ {x y} → Irrelevant (x # y)
+    dec : ∀ x y → x ≈ y ⊎ x # y
+  open IsApartnessRelation isAR public
+  open IsEquivalence isEquivalence renaming (sym to ≈-sym) public
 
 -- NB: **Necessarily** strictly ordered when idempotent, non-strict when not.
 record IsOrderedCommutativeMonoid
