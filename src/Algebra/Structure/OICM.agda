@@ -3,7 +3,7 @@ open import Algebra
 open import Data.Product
 open import Relation.Binary hiding (Irrelevant)
 
-open import Relation.Binary.PropositionalEquality using ()
+open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Relation.Binary.Structures
 open import Relation.Nullary
 open import Data.Empty
@@ -38,6 +38,20 @@ record IsPropDecApartnessRelation
     dec : ∀ x y → x ≈ y ⊎ x # y
   open IsApartnessRelation isAR public
   open IsEquivalence isEquivalence renaming (sym to ≈-sym) public
+
+denialApartness : {X : Set} {_≈_ : X → X → Set} → IsEquivalence _≈_ → Decidable _≈_ → IsPropDecApartnessRelation {X} _≈_ (λ x y → ¬ x ≈ y)
+IsPropDecApartnessRelation.isEquivalence (denialApartness isEq ≡-dec) = isEq
+IsApartnessRelation.irrefl (IsPropDecApartnessRelation.isAR (denialApartness isEq ≡-dec)) x≡y ¬x≡y = ¬x≡y x≡y
+IsApartnessRelation.sym (IsPropDecApartnessRelation.isAR (denialApartness isEq ≡-dec)) ¬x≡y y≡x = ¬x≡y (IsEquivalence.sym isEq y≡x )
+IsApartnessRelation.cotrans (IsPropDecApartnessRelation.isAR (denialApartness isEq ≡-dec)) {x} {y} ¬x≡y z with ≡-dec x z | ≡-dec z y
+... | yes x≡z | yes z≡y = ⊥-elim (¬x≡y (IsEquivalence.trans isEq x≡z z≡y))
+... | yes x≡z | no ¬z≡y = inj₂ ¬z≡y
+... | no ¬x≡z | _ = inj₁ ¬x≡z
+IsPropDecApartnessRelation.prop (denialApartness isEq ≡-dec) p q = refl
+IsPropDecApartnessRelation.dec (denialApartness isEq ≡-dec) x y with ≡-dec x y
+... | yes x≡y = inj₁ x≡y
+... | no ¬x≡y = inj₂ ¬x≡y
+
 
 -- NB: **Necessarily** strictly ordered when idempotent, non-strict when not.
 record IsOrderedCommutativeMonoid
@@ -85,3 +99,18 @@ record IsOrderedIdempotentCommutativeMonoid
 --apparently partially ordered monoids are monoidal categories that are both skeletal and thin.
 --(is that with the ∙-preserves-< condition???)
 --wonder what the categorical view on totally ordered idempotent commmutative monoids are.
+
+record IsIdempotentMonoidWithPropDecApartness
+  { S : Set }
+  ( _≈_ : S → S → Set )
+  ( _#_ : S → S → Set )
+  ( _∙_ : S → S → S )
+  ( ε : S )
+  : Set where
+  field
+    isICM : IsMonoid _≈_ _∙_ ε
+    idempotent : Idempotent _≈_ _∙_
+    isApartness : IsPropDecApartnessRelation _≈_ _#_
+
+  open IsPropDecApartnessRelation isApartness public
+  open IsMonoid isICM hiding (refl; sym; trans; reflexive; isPartialEquivalence) public

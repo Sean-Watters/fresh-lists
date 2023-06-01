@@ -145,6 +145,19 @@ module WithIrr
     cons-cong refl refl = cong (cons _ _) (#-irrelevant _ _)
 
 
+    lift-decEq : ((x y : X) → Dec (x ≡ y)) → ((xs ys : List# R) → Dec (xs ≡ ys))
+    lift-decEq dec [] [] = yes refl
+    lift-decEq dec [] (cons x ys x#xs) = no λ ()
+    lift-decEq dec (cons x xs x#xs) [] = no λ ()
+    lift-decEq dec (cons x xs x#xs) (cons y ys y#ys) with dec x y
+    lift-decEq dec (cons x xs x#xs) (cons y ys y#ys) | yes x≡y with lift-decEq dec xs ys
+    lift-decEq dec (cons x xs x#xs) (cons y ys y#ys) | yes x≡y | yes xs≡ys = yes (cons-cong x≡y xs≡ys)
+    lift-decEq dec (cons x xs x#xs) (cons y ys y#ys) | yes x≡y | no ¬xs≡ys
+      = no λ x∷xs≡y∷ys → ⊥-elim (¬xs≡ys (cons-injective-tail x∷xs≡y∷ys))
+    lift-decEq dec (cons x xs x#xs) (cons y ys y#ys) | no ¬x≡y
+      = no λ x∷xs≡y∷ys → ⊥-elim (¬x≡y (cons-injective-head x∷xs≡y∷ys))
+
+
 -- Fix an R and some notion of equality.
 module WithEq
     {n m : Level}

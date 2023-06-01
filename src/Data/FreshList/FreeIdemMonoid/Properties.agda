@@ -11,9 +11,11 @@ open import Data.Empty
 open import Data.FreshList.InductiveInductive
 -- open import Function
 -- open import Relation.Binary.Isomorphism
-open import Relation.Binary.PropositionalEquality
--- open import Relation.Nullary
+open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEquivalence)
+open import Relation.Nullary
 open import Data.Sum
+open import Data.Product
+open import Algebra.Structures
 
 open import Data.FreshList.FreeIdemMonoid ≠-AR
 -- open _≃_
@@ -52,6 +54,11 @@ remove-union (cons x xs x#xs) ys z with ≠-dec x z
 ... | inj₁ x≈z = trans (remove-union xs ys x) (cong₂ union (remove-fresh-idempotent xs x x#xs) (-[]-resp-≈ ys x≈z))
 ... | inj₂ x≠z = ≠-cons-cong refl (trans (-[]-order-irrelevant (union xs ys) x z) (cong (_-[ x ]) (remove-union xs ys z)))
 
+remove-cons : (xs : UniqueList) → (x : X) → (x#xs : x # xs) → (y : X) → x ≈ y → cons x xs x#xs -[ y ] ≡ xs
+remove-cons xs x x#xs y x≈y with ≠-dec x y
+... | inj₁ x≈y = refl
+... | inj₂ x≠y = ⊥-elim (≠-irrefl x≈y x≠y)
+
 unitʳ : (xs : UniqueList) → union xs [] ≡ xs
 unitʳ [] = refl
 unitʳ (cons x xs x#xs) = ≠-cons-cong refl (trans (cong (_-[ x ]) (unitʳ xs)) (remove-fresh-idempotent xs x x#xs))
@@ -74,6 +81,17 @@ assoc (cons x xs x#xs) ys zs = ≠-cons-cong refl (trans (lemma ys) (cong (_-[ x
     union (union xs (cons y ys y#ys)) zs -[ x ]
     ∎ where open ≡-Reasoning
 
+idem : (xs : UniqueList) → union xs xs ≡ xs
+idem [] = refl
+idem (cons x xs x#xs) = ≠-cons-cong refl (trans lemma (idem xs))
+  where
+    lemma : (union xs (cons x xs x#xs) -[ x ]) ≡ union xs xs
+    lemma = begin
+      union xs (cons x xs x#xs) -[ x ]
+        ≡⟨ remove-union xs (cons x xs x#xs) x ⟩
+      union (xs -[ x ]) (cons x xs x#xs -[ x ])
+        ≡⟨ cong₂ union (remove-fresh-idempotent xs x x#xs) (remove-cons xs x x#xs x ≈-refl) ⟩
+      union xs xs ∎ where open ≡-Reasoning
 
 {-
 

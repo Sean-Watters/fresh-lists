@@ -98,3 +98,4 @@ union-fresh {xs = cons x xs x#xs} (a≠x ∷ a#xs) a#ys = a≠x ∷ -[]-fresh (u
 
 insert : X → UniqueList → UniqueList
 insert x xs = union (cons x [] []) xs
+

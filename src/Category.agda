@@ -1,7 +1,7 @@
 {-# OPTIONS --type-in-type #-}
 module Category where
 
-open import Relation.Binary.PropositionalEquality hiding (Extensionality)
+open import Relation.Binary.PropositionalEquality
 open import Axiom.Extensionality.Propositional
 open import Axiom.UniquenessOfIdentityProofs.WithK
 open import Function as Fun using (_∘′_)
