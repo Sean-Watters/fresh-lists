@@ -93,6 +93,27 @@ idem (cons x xs x#xs) = ≠-cons-cong refl (trans lemma (idem xs))
         ≡⟨ cong₂ union (remove-fresh-idempotent xs x x#xs) (remove-cons xs x x#xs x ≈-refl) ⟩
       union xs xs ∎ where open ≡-Reasoning
 
+erasure : (xs ys : UniqueList) → union (union xs ys) xs ≡ union xs ys
+erasure [] ys = unitʳ ys
+erasure (cons x xs x#xs) ys = ≠-cons-cong refl (begin
+  union (union xs ys -[ x ]) (cons x xs x#xs) -[ x ]
+    ≡⟨ cong (λ w → union w (cons x xs x#xs) -[ x ]) (remove-union xs ys x) ⟩
+  union (union (xs -[ x ]) (ys -[ x ])) (cons x xs x#xs) -[ x ]
+    ≡⟨ remove-union (union (xs -[ x ]) (ys -[ x ])) (cons x xs x#xs) x ⟩
+  union (union (xs -[ x ]) (ys -[ x ]) -[ x ]) ((cons x xs x#xs) -[ x ])
+    ≡⟨ cong₂ union (trans (remove-union (xs -[ x ]) (ys -[ x ]) x)
+                          (cong₂ union (trans (remove-fresh-idempotent (xs -[ x ]) x (remove-removes xs x)) (remove-fresh-idempotent xs x x#xs))
+                                       (remove-fresh-idempotent (ys -[ x ]) x (remove-removes ys x))))
+                   (remove-cons xs x x#xs x ≈-refl) ⟩
+  union (union xs (ys -[ x ])) xs
+    ≡⟨ erasure xs (ys -[ x ]) ⟩
+  union xs (ys -[ x ])
+    ≡⟨ cong (λ w → union w (ys -[ x ])) (sym (remove-fresh-idempotent xs x x#xs)) ⟩
+  union (xs -[ x ]) (ys -[ x ])
+    ≡⟨ sym (remove-union xs ys x) ⟩
+  union xs ys -[ x ]
+    ∎) where open ≡-Reasoning
+
 {-
 
 peel-∈-iso-fun' : {b : X} {xs ys : UniqueList} {b#xs : b # xs} {b#ys : b # ys}
