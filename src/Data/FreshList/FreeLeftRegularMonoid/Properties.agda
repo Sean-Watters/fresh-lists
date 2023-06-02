@@ -2,7 +2,7 @@
 
 open import Algebra.Structure.OICM
 
-module Data.FreshList.FreeIdemMonoid.Properties
+module Data.FreshList.FreeLeftRegularMonoid.Properties
   {X : Set} {_≈_ : X → X → Set} {_≠_ : X → X → Set}
   (≠-AR : IsPropDecApartnessRelation _≈_ _≠_)
   where
@@ -17,8 +17,7 @@ open import Data.Sum
 open import Data.Product
 open import Algebra.Structures
 
-open import Data.FreshList.FreeIdemMonoid ≠-AR
--- open _≃_
+open import Data.FreshList.FreeLeftRegularMonoid ≠-AR
 
 private
   ≠-irrefl  = IsPropDecApartnessRelation.irrefl ≠-AR
@@ -53,6 +52,9 @@ remove-union [] ys z = refl
 remove-union (cons x xs x#xs) ys z with ≠-dec x z
 ... | inj₁ x≈z = trans (remove-union xs ys x) (cong₂ union (remove-fresh-idempotent xs x x#xs) (-[]-resp-≈ ys x≈z))
 ... | inj₂ x≠z = ≠-cons-cong refl (trans (-[]-order-irrelevant (union xs ys) x z) (cong (_-[ x ]) (remove-union xs ys z)))
+
+remove-union-fresh : (xs ys : UniqueList) → (x : X) → x # xs → union xs ys -[ x ] ≡ union xs (ys -[ x ])
+remove-union-fresh xs ys x x#xs = trans (remove-union xs ys x) (cong (λ w → union w (ys -[ x ])) (remove-fresh-idempotent xs x x#xs))
 
 remove-cons : (xs : UniqueList) → (x : X) → (x#xs : x # xs) → (y : X) → x ≈ y → cons x xs x#xs -[ y ] ≡ xs
 remove-cons xs x x#xs y x≈y with ≠-dec x y
@@ -93,9 +95,9 @@ idem (cons x xs x#xs) = ≠-cons-cong refl (trans lemma (idem xs))
         ≡⟨ cong₂ union (remove-fresh-idempotent xs x x#xs) (remove-cons xs x x#xs x ≈-refl) ⟩
       union xs xs ∎ where open ≡-Reasoning
 
-erasure : (xs ys : UniqueList) → union (union xs ys) xs ≡ union xs ys
-erasure [] ys = unitʳ ys
-erasure (cons x xs x#xs) ys = ≠-cons-cong refl (begin
+leftregular : (xs ys : UniqueList) → union (union xs ys) xs ≡ union xs ys
+leftregular [] ys = unitʳ ys
+leftregular (cons x xs x#xs) ys = ≠-cons-cong refl (begin
   union (union xs ys -[ x ]) (cons x xs x#xs) -[ x ]
     ≡⟨ cong (λ w → union w (cons x xs x#xs) -[ x ]) (remove-union xs ys x) ⟩
   union (union (xs -[ x ]) (ys -[ x ])) (cons x xs x#xs) -[ x ]
@@ -106,7 +108,7 @@ erasure (cons x xs x#xs) ys = ≠-cons-cong refl (begin
                                        (remove-fresh-idempotent (ys -[ x ]) x (remove-removes ys x))))
                    (remove-cons xs x x#xs x ≈-refl) ⟩
   union (union xs (ys -[ x ])) xs
-    ≡⟨ erasure xs (ys -[ x ]) ⟩
+    ≡⟨ leftregular xs (ys -[ x ]) ⟩
   union xs (ys -[ x ])
     ≡⟨ cong (λ w → union w (ys -[ x ])) (sym (remove-fresh-idempotent xs x x#xs)) ⟩
   union (xs -[ x ]) (ys -[ x ])

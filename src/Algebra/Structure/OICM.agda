@@ -100,7 +100,7 @@ record IsOrderedIdempotentCommutativeMonoid
 --(is that with the ∙-preserves-< condition???)
 --wonder what the categorical view on totally ordered idempotent commmutative monoids are.
 
-record IsIdempotentMonoidWithPropDecApartness
+record IsLeftRegularMonoidWithPropDecApartness
   { S : Set }
   ( _≈_ : S → S → Set )
   ( _#_ : S → S → Set )
@@ -109,7 +109,7 @@ record IsIdempotentMonoidWithPropDecApartness
   : Set where
   field
     isICM : IsMonoid _≈_ _∙_ ε
-    idempotent : Idempotent _≈_ _∙_
+    leftregular : (x y : S) → ((x ∙ y) ∙ x) ≈ (x ∙ y)
     isApartness : IsPropDecApartnessRelation _≈_ _#_
 
   open IsPropDecApartnessRelation isApartness public
