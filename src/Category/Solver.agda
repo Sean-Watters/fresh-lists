@@ -13,7 +13,7 @@ open Functor
 
 
 -- "syntactic" morphisms
-data SynHom (C : Category) : Obj C -> Obj C -> Set
+data SynHom (C : Category) : Obj C -> Obj C -> Set₂
   where
     <_> : forall {S T} -> Hom C S T -> SynHom C S T
     idSyn : ∀ {T} -> SynHom C T T
@@ -36,7 +36,7 @@ infixr 9 _∘Syn_
 ⟦ -[ f ]- ⟧Sy = ⟦ f ⟧Sy
 
 -- iterated functor application
-data MapPile (C : Category) : Obj C -> Obj C -> Set
+data MapPile (C : Category) : Obj C -> Obj C -> Set₂
   where
     <_> : forall {S T} -> Hom C S T -> MapPile C S T
     fmapSyn : ∀ {C' S' T'} → (F : Functor C' C) -> MapPile C' S' T' ->
@@ -112,11 +112,11 @@ eqArr (solveCat {d = d} {d' = d'} q) = begin
       ∎ where open ≡-Reasoning
 
 
-HomEq : ∀ {C S T S' T'} → (d : SynHom C S T)(d' : SynHom C S' T') -> Set
+HomEq : ∀ {C S T S' T'} → (d : SynHom C S T)(d' : SynHom C S' T') -> Set₁
 HomEq {C} {S} {T} {S'} {T'} d d' =
   Σ (S ≡ S') λ { refl → Σ (T ≡ T') λ { refl → d ≡Hom d' } }
 
-Reduced : ∀ {C S T S' T'} → (d : SynHom C S T)(d' : SynHom C S' T') -> Set
+Reduced : ∀ {C S T S' T'} → (d : SynHom C S T)(d' : SynHom C S' T') -> Set₁
 Reduced (idSyn {T}) (idSyn {T'}) = T ≡ T'
 Reduced (compSyn f g) (compSyn f' g') = Reduced g g' × Reduced f f'
 Reduced d d' = HomEq d d'

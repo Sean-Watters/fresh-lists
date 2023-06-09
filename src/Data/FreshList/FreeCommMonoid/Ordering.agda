@@ -40,10 +40,10 @@ _≉_ : X → X → Set
 a ≉ b = (a ≈ b) → ⊥
 
 ≉-sym : Symmetric _≉_
-≉-sym = {!!}
+≉-sym x≉y y≈x = x≉y (≈-sym y≈x)
 
 ≉-prop : ∀ {x y} → Irrelevant (x ≉ y)
-≉-prop = {!!}
+≉-prop p q = refl
 
 _<_ : X → X → Set
 a < b = (a ≤ b) × (a ≉ b)
@@ -65,7 +65,7 @@ a < b = (a ≤ b) × (a ≉ b)
   ... | yes a≈c = λ _ → a≉b (≤-antisym a≤b (proj₁ ≤-resp-≈ (≈-sym a≈c) b≤c))
 
 <-prop : ∀ {x y} → Irrelevant (x < y)
-<-prop (p , q) (p' , q') = cong₂ _,_ (≤-prop p p') {!!}
+<-prop (p , q) (p' , q') = cong₂ _,_ (≤-prop p p') (≉-prop q q')
 
 <-resp-≈R : _<_ Respectsʳ _≈_
 <-resp-≈R b≈c (a≤b , a≉b) = (proj₁ ≤-resp-≈ b≈c a≤b) , (λ a≈c → a≉b (≈-trans a≈c (≈-sym b≈c)))
@@ -96,17 +96,17 @@ data _≤L_ : SortedList → SortedList → Set where
 ≤L-trans (eq x≈y xs≤ys) (eq y≈z ys≤zs) = eq (≈-trans x≈y y≈z) (≤L-trans xs≤ys ys≤zs)
 
 {-
-≤L-antisym : ∀ {xs ys} → xs ≤L ys → ys ≤L xs → xs ≈ ys
+≤L-antisym : ∀ {xs ys} → xs ≤L ys → ys ≤L xs → xs ≡ ys
 ≤L-antisym [] [] = refl
 ≤L-antisym (lt (x≤y , x≉y)) (lt (y≤x , _)) = ⊥-elim $ x≉y (≤-antisym x≤y y≤x)
-≤L-antisym (lt (_ , ¬refl)) (eq refl _) = ⊥-elim $ ¬refl refl
-≤L-antisym (eq refl _) (lt (_ , ¬refl)) = ⊥-elim $ ¬refl refl
-≤L-antisym (eq refl p) (eq refl q) = cons-cong refl (≤L-antisym p q)
+≤L-antisym (lt (_ , ¬refl)) (eq y≈x _) = ⊥-elim $ ¬refl (≈-sym y≈x)
+≤L-antisym (eq x≈y _) (lt (_ , ¬refl)) = ⊥-elim $ ¬refl (≈-sym x≈y)
+≤L-antisym (eq x≈y p) (eq y≈x q) = cons-cong {!!} (≤L-antisym p q)
 
 ≤L-total : ∀ xs ys → (xs ≤L ys) ⊎ (ys ≤L xs)
 ≤L-total [] ys = inj₁ []
 ≤L-total (cons x xs x#xs) [] = inj₂ []
-≤L-total (cons x xs x#xs) (cons y ys y#ys) with x ≟ y | total x y | ≤L-total xs ys
+≤L-total (cons x xs x#xs) (cons y ys y#ys) with x ≈? y | ≤-total x y | ≤L-total xs ys
 ... | yes refl | _ | inj₁ xs≤ys = inj₁ $ eq refl xs≤ys
 ... | yes refl | _ | inj₂ ys≤xs = inj₂ $ eq refl ys≤xs
 ... | no x≉y | inj₁ x≤y | _ = inj₁ $ lt $ x≤y , x≉y
@@ -123,7 +123,7 @@ _=L?_ : (xs ys : SortedList) → Dec (xs ≈ ys)
 [] =L? [] = yes refl
 [] =L? cons x ys x#xs = no λ {()}
 cons x xs x#xs =L? [] = no λ {()}
-cons x xs x#xs =L? cons y ys y#ys with x ≟ y | xs =L? ys
+cons x xs x#xs =L? cons y ys y#ys with x ≈? y | xs =L? ys
 ... | yes refl | yes refl = yes $ cons-cong refl refl
 ... | yes refl | no xs≉ys = no λ {refl → xs≉ys refl}
 ... | no x≉y   | _        = no λ {refl → x≉y refl}
@@ -145,7 +145,7 @@ cons x xs x#xs ≤L? cons y ys y#ys with <-tri x y | xs ≤L? ys
 
 
 SortedList-Order : IsPropDecTotalOrder _≈_ _≤L_
-IsPreorder.isEquivalence (IsPartialOrder.isPreorder (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order)))) = ≈-isEq
+IsPreorder.isEquivalence (IsPartialOrder.isPreorder (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order)))) = ?
 IsPreorder.reflexive (IsPartialOrder.isPreorder (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order)))) refl = ≤L-refl
 IsPreorder.trans (IsPartialOrder.isPreorder (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order)))) = ≤L-trans
 IsPartialOrder.antisym (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order))) = ≤L-antisym
@@ -153,5 +153,4 @@ IsTotalOrder.total (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO Sort
 IsDecTotalOrder._≟_ (IsPropDecTotalOrder.isDTO SortedList-Order) = _=L?_
 IsDecTotalOrder._≤?_ (IsPropDecTotalOrder.isDTO SortedList-Order) = _≤L?_
 IsPropDecTotalOrder.≤-prop SortedList-Order = ≤L-prop
-
 -}

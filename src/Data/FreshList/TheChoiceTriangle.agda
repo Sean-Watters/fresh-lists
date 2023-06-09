@@ -20,6 +20,46 @@ open import Util.Category
 open import Util.Category.Adjunctions
 open import Util.OICM
 
+
+{-
+
+-- Show that:
+  -- (1) DTO and STO are equivalent
+  -- (2) DTO/STO being equivalent to Set would imply LEM. This is obvious, since trichotomy implies dec eq, and dec eq is explicity included in DTO.
+  --     Other direction is interesting though - is LEM enough to linearly order any set, or do you need some choice principle?
+  -- (3) OCM and OICM are not equivalent. Trivial. [a,a] is an obj in OCM but not OICM. Also not really interesting.
+
+-- The category of sets with decidable equality.
+DecSet : Category
+Category.Obj DecSet = Σ[ X ∈ Set ] Decidable (_≡_ {A = X})
+Category.Hom DecSet (A , _) (B , _) = A → B
+Category.id DecSet = id
+Category.comp DecSet f g = g ∘ f
+Category.assoc DecSet = refl
+Category.identityˡ DecSet = refl
+Category.identityʳ DecSet = refl
+
+-- TODO : prove DecSet is a subcat of Set, but that they aren't equivalent.
+-- We can get this for cheap without talking about morphisms at all;
+-- it's enough that the inclusion functor DecSet->Set is not full.
+
+-- Clearly PDTO and STO are not equivalent to Set - their objects have decidable equality, but not all sets do.
+-- So what about DecSet? Totality and antisymmetry foil the obvious attempts at free orders. Empty order and diagonal order are not total, and the complete order is not antisymmetric.
+
+-- "There exists a set that can't be linearly ordered" is equivalent to the negation of the axiom of choice (according to unsourced internet, at least. need to verify)
+-- (Is the constructively weaker "¬ (all sets can be linearly ordered)" also anti-choice?)
+-- Agda obviously doesn't validate full-fat choice, but I think it also doesn't it refute it? (I know that countable choice is a theorem)
+-- So we shouldn't be able to show that such a non-linearly-orderable set does not exist.
+-- But, this statement may still require classical logic, even if it is anti-choice.
+-- So we may be able to show that it implies LEM?
+
+-- Foundational questions :
+--
+-- 1) DecSet is clearly a strict category. Is Set? Not constructively, right? Does strict constructively mean exactly "has decidable equality on objects"?
+-- 2)
+-}
+
+
 -- Want to show that:
   -- (1) DTO and STO are equivalent categories.
   -- (2) DTO/STO being equivalent to Set would imply LEM. This is obvious, since trichotomy implies dec eq, and dec eq is explicity included in DTO.

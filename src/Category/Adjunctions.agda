@@ -1,10 +1,11 @@
-{-# OPTIONS --type-in-type #-}
 module Category.Adjunctions where
 
 open import Data.Product
 
 open import Relation.Binary.PropositionalEquality
 open import Function as Fun using (_∘′_)
+
+open import Axiom.Extensionality.Propositional
 
 open import Category
 open import Category.Solver
@@ -15,7 +16,7 @@ open import Category.Solver
 
 record Adjunction {C D : Category}
                   (F : Functor C D)
-                  (G : Functor D C) : Set where
+                  (G : Functor D C) : Set₁ where
 
   open Category.Category
   open Functor
@@ -53,6 +54,8 @@ record Adjunction {C D : Category}
       ≡⟦ solveCat refl ⟧
     < from > ∘Syn < (λ h → comp C f (comp C h (fmap G g))) >
       ⟦∎⟧
+    where
+      postulate ext : Extensionality _ _
 
 _⊣_ = Adjunction
 ---------------------------------------------------------------------------

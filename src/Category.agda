@@ -1,5 +1,6 @@
-{-# OPTIONS --type-in-type #-}
 module Category where
+
+open import Level renaming (zero to lzero; suc to lsuc)
 
 open import Relation.Binary.PropositionalEquality
 open import Axiom.Extensionality.Propositional
@@ -8,21 +9,15 @@ open import Function as Fun using (_∘′_)
 open import Data.Product hiding (map)
 
 ----------------------------
--- Function extensionality
-----------------------------
-
-postulate
-  ext : Extensionality _ _
-
-----------------------------
 -- Categories
 ----------------------------
 
-record Category : Set where
+-- We only consider "large" categories in this work
+record Category : Set₂ where
   eta-equality
 
   field
-    Obj : Set
+    Obj : Set₁
     Hom : Obj -> Obj -> Set
 
   field
@@ -40,7 +35,7 @@ open Category
 -- Functors
 ----------------------------
 
-record Functor (C D : Category) : Set where
+record Functor (C D : Category) : Set₁ where
   eta-equality
   private
     module C = Category C
@@ -63,8 +58,14 @@ eqFunctor : {C D : Category}{F G : Functor C D} ->
             (∀ {A B} → subst (λ z → Hom C A B -> Hom D (z A) (z B)) p (fmap F) ≡ (fmap G {A} {B})) ->
             F ≡ G
 eqFunctor {G = G} refl q with iext (λ {A} → iext (λ {B} → q {A} {B}))
-  where   iext = implicit-extensionality ext
-... | refl = eqFunctor' {G = G} (implicit-extensionality ext λ {A} → uip _ _) (iext (iext (iext (iext (iext (uip _ _)))))) where
+  where
+    postulate ext : ∀ {a b} → Extensionality a b
+    iext : ∀ {a b} → ExtensionalityImplicit a b
+    iext = implicit-extensionality ext
+... | refl = eqFunctor' {G = G} (implicit-extensionality ext λ {A} → uip _ _) (iext (iext (iext (iext (iext (uip _ _))))))
+  where
+  postulate ext : ∀ {a b} → Extensionality a b
+  iext : ∀ {a b} → ExtensionalityImplicit a b
   iext = implicit-extensionality ext
   eqFunctor' : ∀ {C} {D} {G : Functor C D}
                {identity' identity'' : {A : Obj C} → fmap G {A} (Category.id C) ≡ Category.id D}
@@ -87,21 +88,23 @@ fmap (compFunctor F G) f = fmap G (fmap F f)
 identity (compFunctor F G) = trans (cong (fmap G) (identity F)) (identity G)
 homomorphism (compFunctor F G) = trans (cong (fmap G) (homomorphism F)) (homomorphism G)
 
-Full : {A B : Category} → Functor A B → Set
+
+Full : {A B : Category} → Functor A B → Set₁
 Full {A} {B} S = ∀ {x y} {g : Category.Hom B (act S x) (act S y)} → Σ[ f ∈ Category.Hom A x y ] g ≡ (fmap S f)
 
-Faithful : {A B : Category} → Functor A B → Set
+Faithful : {A B : Category} → Functor A B → Set₁
 Faithful {A} {B} S = ∀ {x y} {f g : Category.Hom A x y} → fmap S f ≡ fmap S g → f ≡ g
 
-FullyFaithful : {A B : Category} → Functor A B → Set
+FullyFaithful : {A B : Category} → Functor A B → Set₁
 FullyFaithful S = Full S × Faithful S
+
 
 ----------------------------
 -- Natural transformations
 ----------------------------
 
 record NaturalTransformation {C D : Category}
-                             (F G : Functor C D) : Set where
+                             (F G : Functor C D) : Set₁ where
   eta-equality
   private
     module F = Functor F
@@ -121,7 +124,9 @@ eqNatTrans : {C D : Category}{F G : Functor C D} ->
              ((X : Category.Obj C) -> transform η X ≡ transform ρ X) ->
              η ≡ ρ
 eqNatTrans {C} η ρ p with ext p
+  where   postulate ext : Extensionality _ _
 ... | refl = eqNatTrans' η ρ refl (ext λ X → ext λ Y → ext λ f → uip _ _) where
+  postulate ext : ∀ {a b} → Extensionality a b
   eqNatTrans' : {C D : Category}{F G : Functor C D} ->
                 (η ρ : NaturalTransformation F G) ->
                 (p : transform η ≡ transform ρ) ->
@@ -147,7 +152,7 @@ Category.identityʳ SET = refl
 -- Monads
 ----------------------------
 
-record Monad (C : Category) : Set where
+record Monad (C : Category) : Set₁ where
   open Category C
   open Functor
 
@@ -176,7 +181,7 @@ record Monad (C : Category) : Set where
 -- Equivalence of Cats
 ---------------------------
 
-record _≅_ (C D : Category) : Set where
+record _≅_ (C D : Category) : Set₁ where
   constructor MkCatIso
   field
     S : Functor C D
@@ -189,7 +194,7 @@ open _≅_
 -- Anafunctors --
 -----------------
 
-record Anafunctor (C D : Category) : Set where
+record Anafunctor (C D : Category) : Set₁ where
   constructor MkAnafunctor
   field
     SpecF : Set    -- Set of specifications of F
@@ -197,7 +202,7 @@ record Anafunctor (C D : Category) : Set where
     τ : SpecF → Obj D  -- An object of D for each spec
 
   -- What it means for y to be the specified object of F at x.
-  specified : (x : Obj C) (y : Obj D) → Set
+  specified : (x : Obj C) (y : Obj D) → Set₁
   specified x y = Σ[ s ∈ SpecF ] (x ≡ σ s) × (y ≡ τ s) -- s "specifies" y at x
 
   field

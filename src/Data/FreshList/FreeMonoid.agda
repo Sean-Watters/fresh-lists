@@ -71,29 +71,11 @@ fun (map-list f) xs = map-list-fun f xs
 preserves-ε (map-list f) = refl
 preserves-∙ (map-list f) xs ys = map-list-preserves-∙ f xs ys
 
-foldr : {A B : Set} → (A → B → B) → B → List A → B
-foldr f e [] = e
-foldr f e (cons x xs x#xs) = f x (foldr f e xs)
-
 fold-∙ : {A : Set} (B : Monoid) → (A → Carrier B) → List A → Carrier B
-fold-∙ {A} B f = foldr {A} {Carrier B} (λ a b → _∙_ B (f a) b) (ε B)
+fold-∙ {A} B f = foldr (λ a b → _∙_ B (f a) b) (ε B)
 
 fold-∙-preserves-∙ : {X : Set} (B : Monoid) (f : X → Carrier B) (x y : List X)
                    → fold-∙ B f ((List' X ∙ x) y) ≡ (B ∙ fold-∙ B f x) (fold-∙ B f y)
 fold-∙-preserves-∙ (Mon _ _ _ p) f [] y = sym $ proj₁ (IsMonoid.identity p) _
 fold-∙-preserves-∙ B f (cons x xs x#xs) y = trans (cong (_∙_ B (f x)) (fold-∙-preserves-∙ B f xs y)) (sym $ (IsSemigroup.assoc $ IsMonoid.isSemigroup $ proof B) (f x) (fold-∙ B f xs) (fold-∙ B f y))
 
-foldr-universal : ∀ {A B : Set} (h : List A → B) (f : A → B → B) (e : B) → (h [] ≡ e) →
-                  (∀ x xs → h (cons x xs tt#) ≡ f x (h xs)) →
-                  h ≗ foldr f e
-foldr-universal h f e base step [] = base
-foldr-universal h f e base step (cons x xs _) =
-  begin
-    h (cons x xs _)
-  ≡⟨ cong (λ p → h (cons x xs p)) (WithIrr.#-irrelevant R⊤ (λ {tt tt → refl}) _ _) ⟩
-    h (x ∷# xs)
-  ≡⟨ step x xs ⟩
-    f x (h xs)
-  ≡⟨ cong (f x) (foldr-universal h f e base step xs) ⟩
-    f x (foldr f e xs)
-  ∎ where open ≡-Reasoning

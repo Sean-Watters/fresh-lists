@@ -41,6 +41,6 @@ to MonoidAdjunction f x = fun f (cons x [] [])
 fun (from MonoidAdjunction {A} {B} f) = fold-∙ B f
 preserves-ε (from MonoidAdjunction f) = refl
 preserves-∙ (from MonoidAdjunction {A} {B} f) = fold-∙-preserves-∙ B f
-left-inverse-of MonoidAdjunction {A} {B} h = eqMonMorphism (ext λ xs → sym $ foldr-universal (fun h) (λ a → _∙_ B (fun h (a ∷# []))) (ε B) (preserves-ε h) (λ a as → preserves-∙ h (a ∷# []) as) xs)
+left-inverse-of MonoidAdjunction {A} {B} h = eqMonMorphism (ext λ xs → foldr-universal (fun h) (λ a → _∙_ B (fun h (a ∷# []))) (ε B) (preserves-ε h) (λ a as a#as → trans (cong (fun h) (WithIrr.cons-cong R⊤ (λ p q → refl) refl refl)) (preserves-∙ h (a ∷# []) as)) xs)
 right-inverse-of MonoidAdjunction {A} {B} k = ext (λ x → proj₂ (IsMonoid.identity $ proof B) (k x))
 to-natural MonoidAdjunction f g = refl

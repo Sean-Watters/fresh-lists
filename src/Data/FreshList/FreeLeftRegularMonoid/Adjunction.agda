@@ -1,9 +1,3 @@
-{-# OPTIONS --type-in-type --with-K  #-}
--- Accepting heartache to keep the headache at bay --
-
-open import Level renaming (suc to lsuc)
-
-
 module Data.FreshList.FreeLeftRegularMonoid.Adjunction where
 
 open import Data.Empty
@@ -15,6 +9,8 @@ open import Relation.Binary
 open import Relation.Binary.Structures
 open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEquivalence)
 open import Function
+
+open import Axiom.Extensionality.Propositional
 
 open import Axiom.UniquenessOfIdentityProofs.WithK
 
@@ -47,7 +43,7 @@ module _
 -- The Category of Left Regular Monoids with Decidable Apartness relations --
 ---------------------------------------------------------------------------
 
-record LeftRegularMonoidWithPropDecApartness : Set where
+record LeftRegularMonoidWithPropDecApartness : Set₁ where
   constructor MkLrb
   field
     Carrier : Set
@@ -83,7 +79,7 @@ preserves-∙ (lrb-comp f g) _ _ = trans (cong (fun g) (preserves-∙ f _ _)) (p
 eqLrbMorphism : ∀ {A B} → {f g : LrbMorphism A B} → fun f ≡ fun g → f ≡ g
 eqLrbMorphism {A} {B} {MkLrbMorphism .f refl p∙} {MkLrbMorphism f refl q∙} refl
   = cong (MkLrbMorphism f refl) ((ext λ x → ext λ y → uip (p∙ x y) (q∙ x y)))
-
+  where postulate ext : Extensionality _ _
 
 LRB : Category
 Category.Obj LRB = LeftRegularMonoidWithPropDecApartness
@@ -99,7 +95,7 @@ Category.identityʳ LRB {A} {B} {f} = eqLrbMorphism refl
 -- The Category of Propositional Decidable Apartness Types --
 -------------------------------------------------------------
 
-record DecApartnessType : Set where
+record DecApartnessType : Set₁ where
   constructor MkAT
   field
     Carrier : Set
@@ -204,17 +200,17 @@ map-union {X} {Y} f (cons x xs x#xs) ys = WithIrr.cons-cong _ (IsPropDecApartnes
     _-[_]X = _-[_] (proof X)
     _-[_]Y = _-[_] (proof Y)
 
-UNIQUELIST : Functor AT LRB
-act UNIQUELIST (MkAT X _¬≈_ isAT) = MkLrb (UniqueList isAT) _ (union isAT) [] (leftregularBand isAT)
-fmap UNIQUELIST {X} {Y} f = MkLrbMorphism (UL-map {X} {Y} f) refl (map-union {X} {Y} f)
-identity UNIQUELIST {X} = eqLrbMorphism (ext lemma)
+UNIQUELIST : Extensionality _ _ → Functor AT LRB
+act (UNIQUELIST ext) (MkAT X _¬≈_ isAT) = MkLrb (UniqueList isAT) _ (union isAT) [] (leftregularBand isAT)
+fmap (UNIQUELIST ext) {X} {Y} f = MkLrbMorphism (UL-map {X} {Y} f) refl (map-union {X} {Y} f)
+identity (UNIQUELIST ext) {X} = eqLrbMorphism (ext lemma)
   where
     lemma : ∀ xs → UL-map id xs ≡ xs
     lemma [] = refl
     lemma (cons x xs x#xs) = WithIrr.cons-cong _ (IsPropDecApartnessRelation.prop (proof X)) refl
                                                (trans (cong (λ w → _-[_] (proof X) w x) (lemma xs) )
                                                       (remove-fresh-idempotent (proof X) xs x x#xs))
-homomorphism UNIQUELIST {X} {Y} {Z} {f} {g} = eqLrbMorphism (ext lemma)
+homomorphism (UNIQUELIST ext) {X} {Y} {Z} {f} {g} = eqLrbMorphism (ext lemma)
   where
     lemma : ∀ xs → UL-map (λ x → g (f x)) xs ≡ UL-map g (UL-map f xs)
     lemma [] = refl
@@ -312,10 +308,10 @@ foldr-∙-union X B h (cons x xs x#xs) ys = begin
         _-[_]X = _-[_] (proof X)
         unionX = union (proof X)
 
-UL-Adjunction : UNIQUELIST ⊣ FORGET
-to UL-Adjunction f x = fun f (cons x [] [])
-from UL-Adjunction {X} {B} h = MkLrbMorphism (foldr-∙ X B h) refl (foldr-∙-union X B h)
-left-inverse-of UL-Adjunction {X} {B} h = eqLrbMorphism (ext lemma)
+UL-Adjunction : (ext : Extensionality _ _) → (UNIQUELIST ext) ⊣ FORGET
+to (UL-Adjunction ext) f x = fun f (cons x [] [])
+from (UL-Adjunction ext) {X} {B} h = MkLrbMorphism (foldr-∙ X B h) refl (foldr-∙-union X B h)
+left-inverse-of (UL-Adjunction ext) {X} {B} h = eqLrbMorphism (ext lemma)
   where
     lemma : (xs : UniqueList (proof X)) → foldr (λ x → B ∙ fun h (cons x [] [])) (ε B) xs ≡ fun h xs
     lemma [] = sym (preserves-ε h)
@@ -333,5 +329,5 @@ left-inverse-of UL-Adjunction {X} {B} h = eqLrbMorphism (ext lemma)
         foldr-∙' = foldr (λ x b → fun h (cons x [] []) ∙' b) (ε B)
         _-[_]X = _-[_] (proof X)
         unionX = union (proof X)
-right-inverse-of UL-Adjunction {X} {B} f = ext (λ x → proj₂ (IsLeftRegularMonoidWithPropDecApartness.identity (proof B)) (f x))
-to-natural UL-Adjunction f g = ext λ _ → ext λ _ → refl
+right-inverse-of (UL-Adjunction ext) {X} {B} f = ext (λ x → proj₂ (IsLeftRegularMonoidWithPropDecApartness.identity (proof B)) (f x))
+to-natural (UL-Adjunction ext) f g = ext λ _ → ext λ _ → refl

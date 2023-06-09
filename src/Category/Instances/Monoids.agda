@@ -3,7 +3,7 @@
 open import Axiom.Extensionality.Propositional
 open import Category
 open import Algebra.Structure.Monoid
-open import Relation.Binary.PropositionalEquality hiding (Extensionality)
+open import Relation.Binary.PropositionalEquality
 
 module Category.Instances.Monoids (funext : Extensionality _ _) where
 

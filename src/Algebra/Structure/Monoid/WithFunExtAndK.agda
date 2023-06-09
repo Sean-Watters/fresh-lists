@@ -4,7 +4,7 @@ open import Axiom.Extensionality.Propositional
 open import Axiom.UniquenessOfIdentityProofs.WithK
 
 open import Algebra.Structure.Monoid
-open import Relation.Binary.PropositionalEquality hiding (Extensionality)
+open import Relation.Binary.PropositionalEquality
 
 module Algebra.Structure.Monoid.WithFunExtAndK (funext : Extensionality _ _) where
   open MonoidMorphism
