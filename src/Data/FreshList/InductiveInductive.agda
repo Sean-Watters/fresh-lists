@@ -188,3 +188,7 @@ module WithEq
 
     ∉-weaken : {a x : X} {xs : List# R} {x#xs : x # xs} → a ∉ (cons x xs x#xs) → a ∉ xs
     ∉-weaken ¬p q = ⊥-elim (¬p (there q))
+
+    #-resp-≈ : {x y : X} {xs : List# R} → x # xs → x ≈ y → y # xs
+    #-resp-≈ [] x≈y = []
+    #-resp-≈ (px ∷ pxs) x≈y = proj₂ R-resp-≈ x≈y px ∷ #-resp-≈ pxs x≈y
