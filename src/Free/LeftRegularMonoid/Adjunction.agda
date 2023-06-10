@@ -1,5 +1,5 @@
-{-# OPTIONS --without-K #-}
-module Data.FreshList.FreeLeftRegularMonoid.Adjunction where
+{-# OPTIONS --safe --without-K #-}
+module Free.LeftRegularMonoid.Adjunction where
 
 open import Data.Empty
 open import Data.Sum
@@ -18,11 +18,11 @@ open import Algebra.Structures
 open import Algebra.Structure.OICM
 
 open import Data.FreshList.InductiveInductive
-open import Data.FreshList.FreeLeftRegularMonoid
-open import Data.FreshList.FreeLeftRegularMonoid.Properties
+open import Free.LeftRegularMonoid.Base
+open import Free.LeftRegularMonoid.Properties
 
 
-open import Category
+open import Category.Base
 
 module _
   {X : Set}
@@ -75,11 +75,10 @@ preserves-ε (lrb-comp f g) = trans (cong (fun g) (preserves-ε f)) (preserves-�
 preserves-∙ (lrb-comp f g) _ _ = trans (cong (fun g) (preserves-∙ f _ _)) (preserves-∙ g _ _)
 
 
-eqLrbMorphism : ∀ {A B} → {f g : LrbMorphism A B} → fun f ≡ fun g → f ≡ g
-eqLrbMorphism {A} {B} {MkLrbMorphism .f refl p∙} {MkLrbMorphism f q q∙} refl
+eqLrbMorphism : Extensionality _ _ → ∀ {A B} → {f g : LrbMorphism A B} → fun f ≡ fun g → f ≡ g
+eqLrbMorphism ext {A} {B} {MkLrbMorphism .f refl p∙} {MkLrbMorphism f q q∙} refl
   = cong₂ (MkLrbMorphism f) (uipB refl q) ((ext λ x → ext λ y → uipB (p∙ x y) (q∙ x y)))
   where
-    postulate ext : Extensionality _ _
     uipB : Irrelevant (_≡_ {A = Carrier B})
     uipB = Axiom.UniquenessOfIdentityProofs.Decidable⇒UIP.≡-irrelevant decB
       where
@@ -88,14 +87,14 @@ eqLrbMorphism {A} {B} {MkLrbMorphism .f refl p∙} {MkLrbMorphism f q q∙} refl
         ... | inj₁ x≡y = yes x≡y
         ... | inj₂ x≠y = no λ x≡y → IsPropDecApartnessRelation.irrefl (IsLeftRegularMonoidWithPropDecApartness.isApartness (proof B)) x≡y x≠y
 
-LRB : Category
-Category.Obj LRB = LeftRegularMonoidWithPropDecApartness
-Category.Hom LRB = LrbMorphism
-Category.id LRB = lrb-id
-Category.comp LRB = lrb-comp
-Category.assoc LRB {A} {B} {C} {D} {f} {g} {h} = eqLrbMorphism refl
-Category.identityˡ LRB {A} {B} {f} = eqLrbMorphism refl
-Category.identityʳ LRB {A} {B} {f} = eqLrbMorphism refl
+LRB : Extensionality _ _ → Category
+Category.Obj (LRB ext) = LeftRegularMonoidWithPropDecApartness
+Category.Hom (LRB ext) = LrbMorphism
+Category.id (LRB ext) = lrb-id
+Category.comp (LRB ext) = lrb-comp
+Category.assoc (LRB ext) {A} {B} {C} {D} {f} {g} {h} = eqLrbMorphism ext refl
+Category.identityˡ (LRB ext) {A} {B} {f} = eqLrbMorphism ext refl
+Category.identityʳ (LRB ext) {A} {B} {f} = eqLrbMorphism ext refl
 
 
 -------------------------------------------------------------
@@ -125,11 +124,11 @@ Category.identityʳ AT = refl
 
 open Functor
 
-FORGET : Functor LRB AT
-act FORGET (MkLrb S _¬≈_ _∙_ ε lrb) = MkAT S _¬≈_ (IsLeftRegularMonoidWithPropDecApartness.isApartness lrb)
-fmap FORGET f = fun f
-identity FORGET = refl
-homomorphism FORGET = refl
+FORGET : (ext : Extensionality _ _) → Functor (LRB ext) AT
+act (FORGET _) (MkLrb S _¬≈_ _∙_ ε lrb) = MkAT S _¬≈_ (IsLeftRegularMonoidWithPropDecApartness.isApartness lrb)
+fmap (FORGET _) f = fun f
+identity (FORGET _) = refl
+homomorphism (FORGET _) = refl
 
 ----------------------
 -- The Free Functor --
@@ -207,17 +206,17 @@ map-union {X} {Y} f (cons x xs x#xs) ys = WithIrr.cons-cong _ (IsPropDecApartnes
     _-[_]X = _-[_] (proof X)
     _-[_]Y = _-[_] (proof Y)
 
-UNIQUELIST : Extensionality _ _ → Functor AT LRB
+UNIQUELIST : (ext : Extensionality _ _) → Functor AT (LRB ext)
 act (UNIQUELIST ext) (MkAT X _¬≈_ isAT) = MkLrb (UniqueList isAT) _ (union isAT) [] (leftregularBand isAT)
 fmap (UNIQUELIST ext) {X} {Y} f = MkLrbMorphism (UL-map {X} {Y} f) refl (map-union {X} {Y} f)
-identity (UNIQUELIST ext) {X} = eqLrbMorphism (ext lemma)
+identity (UNIQUELIST ext) {X} = eqLrbMorphism ext (ext lemma)
   where
     lemma : ∀ xs → UL-map id xs ≡ xs
     lemma [] = refl
     lemma (cons x xs x#xs) = WithIrr.cons-cong _ (IsPropDecApartnessRelation.prop (proof X)) refl
                                                (trans (cong (λ w → _-[_] (proof X) w x) (lemma xs) )
                                                       (remove-fresh-idempotent (proof X) xs x x#xs))
-homomorphism (UNIQUELIST ext) {X} {Y} {Z} {f} {g} = eqLrbMorphism (ext lemma)
+homomorphism (UNIQUELIST ext) {X} {Y} {Z} {f} {g} = eqLrbMorphism ext (ext lemma)
   where
     lemma : ∀ xs → UL-map (λ x → g (f x)) xs ≡ UL-map g (UL-map f xs)
     lemma [] = refl
@@ -315,10 +314,10 @@ foldr-∙-union X B h (cons x xs x#xs) ys = begin
         _-[_]X = _-[_] (proof X)
         unionX = union (proof X)
 
-UL-Adjunction : (ext : Extensionality _ _) → (UNIQUELIST ext) ⊣ FORGET
+UL-Adjunction : (ext : Extensionality _ _) → (UNIQUELIST ext) ⊣ (FORGET ext)
 to (UL-Adjunction ext) f x = fun f (cons x [] [])
 from (UL-Adjunction ext) {X} {B} h = MkLrbMorphism (foldr-∙ X B h) refl (foldr-∙-union X B h)
-left-inverse-of (UL-Adjunction ext) {X} {B} h = eqLrbMorphism (ext lemma)
+left-inverse-of (UL-Adjunction ext) {X} {B} h = eqLrbMorphism ext (ext lemma)
   where
     lemma : (xs : UniqueList (proof X)) → foldr (λ x → B ∙ fun h (cons x [] [])) (ε B) xs ≡ fun h xs
     lemma [] = sym (preserves-ε h)

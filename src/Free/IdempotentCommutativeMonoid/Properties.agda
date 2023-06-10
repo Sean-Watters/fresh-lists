@@ -1,5 +1,11 @@
 {-# OPTIONS --safe --without-K #-}
 
+open import Algebra.Structure.OICM
+
+module Free.IdempotentCommutativeMonoid.Properties
+  {X : Set} {_≈_ : X -> X -> Set} {_<_ : X -> X -> Set}
+  (<-STO : IsPropStrictTotalOrder _≈_ _<_)
+  where
 
 open import Level renaming (suc to lsuc)
 open import Algebra
@@ -7,50 +13,42 @@ open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
 open import Data.Unit
 open import Data.Empty
-open import Data.Nat hiding (_<_; _<?_; compare)
+open import Data.Nat hiding (_<?_; compare)  renaming (_<_ to _<ℕ_)
 open import Data.Nat.Properties hiding (<-trans; <-asym; <-irrefl; _<?_)
+open import Data.Nat.Induction
 
 open import Function
+open import Induction.WellFounded
 
 open import Relation.Binary hiding (NonEmpty; StrictTotalOrder)
 open import Relation.Binary.PropositionalEquality hiding (isEquivalence)
-open import Relation.Nullary
+open import Relation.Nullary hiding (Irrelevant)
 open import Relation.Nullary.Decidable hiding (map)
 
-open import Data.FreshList hiding (map)
-open import Algebra.Structure.OICM
-
--- Given a set X, and a decidable strict total order _<_ on X, we can form the type of
--- lists of X's which are sorted according to _<_
-module Data.FreshList.FreeIdemCommMonoidOld
-  {X : Set} {_≈_ : X -> X -> Set} {_<_ : X -> X -> Set}
-  (<-STO : IsStrictTotalOrder _≈_ _<_)
-  where
-
--- Some more convenient names for the fields and subfields of the STO proof
-<-SPO    = IsStrictTotalOrder.isStrictPartialOrder <-STO
-≈-Eq     = IsStrictTotalOrder.isEquivalence <-STO
-<-trans  = IsStrictTotalOrder.trans <-STO
-<-irrefl = IsStrictPartialOrder.irrefl <-SPO
-<-asym   = IsStrictPartialOrder.asym <-SPO
-<-resp-≈ = IsStrictPartialOrder.<-resp-≈ <-SPO
-≈-refl   = IsEquivalence.refl ≈-Eq
-≈-sym    = IsEquivalence.sym ≈-Eq
-≈-trans  = IsEquivalence.trans ≈-Eq
-_<?_     = IsStrictTotalOrder._<?_ <-STO
-_≈?_     = IsStrictTotalOrder._≟_ <-STO
-compare  = IsStrictTotalOrder.compare <-STO
+open import Data.FreshList.InductiveInductive
+open import Free.IdempotentCommutativeMonoid.Base <-STO
 
 
-SortedList :  Set
-SortedList = List# _<?_
+
+private
+  -- Some more convenient names for the fields and subfields of the STO proof
+  <-SPO    = IsPropStrictTotalOrder.isStrictPartialOrder <-STO
+  ≈-Eq     = IsPropStrictTotalOrder.isEquivalence <-STO
+  <-trans  = IsPropStrictTotalOrder.trans <-STO
+  <-irrefl = IsStrictPartialOrder.irrefl <-SPO
+  <-asym   = IsStrictPartialOrder.asym <-SPO
+  <-resp-≈ = IsStrictPartialOrder.<-resp-≈ <-SPO
+  ≈-refl   = IsEquivalence.refl ≈-Eq
+  ≈-sym    = IsEquivalence.sym ≈-Eq
+  ≈-trans  = IsEquivalence.trans ≈-Eq
+  _<?_     = IsPropStrictTotalOrder._<?_ <-STO
+  _≈?_     = IsPropStrictTotalOrder._≟_ <-STO
+  compare  = IsPropStrictTotalOrder.compare <-STO
 
 
--- The head of the list is the smallest, so to cons z, it suffices to know
--- that z < head.
-cons-lem : ∀ {x y} {xs : SortedList} {fx : x # xs} -> y < x -> All (y <_) (cons x xs fx)
-cons-lem {fx = fx} y<x = y<x ∷ all-map (<-trans y<x) (fresh→all fx)
-
+-- Since < is transitive, it suffices to know that z < head to cons z,
+cons-head-< : ∀ {x y} {xs : SortedList} {fx : x # xs} -> y < x -> All (y <_) (cons x xs fx)
+cons-head-< {fx = fx} y<x = y<x ∷ all-map (<-trans y<x) (fresh→all fx)
 
 -- Overload for membership to work with  ≈
 _∈_ : X -> SortedList -> Set
@@ -92,8 +90,8 @@ cons⊈[] {x} {xs} {fx} p with p (here ≈-refl)
 
 -- Equivalence preserves freshness
 ≈-preserves-# : ∀ {x y} {xs : SortedList} -> x # xs -> x ≈ y -> y # xs
-≈-preserves-# fx eq with fresh→all fx
-... | z = all→fresh (all-map (IsStrictTotalOrder.<-respˡ-≈ <-STO eq) z)
+≈-preserves-# = WithEq.#-resp-≈ _<_ ≈-Eq (IsPropStrictTotalOrder.<-resp-≈ <-STO)
+
 
 -- Equivalence preserves membership
 ≈-preserves-∈ : ∀ {a b} {xs : SortedList} -> a ∈ xs -> a ≈ b -> b ∈ xs
@@ -160,6 +158,10 @@ data _≈L_ : SortedList -> SortedList -> Set where
 ≈L-trans [] q = q
 ≈L-trans (cons x p) (cons y q) = cons (≈-trans x y) (≈L-trans p q)
 
+≈L-prop : Irrelevant (_≈L_)
+≈L-prop [] [] = refl
+≈L-prop (cons x=y xs=ys) (cons x=y' xs=ys') = cong₂ cons (IsPropStrictTotalOrder.≈-prop <-STO x=y x=y') (≈L-prop xs=ys xs=ys')
+
 isEquivalence : IsEquivalence _≈L_
 IsEquivalence.refl isEquivalence = ≈L-refl
 IsEquivalence.sym isEquivalence = ≈L-sym
@@ -212,108 +214,6 @@ all-resp-≈L : ∀ {xs ys : SortedList} {P : X -> Set}
 all-resp-≈L f [] pxs = pxs
 all-resp-≈L f (cons x≈y xs≈ys) (px ∷ pxs) = f x≈y px ∷ all-resp-≈L f xs≈ys pxs
 
--------------------
--- Concatenation --
--------------------
-
--- The prerequisite for concatenating contexts is that the largest (aka, rightmost)
--- thing in the left context must be smaller than the smallest (aka, leftmost; aka, the head)
--- thing in the right context.
-Gluable : SortedList -> SortedList -> Set
-Gluable xs [] = ⊤
-Gluable xs (y ∷# ys) = All (_< y) xs
-
-gluable-singleton : ∀ x ys → All (x <_) ys → Gluable (x ∷# []) ys
-gluable-singleton x [] [] = tt
-gluable-singleton x (cons y ys fy) (x<y ∷ ps) = x<y ∷ []
-
--- It's also very easy to glue with the empty list in the other direction.
-[]gluable-l : ∀ xs -> Gluable [] xs
-[]gluable-l [] = tt
-[]gluable-l (cons x xs fx) = []
-
--- Removing elements from the front of the left list preserves gluability.
--- (both this and the following strengthing lemms have duals for the end of
--- the right list, but we don't need those yet)
-Gluable-weaken : {x : X} {xs ys : SortedList} {fx : x # xs} -> Gluable (cons x xs fx) ys -> Gluable xs ys
-Gluable-weaken {ys = []} g = tt
-Gluable-weaken {ys = cons y ys fy} (_ ∷ g) = g
-
--- as long as there was already something at the front, we can add more
--- (constraint is important: anything is both smaller + larger than every element of the empty list)
-Gluable-strengthenL : {x : X} {xs ys : SortedList} (fx : fresh _ _ x xs)
-                   -> NonEmpty xs
-                   -> Gluable xs ys
-                   -> Gluable (cons x xs fx) ys
-Gluable-strengthenL {ys = []} _ _ _ = tt
-Gluable-strengthenL {ys = cons y ys fy} fx pxs g = all-trans pxs (fresh→all fx) g ∷ g where
-  all-trans : ∀ {a b} {as : SortedList} -> NonEmpty as -> All (a <_) as -> All (_< b) as -> a < b
-  all-trans (cons x xs fx) (a<x ∷ l) (x<b ∷ r) = <-trans a<x x<b
-
--- Concatenation is defined mutually because we have to build proofs as we go
-concat : (xs ys : SortedList) -> Gluable xs ys -> SortedList
-concat-fresh : ∀ x xs ys ( fx : x # xs ) (ps : Gluable (cons x xs fx) ys) -> All (x <_) (concat xs ys (Gluable-weaken ps))
-
-concat [] ys _ = ys
-concat (cons x xs fx) ys ps = cons x (concat xs ys (Gluable-weaken ps)) (all→fresh (concat-fresh x xs ys fx ps))
-
-concat-fresh z [] [] fz ps = []
-concat-fresh z [] (cons y ys fy) (lift tt) (x ∷ []) = cons-lem x
-concat-fresh z (cons x xs fx) ys (lift z<x , fz) q = toWitness z<x ∷ all-map (<-trans (toWitness z<x)) (concat-fresh x xs ys fx (Gluable-weaken q))
-
-syntax concat xs ys g = xs ++[ g ] ys
-
--- Concatenation for All
-_++A_ : {xs ys : SortedList} {g : Gluable xs ys} {P : X -> Set}
-           -> All P xs -> All P ys -> All P (xs ++[ g ] ys)
-_++A_ [] pys = pys
-_++A_ (px ∷ pxs) pys = px ∷ (pxs ++A pys)
-
--- Append to the end of a context
-snoc : (xs : SortedList) (x : X) -> All (_< x) xs -> SortedList
-snoc xs x p = xs ++[ p ] (x ∷# [])
-
--- If y is larger than the x that was snocced, then y is larger than the whole list.
-snoc-all< : {x y : X} {xs : SortedList} {pxs : All (_< x) xs}
-          -> x < y -> All (_< y) (snoc xs x pxs)
-snoc-all< {x} {y} {xs} {pxs} x<y = (all-map (λ z → <-trans z x<y) pxs) ++A (x<y ∷ [])
-
--- If the thing that was snocced is smaller than the whole right list, then the two lists are still gluable.
-snoc-gluable : {l r : SortedList} {x : X} {p : All (_< x) l} -> All (x <_) r -> Gluable (snoc l x p) r
-snoc-gluable [] = tt
-snoc-gluable (x<r ∷ prs ) = snoc-all< x<r
-
--- -- If we have an All P on a snoc, then we can traverse it to get the P x at the end
--- snoc-allP : ∀ {x} {xs : SortedList} {P : X → Set} {p : All (_< x) xs} -> All P (snoc xs x p) -> P x
--- snoc-allP = {!!}
-
----------------------------------
--- Properties of Concatenation --
----------------------------------
-
--- For the same left and right side, the gluable proof doesn't change the result of the concat
-concat-gluable-irrelevant : { l l' r r' : SortedList } {p q : Gluable l r} -> l ≡ l' -> r ≡ r' -> l ++[ p ] r ≡ l ++[ q ] r
-concat-gluable-irrelevant {[]} refl refl = refl
-concat-gluable-irrelevant {cons l₀ l fl} refl refl = cons-cong l₀ (concat-gluable-irrelevant {l} refl refl)
-
-concat-idʳ : ∀ xs -> xs ++[ tt ] [] ≡ xs
-concat-idʳ [] = refl
-concat-idʳ (cons x xs fx) = cons-cong x (concat-idʳ xs)
-
--- Concatenation is associative
-concat-assoc : ∀ xs ys zs {p q p' q'} -> (xs ++[ p ] ys) ++[ q ] zs ≡ xs ++[ q' ] (ys ++[ p' ] zs)
-concat-assoc [] [] zs = refl
-concat-assoc [] (cons y ys fy) zs = cons-cong y (concat-gluable-irrelevant {l = ys} {r = zs} refl refl)
-concat-assoc (cons x xs fx) ys zs = cons-cong x (concat-assoc xs ys zs)
-
-
-
--- -- We can push a snoc on the left of a concat to a cons on the right
--- concat-snoc-cons : ∀ l r x p fx g g' -> (snoc l x p) ++[ g ] r ≡ l ++[ g' ] (cons x r fx)
--- concat-snoc-cons l [] x p fx tt g' rewrite concat-idʳ (l ++[ p ] (x ∷# [])) tt = concat-gluable-irrelevant refl refl
--- concat-snoc-cons l (cons r₀ r fr) x p fx g g' with fresh-irrelevant (all→fresh {x = x} {xs = concat [] (cons r₀ r fr) (Gluable-weaken (snoc-allP g ∷ []))} (concat-fresh x [] (cons r₀ r fr) (lift tt) (snoc-allP g ∷ []))) fx
--- ... | z = {!concat-assoc l (x ∷# []) r!}
--- -- = concat-assoc l (x ∷# []) r
 -- ----------------------------
 -- -- SortedList Extensionality --
 -- ----------------------------
@@ -348,42 +248,9 @@ extensionality (cons x xs fx) (cons y ys fy) p with compare x y
 ... | tri< lt ¬eq ¬gt = ⊥-elim (ext-lem (lt) (proj₁ (p x) (here ≈-refl)))
 ... | tri> ¬lt ¬eq gt = ⊥-elim (ext-lem (gt) (proj₂ (p y) (here ≈-refl)))
 
------------------
--- Insertion
------------------
-
--- General form of insertion that also produces some proof data;
--- namely, that the result can be seen as (l ++ [x] ++ r) for some l and r.
-ins : (l : SortedList) (r : SortedList) (x : X)
-    -> (g : Gluable l r)
-    -> (p : All (_< x) l)
-    -> SortedList
-    × Σ[ l ∈ SortedList ] Σ[ r ∈ SortedList ] Σ[ p ∈ All (_< x) l ] (Gluable (snoc l x p) r)
-ins l [] x g p = snoc l x p
-                 , l , [] , p , g
-ins l (cons r₀ r fr) x g p with compare x r₀
--- if x<r₀ then we've found its one true home. insert here.
-... | tri< lt ¬eq ¬gt = (snoc l x p) ++[ snoc-all< (lt) ] (cons r₀ r fr)
-                  , l , (cons r₀ r fr) , p , snoc-all< (lt)
--- if x=r₀ then we stop here and don't insert.
-... | tri≈ ¬lt eq ¬gt = l ++[ g ] (cons r₀ r fr)
-                  , l , r , p , snoc-gluable (fresh→all (≈-preserves-# fr (≈-sym eq)))
--- if x>r₀ then we need to keep looking.
-... | tri> ¬lt ¬eq gt = ins (snoc l r₀ g) r x (snoc-gluable (fresh→all fr)) (snoc-all< (gt))
-
--- If x doesn't already appear in the list, then insert it in the
--- correct place. Otherwise, leave it alone.
-insert : X -> SortedList -> SortedList
-insert x xs = proj₁ (ins [] xs x ([]gluable-l xs) [])
-
 ----------------------------
--- Union and Intersection --
+-- Intersection --
 ----------------------------
-
--- Union of sorted lists.
-_∪_ : SortedList -> SortedList -> SortedList
-[] ∪ ys = ys
-cons x xs p ∪ ys = insert x (xs ∪ ys)
 
 -- Intersection of sorted lists
 _∩_ : SortedList -> SortedList -> SortedList
@@ -392,6 +259,7 @@ _∩_ (cons x xs p) ys with any? (x <?_) ys
 ... | yes _ = insert x (xs ∩ ys)
 ... | no  _ = xs ∩ ys
 
+{-
 
 ----------------------
 -- Deletion/Removal --
@@ -545,28 +413,31 @@ insert-strengthen-∉ : ∀ {a x xs} -> ¬ (x ≈ a) -> a ∉ xs -> a ∉ insert
 insert-strengthen-∉ {a} {x} {xs} x≢a a∉xs a∈ins with cases-insert∈ xs a∈ins
 ... | inj₁ a≈x = ⊥-elim (x≢a (≈-sym a≈x))
 ... | inj₂ a∈xs = ⊥-elim (a∉xs a∈xs)
+-}
 
 ----------------------------------------
 -- The Important Properties of Insert --
 ----------------------------------------
 
--- Limitation: Using extensionality makes the proofs easy, but is weaker than actually proving equality.
--- For many of these, we should have equality, but currently don't. Though it's also not currently an issue.
 
+{-
 -- Order of insertion doesn't matter, because it ends up sorted anyway.
 insert-comm : ∀ x y xs
              -> insert x (insert y xs) ≈L insert y (insert x xs)
 insert-comm x y xs = extensionality (insert x (insert y xs)) (insert y (insert x xs)) λ z → f xs , f xs where
   f : ∀ {x y z} ( xs : SortedList ) -> z ∈ (insert x (insert y xs)) -> z ∈ (insert y (insert x xs))
   f {x} {y} {z} xs p with z ≈? y
-  ... | yes z≈y = mk-insert∈ (insert x xs) (inj₁ z≈y)
+  ... | yes z≈y = {!!} -- mk-insert∈ (insert x xs) (inj₁ z≈y)
   ... | no z≉y with z ≈? x
-  ... | yes z≈x = mk-insert∈ (insert x xs) (inj₂ (mk-insert∈ xs (inj₁ z≈x)))
+  ... | yes z≈x = {!!} -- mk-insert∈ (insert x xs) (inj₂ (mk-insert∈ xs (inj₁ z≈x)))
   ... | no z≉x with cases-insert∈ (insert y xs) p
   ... | inj₁ z≈x = ⊥-elim (z≉x z≈x)
   ... | inj₂ q with cases-insert∈ xs q
   ... | inj₁ z≈y = ⊥-elim (z≉y z≈y)
-  ... | inj₂ z∈xs = mk-insert∈ (insert x xs) (inj₂ (mk-insert∈ xs (inj₂ z∈xs)))
+  ... | inj₂ z∈xs = {!!} -- mk-insert∈ (insert x xs) (inj₂ (mk-insert∈ xs (inj₂ z∈xs)))
+-}
+
+{-
 
 -- Trying to insert the same thing twice has the same effect as once.
 insert-idempotent : ∀ {x y}
@@ -586,45 +457,20 @@ insert-idempotent {x} {y} x≈y xs = extensionality (insert x (insert y xs)) (in
   g {x} {y} {z} x≈y xs p with cases-insert∈ xs p
   ... | inj₁ z≈x = mk-insert∈ (insert y xs) (inj₂ (mk-insert∈ xs (inj₁ (≈-trans z≈x x≈y))))
   ... | inj₂ z∈xs = mk-insert∈ (insert y xs) (inj₂ (mk-insert∈ xs (inj₂ z∈xs)))
+-}
 
 -- Inserting something that is smaller than everything else is the same as directly doing a cons.
 insert-consview : ∀ {x} {xs : SortedList} -> (fx : x # xs) -> insert x xs ≡ cons x xs fx
-insert-consview {xs = []} _ = refl
-insert-consview {a} {cons x xs fx} fa with fresh→all {xs = cons x xs fx} fa | compare a x
-... | _       | tri< _   _ _ = cons-cong a refl
-... | a<x ∷ _ | tri≈ a≮x _ _ = ⊥-elim (a≮x a<x)
-... | a<x ∷ _ | tri> a≮x _ _ = ⊥-elim (a≮x a<x)
+insert-consview {xs = []} [] = refl
+insert-consview {x} {xs = cons y ys y#ys} x#xs with compare x y
+... | tri< _ _ _ = WithIrr.cons-cong _<_ (IsPropStrictTotalOrder.<-prop <-STO) refl refl
+insert-consview {x} {cons y ys y#ys} (x<y ∷ x#xs) | tri≈ _ x≈y _ = ⊥-elim (<-irrefl x≈y x<y)
+insert-consview {x} {cons y ys y#ys} (x<y ∷ x#ys) | tri> _ _ y<x = ⊥-elim (<-irrefl (≈-refl {x}) (<-trans x<y y<x))
 
 ------------------------
 -- Preservation of ≈L --
 ------------------------
 
-concat-preserves-≈L : ∀ {xs ys xs' ys' p q} -> xs ≈L xs' -> ys ≈L ys' -> (xs ++[ p ] ys) ≈L (xs' ++[ q ] ys')
-concat-preserves-≈L [] ys≈ys' = ys≈ys'
-concat-preserves-≈L (cons x≈x' xs≈xs') ys≈ys' = cons x≈x' (concat-preserves-≈L xs≈xs' ys≈ys')
-
-snoc-preserves-≈L : ∀ {x y xs ys p q} -> xs ≈L ys -> x ≈ y -> snoc xs x p ≈L snoc ys y q
-snoc-preserves-≈L xs≈ys x≈y = concat-preserves-≈L xs≈ys (cons x≈y [])
-
-ins-preserves-≈L : ∀ {l l' r r' x x' g g' p p'}
-                 -> l ≈L l'
-                 -> r ≈L r'
-                 -> x ≈ x'
-                 -> proj₁ (ins l r x g p) ≈L proj₁ (ins l' r' x' g' p')
-ins-preserves-≈L l≈l' [] x≈x' = snoc-preserves-≈L l≈l' x≈x'
-ins-preserves-≈L {l} {l'} {cons r₀ r fr} {cons r₀' r' fr'} {x} {x'} l≈l' (cons r₀≈r₀' r≈r') x≈x' with compare x r₀ | compare x' r₀'
-... | tri< x<r₀ x≉r₀ x≯r₀ | tri< x'<r₀' x'≉r₀' x'≯r₀' = concat-preserves-≈L (snoc-preserves-≈L l≈l' x≈x') (cons r₀≈r₀' r≈r')
-... | tri< x<r₀ x≉r₀ x≯r₀ | tri≈ x'≮r₀' x'≈r₀' x'≯r₀' = ⊥-elim (x≉r₀ (≈-trans x≈x' (≈-trans x'≈r₀' (≈-sym r₀≈r₀'))))
-... | tri< x<r₀ x≉r₀ x≯r₀ | tri> x'≮r₀' x'≉r₀' x'>r₀' = ⊥-elim (<-asym x<r₀ (proj₂ <-resp-≈ (≈-sym r₀≈r₀') (proj₁ <-resp-≈ (≈-sym x≈x') x'>r₀')))
-... | tri≈ x≮r₀ x≈r₀ x≯r₀ | tri< x'<r₀' x'≉r₀' x'≯r₀' = ⊥-elim (x'≉r₀' (≈-trans (≈-sym x≈x') (≈-trans x≈r₀ r₀≈r₀')))
-... | tri≈ x≮r₀ x≈r₀ x≯r₀ | tri≈ x'≮r₀' x'≈r₀' x'≯r₀' = concat-preserves-≈L l≈l' (cons r₀≈r₀' r≈r')
-... | tri≈ x≮r₀ x≈r₀ x≯r₀ | tri> x'≮r₀' x'≉r₀' x'>r₀' = ⊥-elim (x'≉r₀' (≈-trans (≈-sym x≈x') (≈-trans x≈r₀ r₀≈r₀')))
-... | tri> x≮r₀ x≉r₀ x>r₀ | tri< x'<r₀' x'≉r₀' x'≯r₀' = ⊥-elim (<-asym x>r₀ (proj₂ <-resp-≈ (≈-sym x≈x') (proj₁ <-resp-≈ (≈-sym r₀≈r₀') x'<r₀')))
-... | tri> x≮r₀ x≉r₀ x>r₀ | tri≈ x'≮r₀' x'≈r₀' x'≯r₀' = ⊥-elim (x≉r₀ (≈-trans x≈x' (≈-trans x'≈r₀' (≈-sym r₀≈r₀'))))
-... | tri> x≮r₀ x≉r₀ x>r₀ | tri> x'≮r₀' x'≉r₀' x'>r₀' = ins-preserves-≈L (snoc-preserves-≈L l≈l' r₀≈r₀') r≈r' x≈x'
-
-insert-preserves-≈L : ∀ {x y} {xs ys : SortedList} -> x ≈ y -> xs ≈L ys -> insert x xs ≈L insert y ys
-insert-preserves-≈L x≈y xs≈ys = ins-preserves-≈L [] xs≈ys x≈y
 
 ≈L-preserves-∈ : ∀ {a} {xs ys : SortedList} -> a ∈ xs -> xs ≈L ys -> a ∈ ys
 ≈L-preserves-∈ (here a≈x) (cons x≈y xs≈ys) = here (≈-trans a≈x x≈y)
@@ -649,13 +495,7 @@ strengthen-∉ : ∀ {x a} {as : SortedList} {fa : a # as} -> ¬ (x ≈ a) -> x 
 strengthen-∉ x≉a x∉as (here x≈a) = x≉a x≈a
 strengthen-∉ x≉a x∉as (there x∈as) = x∉as x∈as
 
-length-concat : ∀ l r (g : Gluable l r) -> length (l ++[ g ] r) ≡ length l + length r
-length-concat [] r g = refl
-length-concat (cons l₀ l fl) r g = cong suc (length-concat l r (Gluable-weaken g))
-
-length-snoc : ∀ xs x p -> length (snoc xs x p) ≡ suc (length xs)
-length-snoc xs x p rewrite +-comm 1 (length xs) = length-concat xs (x ∷# []) p
-
+{-
 module _ where
   open Relation.Binary.PropositionalEquality.≡-Reasoning
 
@@ -718,19 +558,31 @@ insert-length∈ {x} {xs} x∈xs = ins-len∈ [] xs x ([]gluable-l xs) [] x∈xs
 
 NonEmpty-length : {xs : SortedList} -> NonEmpty xs -> length xs > 0
 NonEmpty-length (cons x xs fx) = s≤s z≤n
+-}
 
 ----------------------
 -- Union Properties --
 ----------------------
 
+union∈ : ∀ {a} {xs ys : SortedList} -> (p : Acc _<ℕ_ (length xs + length ys)) → a ∈ (union xs ys p) -> a ∈ xs ⊎ a ∈ ys
+union∈ {a} {[]} {ys} p a∈ys = inj₂ a∈ys
+union∈ {a} {cons x xs x#xs} {[]} p a∈xs = inj₁ a∈xs
+union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) a∈xs∪ys with compare x y
+union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri< x<y ¬x≈y ¬y<x = inj₁ (here a≈x)
+union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪yys) | tri< x<y ¬x≈y ¬y<x with union∈ {a} {xs} {cons y ys y#ys} _ a∈xs∪yys
+... | inj₁ a∈xs = inj₁ (there a∈xs)
+... | inj₂ a∈yys = inj₂ a∈yys
+union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri≈ ¬x<y x≈y ¬y<x = inj₁ (here a≈x)
+union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪ys) | tri≈ ¬x<y x≈y ¬y<x with union∈ {a} {xs} {ys} _ a∈xs∪ys
+... | inj₁ a∈xs = inj₁ (there a∈xs)
+... | inj₂ a∈ys = inj₂ (there a∈ys)
+union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈y) | tri> ¬x<y ¬x≈y y<x = inj₂ (here a≈y)
+union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xxs∪ys) | tri> ¬x<y ¬x≈y y<x with union∈ {a} {cons x xs x#xs} {ys} _ a∈xxs∪ys
+... | inj₁ a∈xxs = inj₁ a∈xxs
+... | inj₂ a∈ys = inj₂ (there a∈ys)
 
 ∪∈ : ∀ {a} {xs ys : SortedList} -> a ∈ (xs ∪ ys) -> a ∈ xs ⊎ a ∈ ys
-∪∈ {a} {[]} {ys} a∈ys = inj₂ a∈ys
-∪∈ {a} {cons x xs fx} {ys} p with cases-insert∈ (xs ∪ ys) p
-... | inj₁ a≈x = inj₁ (here a≈x)
-... | inj₂ a∈∪ with ∪∈ a∈∪
-... | inj₁ a∈xs = inj₁ (there a∈xs)
-... | inj₂ a∈ys = inj₂ a∈ys
+∪∈ {a} {xs} {ys} = union∈ (<-wellFounded (length xs + length ys))
 
 ∉∪ : ∀ {a} {xs ys : SortedList} -> a ∉ xs -> a ∉ ys -> a ∉ (xs ∪ ys)
 ∉∪ {a} {[]} {ys} a∉xs a∉ys = a∉ys
@@ -738,28 +590,47 @@ NonEmpty-length (cons x xs fx) = s≤s z≤n
 ... | inj₁ a∈xs = a∉xs a∈xs
 ... | inj₂ a∈ys = a∉ys a∈ys
 
+
+{-
+cases-insert∈ : ∀ {a y} (xs : SortedList) -> a ∈ insert y xs -> a ≈ y ⊎ a ∈ xs
+cases-insert∈ {a} {y} {xs}
+
+
+(here a≈y) = inj₁ a≈y
+cases-insert∈ {a} {y} (cons x xs x#xs) a∈ins with compare y x
+cases-insert∈ {a} {y} (cons x xs x#xs) (here a≈y) | tri< _ _ _ = inj₁ a≈y
+cases-insert∈ {a} {y} (cons x xs x#xs) (there a∈xxs) | tri< _ _ _ = inj₂ a∈xxs
+cases-insert∈ {a} {y} (cons x xs x#xs) (here a≈y) | tri≈ _ _ _ = inj₁ a≈y
+cases-insert∈ {a} {y} (cons x xs x#xs) (there a∈xs) | tri≈ _ _ _ = inj₂ (there a∈xs)
+cases-insert∈ {a} {y} (cons x xs x#xs) (here a≈x) | tri> _ _ _ = inj₂ (here a≈x)
+cases-insert∈ {a} {y} (cons x xs x#xs) (there a∈ins) | tri> _ _ _ = {!!}
+-}
+
+{-
 -- This one definitely should be a _≡_, but the final case needs commutativity, which we haven't proved to _≡_ (yet?)
 -- Not really a problem though. We lose rewritability, but can still prove ∈∪ʳ, which is its only current use.
 module _ where
   open ≈L-Reasoning
 
   ∪-consʳ : ∀ {y} xs {ys : SortedList} ( fy : y # ys ) -> (xs ∪ cons y ys fy) ≈L (insert y (xs ∪ ys))
-  ∪-consʳ {a} [] {[]} fa = ≈L-refl
+  ∪-consʳ {a} [] {[]} fa = {!≈L-refl!}
   ∪-consʳ {a} [] {cons y ys fy} fa with fresh→all {xs = cons y ys fy} fa | compare a y
   ... | _       | tri< a<y a≉y a≯y = cons-refl-fresh-irrelevant where
     cons-refl-fresh-irrelevant : ∀ {x xs} {p q : x # xs} -> (cons x xs p) ≈L (cons x xs q)
-    cons-refl-fresh-irrelevant {p = p} {q = q} rewrite fresh-irrelevant p q = ≈L-refl
+    cons-refl-fresh-irrelevant {p = p} {q = q} = {!!} -- rewrite fresh-irrelevant p q = ≈L-refl
   ... | a<y ∷ _ | tri≈ a≮y  _   _  = ⊥-elim (a≮y a<y)
   ... | a<y ∷ _ | tri> a≮y  _   _  = ⊥-elim (a≮y a<y)
   ∪-consʳ {a} ( cons x xs fx ) {ys} fa =
     begin
       (cons x xs fx ∪ cons a ys fa)
-    ≈⟨ insert-preserves-≈L ≈-refl (∪-consʳ xs fa) ⟩
+    ≈⟨ {!insert-preserves-≈L ≈-refl (∪-consʳ xs fa)!} ⟩
       insert x (insert a (xs ∪ ys))
-    ≈⟨ insert-comm x a (xs ∪ ys) ⟩
+    ≈⟨ {!insert-comm x a (xs ∪ ys)!} ⟩
       insert a (cons x xs fx ∪ ys)
     ∎
+-}
 
+{-
 ∈∪ˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> a ∈ (xs ∪ ys)
 ∈∪ˡ {a} {cons x xs fx} (here a≈x) ys rewrite insert-consview fx = mk-insert∈ (xs ∪ ys) (inj₁ a≈x)
 ∈∪ˡ {a} {cons x xs fx} (there a∈xs) ys = mk-insert∈ (xs ∪ ys) (inj₂ (∈∪ˡ a∈xs ys))
@@ -767,6 +638,38 @@ module _ where
 ∈∪ʳ : ∀ {x} {ys : SortedList} -> (xs : SortedList) -> x ∈ ys -> x ∈ (xs ∪ ys)
 ∈∪ʳ {a} {cons y ys fy} xs (here a≈y) rewrite insert-consview fy = ≈L-preserves-∈ (mk-insert∈ (xs ∪ ys) (inj₁ a≈y)) (≈L-sym (∪-consʳ xs fy))
 ∈∪ʳ {a} {cons y ys fy} xs (there a∈ys) = ≈L-preserves-∈ (mk-insert∈ (xs ∪ ys) (inj₂ (∈∪ʳ xs a∈ys))) (≈L-sym (∪-consʳ xs fy))
+-}
+
+∈unionˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
+∈unionˡ {a} {cons x xs x#xs} (here a≈x) [] p = here a≈x
+∈unionˡ {a} {cons x xs x#xs} (here a≈x) (cons y ys y#ys) (acc rs) with compare x y
+... | tri< _ _ _ = here a≈x
+... | tri≈ _ _ _ = here a≈x
+... | tri> _ _ _ = there (∈unionˡ {a} {cons x xs x#xs} (here a≈x) ys _)
+∈unionˡ {a} {cons x xs x#xs} (there a∈xs) [] p = there a∈xs
+∈unionˡ {a} {cons x xs x#xs} (there a∈xs) (cons y ys y#ys) (acc rs) with compare x y
+... | tri< _ _ _ = there (∈unionˡ {a} {xs} a∈xs (cons y ys y#ys) _)
+... | tri≈ _ _ _ = there (∈unionˡ {a} {xs} a∈xs ys _)
+... | tri> _ _ _ = there (∈unionˡ {a} {cons x xs x#xs} (there a∈xs) ys _)
+
+∈unionʳ : ∀ {a} {ys : SortedList} -> (xs : SortedList) → a ∈ ys -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
+∈unionʳ {a} {ys} [] a∈ys p = a∈ys
+∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) a∈yys (acc rs) with compare x y
+... | tri< _ _ _ = there (∈unionʳ {a} {cons y ys y#ys} xs a∈yys _)
+∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri≈ _ x≈y _ = here (≈-trans a≈y (≈-sym x≈y))
+∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri≈ _ _ _ = there (∈unionʳ {a} {ys} xs a∈ys _)
+∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri> _ _ _ = here a≈y
+∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri> _ _ _ = there (∈unionʳ {a} {ys} (cons x xs x#xs) a∈ys _)
+
+∈∪ˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> a ∈ (xs ∪ ys)
+∈∪ˡ {a} {xs} a∈xs ys = ∈unionˡ a∈xs ys (<-wellFounded (length xs + length ys))
+
+∈∪ʳ : ∀ {x} {ys : SortedList} -> (xs : SortedList) -> x ∈ ys -> x ∈ (xs ∪ ys)
+∈∪ʳ {a} {ys} xs a∈ys = ∈unionʳ {a} {ys} xs a∈ys (<-wellFounded (length xs + length ys))
+
+∈∪ : ∀ {a} {xs ys : SortedList} -> (a ∈ xs) ⊎ (a ∈ ys) → a ∈ (xs ∪ ys)
+∈∪ {xs = xs} {ys} (inj₁ a∈xs) = ∈∪ˡ a∈xs ys
+∈∪ {xs = xs} {ys} (inj₂ a∈ys) = ∈∪ʳ xs a∈ys
 
 ∉∪ˡ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ xs
 ∉∪ˡ {ys = ys} ¬p a∈xs = ¬p (∈∪ˡ a∈xs ys)
@@ -776,102 +679,56 @@ module _ where
 
 ∪-idʳ : (xs : SortedList) -> (xs ∪ []) ≡ xs
 ∪-idʳ [] = refl
-∪-idʳ (cons x xs fx) rewrite ∪-idʳ xs = insert-consview fx
+∪-idʳ (cons x xs fx) rewrite ∪-idʳ xs = refl
 
 ∪-id : Identity _≈L_ [] _∪_
 proj₁ ∪-id = λ x → ≈L-refl
 proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
 
-open ≈L-Reasoning
-
 ∪-comm : ( xs ys : SortedList ) -> (xs ∪ ys) ≈L (ys ∪ xs)
-∪-comm [] ys rewrite ∪-idʳ ys = ≈L-refl
-∪-comm (cons x xs fx) [] rewrite ∪-idʳ xs rewrite insert-consview fx = ≈L-refl
-∪-comm (cons x xs fx) (cons y ys fy) =
-  begin
-    insert x (xs ∪ cons y ys fy)
-  ≈⟨ insert-preserves-≈L ≈-refl (∪-comm xs (cons y ys fy)) ⟩
-    insert x (insert y (ys ∪ xs))
-  ≈⟨ insert-comm x y (ys ∪ xs) ⟩
-    insert y (insert x (ys ∪ xs))
-  ≈⟨ insert-preserves-≈L ≈-refl (insert-preserves-≈L ≈-refl (∪-comm ys xs)) ⟩
-    insert y (insert x (xs ∪ ys))
-  ≈⟨ insert-preserves-≈L ≈-refl (≈L-sym (∪-comm ys (cons x xs fx))) ⟩
-    insert y (ys ∪ cons x xs fx)
-  ∎
+∪-comm xs ys = extensionality (xs ∪ ys) (ys ∪ xs) (λ x → f xs ys x , f ys xs x)
+  where
+    f : (xs ys : SortedList) → (x : X) → x ∈ (xs ∪ ys) → x ∈ (ys ∪ xs)
+    f xs ys x x∈xs∪ys with ∪∈ x∈xs∪ys
+    ... | inj₁ x∈xs = ∈∪ʳ ys x∈xs
+    ... | inj₂ x∈ys = ∈∪ˡ x∈ys xs
 
 ∪-idempotent : Idempotent _≈L_ _∪_
-∪-idempotent [] = ≈L-refl
-∪-idempotent (cons x xs fx) =
-  begin
-    (cons x xs fx ∪ cons x xs fx)
-  ≈⟨ insert-preserves-≈L ≈-refl (∪-consʳ xs fx) ⟩
-    insert x (insert x (xs ∪ xs))
-  ≈⟨ insert-idempotent ≈-refl (xs ∪ xs) ⟩
-    insert x (xs ∪ xs)
-  ≈⟨ insert-preserves-≈L ≈-refl (∪-idempotent xs) ⟩
-    insert x xs
-  ≈⟨ ≡→≈L (insert-consview fx) ⟩
-    cons x xs fx
-  ∎
+∪-idempotent xs = extensionality (xs ∪ xs) xs (λ x → (λ x∈xs∪xs → [ id , id ]′ (∪∈ x∈xs∪xs) ) , ∈∪ʳ xs)
 
 ∪-preserves-≈L : {xs xs' ys ys' : SortedList} -> xs ≈L xs' -> ys ≈L ys' -> (xs ∪ ys) ≈L (xs' ∪ ys')
-∪-preserves-≈L [] [] = []
-∪-preserves-≈L {ys = cons y ys fy} {ys' = cons y' ys' fy'} [] (cons y≈y' ys≈ys')
-  = cons y≈y' ys≈ys'
-∪-preserves-≈L {cons x xs fx} {cons x' xs' fx'} (cons x≈x' xs≈xs') []
-  rewrite ∪-idʳ xs
-  rewrite ∪-idʳ xs'
-  = insert-preserves-≈L x≈x' xs≈xs'
-∪-preserves-≈L {cons x xs fx} {cons x' xs' fx'} {cons y ys fy} {cons y' ys' fy'} (cons x≈x' xs≈xs') (cons y≈y' ys≈ys')
-  = insert-preserves-≈L x≈x' (∪-preserves-≈L xs≈xs' (cons y≈y' ys≈ys'))
+∪-preserves-≈L {xs} {xs'} {ys} {ys'} xs=xs' ys=ys' = extensionality _ _ λ x → f x xs=xs' ys=ys' , f x (≈L-sym xs=xs') (≈L-sym ys=ys')
+  where
+    f : (x : X) → {xs xs' ys ys' : SortedList} -> xs ≈L xs' -> ys ≈L ys' → x ∈ (xs ∪ ys) → x ∈ (xs' ∪ ys')
+    f x {xs} {xs'} {ys} {ys'} xs=xs' ys=ys' x∈xs∪xs = [ (λ x∈xs → ∈∪ˡ (≈L-preserves-∈ x∈xs xs=xs') ys') , (λ x∈ys → ∈∪ʳ xs' (≈L-preserves-∈ x∈ys ys=ys')) ]′ (∪∈ x∈xs∪xs)
 
 ∪-cancelˡ : {xs ys : SortedList} -> xs ≈L ys -> (xs ∪ ys) ≈L xs
-∪-cancelˡ [] = ≈L-refl
-∪-cancelˡ {cons x xs fx} {cons y ys fy} (cons x≈y xs≈ys) =
-  begin
-    insert x (xs ∪ cons y ys fy)
-  ≈⟨ insert-preserves-≈L ≈-refl (∪-comm xs (cons y ys fy)) ⟩
-    insert x (cons y ys fy ∪ xs)
-  ≈⟨⟩
-    insert x (insert y (ys ∪ xs))
-  ≈⟨ insert-idempotent x≈y (ys ∪ xs) ⟩
-    insert x (ys ∪ xs)
-  ≈⟨ insert-preserves-≈L ≈-refl (∪-comm ys xs) ⟩
-    insert x (xs ∪ ys)
-  ≈⟨ insert-preserves-≈L ≈-refl (∪-cancelˡ xs≈ys)  ⟩
-    insert x xs
-  ≈⟨ ≡→≈L (insert-consview fx) ⟩
-    cons x xs fx
-  ∎
-
--- Union associates with insertion.
-∪-insert-assoc : ∀ x ( xs ys : SortedList ) -> ((insert x xs) ∪ ys) ≈L (insert x (xs ∪ ys))
-∪-insert-assoc x xs ys = extensionality (insert x xs ∪ ys) (insert x (xs ∪ ys)) (λ x → f x , g x) where
-  f : ∀ a → a ∈ (insert x xs ∪ ys) → a ∈ insert x (xs ∪ ys)
-  f a p with ∪∈ {xs = insert x xs} {ys = ys} p
-  ... | inj₂ a∈ys = mk-insert∈ (xs ∪ ys) (inj₂ (∈∪ʳ xs a∈ys))
-  ... | inj₁ q with cases-insert∈ xs q
-  ... | inj₁ a≈x = mk-insert∈ (xs ∪ ys) (inj₁ a≈x)
-  ... | inj₂ a∈xs = mk-insert∈ (xs ∪ ys) (inj₂ (∈∪ˡ a∈xs ys))
-
-  g : ∀ a → a ∈ insert x (xs ∪ ys) → a ∈ (insert x xs ∪ ys)
-  g a p with cases-insert∈ (xs ∪ ys) p
-  ... | inj₁ a≈x = ∈∪ˡ (mk-insert∈ xs (inj₁ a≈x)) ys
-  ... | inj₂ q with ∪∈ {xs = xs} {ys = ys} q
-  ... | inj₁ a∈xs = ∈∪ˡ (mk-insert∈ xs (inj₂ a∈xs)) ys
-  ... | inj₂ a∈ys = ∈∪ʳ (insert x xs) a∈ys
+∪-cancelˡ {xs} {ys} xs=ys = begin
+  xs ∪ ys
+    ≈⟨ ∪-preserves-≈L (≈L-refl {xs}) (≈L-sym xs=ys) ⟩
+  xs ∪ xs
+    ≈⟨ ∪-idempotent xs ⟩
+  xs
+    ∎ where open ≈L-Reasoning
 
 ∪-assoc : (xs ys zs : SortedList) -> ((xs ∪ ys) ∪ zs) ≈L (xs ∪ (ys ∪ zs))
-∪-assoc [] ys zy = ≈L-refl
-∪-assoc (cons x xs fx) ys zs =
-  begin
-    (insert x (xs ∪ ys)) ∪ zs
-  ≈⟨ ∪-insert-assoc x (xs ∪ ys) zs ⟩
-    insert x ((xs ∪ ys) ∪ zs)
-  ≈⟨ insert-preserves-≈L ≈-refl (∪-assoc xs ys zs) ⟩
-    insert x (xs ∪ (ys ∪ zs))
-  ∎
+∪-assoc xs ys zs = extensionality ((xs ∪ ys) ∪ zs) (xs ∪ (ys ∪ zs)) (λ x → f x , g x)
+  where
+    f : (x : X) → (x ∈ ((xs ∪ ys) ∪ zs) → x ∈ (xs ∪ (ys ∪ zs)))
+    f x x∈xs∪ys∪zs with ∪∈ {xs = xs ∪ ys} x∈xs∪ys∪zs
+    f x x∈xs∪ys∪zs | inj₁ x∈xs∪ys with ∪∈ {xs = xs} x∈xs∪ys
+    ... | inj₁ x∈xs = ∈∪ˡ x∈xs (ys ∪ zs)
+    ... | inj₂ x∈ys = ∈∪ʳ xs (∈∪ˡ x∈ys zs)
+    f x x∈xs∪ys∪zs | inj₂ x∈zs = ∈∪ʳ xs (∈∪ʳ ys x∈zs)
+
+    g : (x : X) → (x ∈ (xs ∪ (ys ∪ zs)) → x ∈ ((xs ∪ ys) ∪ zs))
+    g x x∈xs∪ys∪zs with ∪∈ {xs = xs} x∈xs∪ys∪zs
+    g x x∈xs∪ys∪zs | inj₁ x∈xs = ∈∪ˡ (∈∪ˡ x∈xs ys) zs
+    g x x∈xs∪ys∪zs | inj₂ x∈ys∪zs with ∪∈ {xs = ys} x∈ys∪zs
+    ... | inj₁ x∈ys = ∈∪ˡ (∈∪ʳ xs x∈ys) zs
+    ... | inj₂ x∈zs = ∈∪ʳ (xs ∪ ys) x∈zs
+{-
+
 
 ---------------------------
 -- Properties of Removal --
@@ -1248,6 +1105,7 @@ partition-by-origin (cons x xs fx) ys with partition-by-origin xs ys | x ∈? ys
 
 ∪-size-kˡ : ∀ {k} {xs ys : SortedList} -> k ≥ length (xs ∪ ys) -> k ≥ length ys
 ∪-size-kˡ {k} {xs} {ys} p = ≤-trans (∪-sizeʳ xs ys) p
+-}
 
 ----------------------------
 -- Lexicographic Ordering --
@@ -1281,74 +1139,23 @@ compareL (cons x xs fx) (cons y ys fy) with compare x y
 ... | tri≈ xs≮ys xs≈ys xs≯ys = tri≈ (λ { (here x<y) → x≮y x<y ; (there _ xs<ys) → xs≮ys xs<ys}) (cons x≈y xs≈ys) λ { (here y<x) → x≯y y<x ; (there _ ys<xs) → xs≯ys ys<xs}
 ... | tri> xs≮ys xs≉ys xs>ys = tri> (λ { (here x<y) → x≮y x<y ; (there _ xs<ys) → xs≮ys xs<ys}) (λ { (cons _ xs≈ys) → xs≉ys xs≈ys}) (there (≈-sym x≈y) xs>ys)
 
-<-lex-STO : IsStrictTotalOrder _≈L_ _<-lex_
-IsStrictTotalOrder.isEquivalence <-lex-STO = isEquivalence
-IsStrictTotalOrder.trans <-lex-STO = <-lex-trans
-IsStrictTotalOrder.compare <-lex-STO = compareL
+<L-prop : Irrelevant _<-lex_
+<L-prop [] [] = refl
+<L-prop (here x<y) (here x<y') = cong here (IsPropStrictTotalOrder.<-prop <-STO x<y x<y')
+<L-prop (here x<y) (there x=y xs<ys) = ⊥-elim (<-irrefl x=y x<y)
+<L-prop (there x=y xs<ys) (here x<y) = ⊥-elim (<-irrefl x=y x<y)
+<L-prop (there x=y xs<ys) (there x=y' xs<ys') = cong₂ there (IsPropStrictTotalOrder.≈-prop <-STO x=y x=y') (<L-prop xs<ys xs<ys')
 
-<-lex-concat : ∀ xs {ys'} (ys : NonEmpty ys') g → xs <-lex (xs ++[ g ] ys')
-<-lex-concat [] (cons y ys fy) g = []
-<-lex-concat (cons x xs fx) ys g = there ≈-refl (<-lex-concat xs ys (Gluable-weaken g))
+<-lex-STO : IsPropStrictTotalOrder _≈L_ _<-lex_
+IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO <-lex-STO) = isEquivalence
+IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO <-lex-STO) = <-lex-trans
+IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO <-lex-STO) = compareL
+IsPropStrictTotalOrder.≈-prop <-lex-STO = ≈L-prop
+IsPropStrictTotalOrder.<-prop <-lex-STO = <L-prop
 
 <L-trans = <-lex-trans
 _<L_ = _<-lex_
 <L-STO = <-lex-STO
-
-
-{-
-concat-<L-eql : ∀ l {r r'} g g' -> r <L r' -> (l ++[ g ] r) <L (l ++[ g' ] r')
-concat-<L-eql l g g' x = {!!}
-
-ins-preserves-<L : ∀ x l {r r'} g g' p → r <L r' → proj₁ (ins l r x g p) <L proj₁ (ins l r' x g' p)
-ins-preserves-<L x l {[]} {cons r rs fr} g g' p [] with compare x r
-... | tri< a ¬b ¬c = <L-concat (concat l (x ∷# []) p) (cons r rs fr) _
-... | tri≈ ¬a b ¬c = concat-<L-eql l p g' (there b {!!}) -- uhhhh this is a problem. rs might be empty, in which case the goal is impossible
-... | tri> ¬a ¬b c = {!!}
-ins-preserves-<L x l {cons r rs fr} {cons s ss fs} g g' p (here r<s) = {!!}
-ins-preserves-<L x l {cons r rs fr} {cons s ss fs} g g' p (there r≈s rs<ss) = {!!}
-
-insert-preserves-<L : ∀ x {xs ys} → xs <L ys → insert x xs <L insert x ys
-insert-preserves-<L x xs<ys = ins-preserves-<L x [] ([]gluable-l _) ([]gluable-l _) [] xs<ys
-
--- this is already clearly false. counterexample:
--- xs = [0,1,2,3], as = [0,1], bs = [2,3]
--- as < bs, but the unions are equal.
--- For this lemma to be true there also needs to be an extra disjointness property
-∪-preservesˡ-<L : ∀ {as bs} xs → as <L bs → (xs ∪ as) <L (xs ∪ bs)
-∪-preservesˡ-<L [] as<bs = as<bs
-∪-preservesˡ-<L (cons x xs fx) as<bs = insert-preserves-<L x (∪-preservesˡ-<L xs as<bs)
-
-[]-minimal : ∀ {xs} → [] ≢ xs → [] <L xs
-[]-minimal {[]} ¬refl = ⊥-elim (¬refl refl)
-[]-minimal {cons x xs fx} _ = []
--}
-
-{-
--- Other More Different Ordering --
--- Want xs < ys if xs is smaller in length. If they are the same length, then
--- fall back on lexicographic order. This may be tricky to do in a proof relevant way.
-
-data LenEncoded : ℕ → SortedList → Set where
-  [] : LenEncoded 0 []
-  cons : ∀ x {xs} {n : ℕ} → LenEncoded n xs → (x#xs : x # xs) → LenEncoded (suc n) (cons x xs x#xs)
-
-encode-len : (xs : SortedList) → LenEncoded (length xs) xs
-encode-len [] = []
-encode-len (cons x xs x#xs) = cons x (encode-len xs) x#xs
-
-data _<L'_ : {xs ys : SortedList} {n m : ℕ} → LenEncoded n xs → LenEncoded m ys → Set where
-  len : ∀ {n m xs ys} → (nxs : LenEncoded n xs) (mys : LenEncoded m ys) → nxs <L' mys
-  here : ∀ {x xs x#xs y ys y#ys n} {nxs : LenEncoded n xs} {nys : LenEncoded n ys} → x < y → (cons x nxs x#xs) <L' (cons y nys y#ys)
-  there : ∀ {x xs x#xs y ys y#ys n} {nxs : LenEncoded n xs} {nys : LenEncoded n ys} → x ≈ y → nxs <L' nys → (cons x nxs x#xs) <L' (cons y nys y#ys)
-
-_<L_ : SortedList → SortedList → Set
-xs <L ys = (encode-len xs) <L' (encode-len ys)
-
-
-<L-trans : ∀ {xs ys zs} → xs <L ys → ys <L zs → xs <L zs
-<L-trans {xs} {[]} {zs} (len .(encode-len xs) .(encode-len [])) (len .(encode-len []) .(encode-len zs)) = {!!}
-<L-trans {xs} {cons a ys x} {zs} p q = {!!}
--}
 
 -----------------------------------
 -- Idempotent Commutative Monoid --

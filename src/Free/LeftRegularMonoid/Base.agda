@@ -2,7 +2,7 @@
 
 open import Algebra.Structure.OICM
 
-module Data.FreshList.FreeLeftRegularMonoid
+module Free.LeftRegularMonoid.Base
   {X : Set} {_≈_ : X → X → Set} {_≠_ : X → X → Set}
   (≠-AR : IsPropDecApartnessRelation _≈_ _≠_)
   where

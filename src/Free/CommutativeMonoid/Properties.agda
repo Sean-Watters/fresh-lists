@@ -1,139 +1,53 @@
-{-# OPTIONS --safe --with-K #-}
+{-# OPTIONS --safe --without-K #-}
 
-open import Level renaming (zero to lzero; suc to lsuc)
-open import Algebra
-open import Data.Bool using (Bool; true; false; if_then_else_)
+open import Algebra.Structure.OICM
+open import Relation.Binary.PropositionalEquality
+
+module Free.CommutativeMonoid.Properties
+  {X : Set} {_≤_ : X → X → Set}
+  (≤-PDTO : IsPropDecTotalOrder _≡_ _≤_)
+  where
+
+open import Data.Empty
 open import Data.Nat using (ℕ; zero; suc; _+_; z≤n; s≤s) renaming (_≤_ to _≤ℕ_; _<_ to _<ℕ_)
 open import Data.Nat.Properties using (1+n≢n; 1+n≢0; +-identityʳ; m≤m+n; +-suc; suc-injective; +-assoc; +-comm) renaming (≤-step to ≤ℕ-step; ≤-refl to ≤ℕ-refl; ≤-trans to ≤ℕ-trans; ≤-reflexive to ≤ℕ-reflexive)
 open import Data.Nat.Induction
-open import Data.Fin using (Fin) renaming (zero to fzero; suc to fsuc)
-open import Data.Product hiding (map)
-open import Data.Sum hiding (map)
-open import Data.Unit using (⊤; tt)
-open import Data.Empty
-open import Data.Erased
-
+open import Data.Bool using (Bool; true; false; if_then_else_)
+open import Data.Sum
+open import Data.Product
+open import Algebra
 open import Function
 open import Induction.WellFounded
 
 open import Relation.Binary hiding (Irrelevant)
-open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEq)
-open import Relation.Nullary hiding ()
-open import Relation.Nullary.Decidable hiding (map)
+open import Relation.Binary.Isomorphism
+open import Relation.Nullary
+open import Axiom.UniquenessOfIdentityProofs
 
 open import Data.FreshList.InductiveInductive
-open import Algebra.Structure.OICM
-
-module Data.FreshList.FreeCommMonoidOld
-  {X : Set} {_≤_ : X -> X -> Set}
-  (≤-PDTO : IsPropDecTotalOrder _≡_ _≤_)
-  where
-
-cong₃ : {A B C D : Set} {a a' : A} {b b' : B} {c c' : C}
-      → (f : A → B → C → D) → a ≡ a' → b ≡ b' → c ≡ c'
-      → f a b c ≡ f a' b' c'
-cong₃ f refl refl refl = refl
-
-
-≤-prop = IsPropDecTotalOrder.≤-prop ≤-PDTO
-_≟_ = IsPropDecTotalOrder._≟_ ≤-PDTO
-total = IsPropDecTotalOrder.total ≤-PDTO
-≤-refl = IsPropDecTotalOrder.refl ≤-PDTO
-≤-trans = IsPropDecTotalOrder.trans ≤-PDTO
-≤-antisym = IsPropDecTotalOrder.antisym ≤-PDTO
-≤-resp-≈ = IsPropDecTotalOrder.≤-resp-≈ ≤-PDTO
-
-_<_ : X → X → Set
-a < b = (a ≤ b) × (a ≢ b)
-
-<-tri : Trichotomous _≡_ _<_
-<-tri x y with total x y | x ≟ y
-... | _        | yes refl = tri≈ (λ p → proj₂ p refl) refl (λ p → proj₂ p refl)
-... | inj₁ x≤y | no x≢y   = tri< (x≤y , x≢y) x≢y (λ p → x≢y $ ≤-antisym x≤y (proj₁ p))
-... | inj₂ y≤x | no x≢y   = tri> (λ p → x≢y $ ≤-antisym (proj₁ p) y≤x) x≢y (y≤x , (≢-sym x≢y))
-
-<-trans : ∀ {a b c} → a < b → b < c → a < c
-<-trans {a} {b} {c} (a≤b , a≢b) (b≤c , b≢c) = a≤c , a≢c where
-  a≤c : a ≤ c
-  a≤c = ≤-trans a≤b b≤c
-
-  a≢c : a ≢ c
-  a≢c with a ≟ c
-  ... | no ¬q = ¬q
-  ... | yes refl = λ _ → a≢b (≤-antisym a≤b b≤c)
-
-<-prop : ∀ {x y} → Irrelevant (x < y)
-<-prop (p , q) (p' , q') = {!!}
---cong₂ _,_ (≤-prop p p') (funext q q' (λ x≡y → ⊥-elim (q x≡y)))
-
-open Data.FreshList.InductiveInductive.WithIrr _≤_ ≤-prop
-open Data.FreshList.InductiveInductive.WithEq _≤_ ≡-isEq ≤-resp-≈
-
-SortedList : Set
-SortedList = List# _≤_
-
-----------------
--- Merge Sort --
-----------------
-
-union : (xs ys : SortedList) → Acc _<ℕ_ (length xs + length ys) → SortedList
-union-fresh : {a : X} {xs ys : SortedList} {p : Acc _<ℕ_ (length xs + length ys)} → a # xs → a # ys → a # (union xs ys p)
-
-union [] ys (acc rs) = ys
-union (cons x xs x#xs) [] (acc rs) = cons x xs x#xs
-union (cons x xs x#xs) (cons y ys y#ys) (acc rs) with total x y
-... | inj₁ x≤y = cons x (union xs (cons y ys y#ys) (rs _ ≤ℕ-refl)) (union-fresh x#xs (#-trans ≤-trans x y (cons y ys y#ys) x≤y (≤-refl ∷ y#ys)))
-... | inj₂ y≤x = cons y (union (cons x xs x#xs) ys (rs _ (s≤s (≤ℕ-reflexive $ sym $ +-suc _ _)))) (union-fresh (#-trans ≤-trans y x (cons x xs x#xs) y≤x (≤-refl ∷ x#xs)) y#ys)
-
-union-fresh {a} {[]} {ys} {acc rs} a#xs a#ys = a#ys
-union-fresh {a} {cons x xs x#xs} {[]} {acc rs} a#xs a#ys = a#xs
-union-fresh {a} {cons x xs x#xs} {cons y ys y#ys} {acc rs} (a≤x ∷ a#xs) (a≤y ∷ a#ys) with total x y
-... | inj₁ x≤y = a≤x ∷ union-fresh a#xs (a≤y ∷ a#ys)
-... | inj₂ y≤x = a≤y ∷ union-fresh (a≤x ∷ a#xs) a#ys
-
-_∪_ : SortedList → SortedList → SortedList
-xs ∪ ys = union xs ys (<-wellFounded (length xs + length ys))
-
-
-
---------------------
--- Extensionality --
---------------------
-
-
--- can't find this in stdlib, but I know it's there somewhere...
-record _≃_ {n} (A B : Set n) : Set n where
-  constructor MkIso
-  field
-    to : A → B
-    from : B → A
-    from-to : ∀ a → a ≡ from (to a)
-    to-from  : ∀ b → b ≡ to (from b)
-
-  to-inj : {x y : A} → to x ≡ to y → x ≡ y
-  to-inj {x} {y} p = trans (from-to x) (trans (cong from p) (sym $ from-to y))
-
-  from-inj : {x y : B} → from x ≡ from y → x ≡ y
-  from-inj {x} {y} p = trans (to-from x) (trans (cong to p) (sym $ to-from y))
+open import Free.CommutativeMonoid.Base ≤-PDTO
 open _≃_
 
-≃-sym : ∀ {n} {A B : Set n} → A ≃ B → B ≃ A
-to (≃-sym iso) = from iso
-from (≃-sym iso) = to iso
-from-to (≃-sym iso) = to-from iso
-to-from (≃-sym iso) = from-to iso
+private
+  ≤-prop = IsPropDecTotalOrder.≤-prop ≤-PDTO
+  _≟_ = IsPropDecTotalOrder._≟_ ≤-PDTO
+  total = IsPropDecTotalOrder.total ≤-PDTO
+  ≤-refl = IsPropDecTotalOrder.refl ≤-PDTO
+  ≤-trans = IsPropDecTotalOrder.trans ≤-PDTO
+  ≤-antisym = IsPropDecTotalOrder.antisym ≤-PDTO
+  ≤-resp-≡ = IsPropDecTotalOrder.≤-resp-≈ ≤-PDTO
+  ≡-isEq = IsPropDecTotalOrder.isEquivalence ≤-PDTO
+  ≈-refl = λ {x} → IsPropDecTotalOrder.Eq.reflexive ≤-PDTO {x = x} refl
 
-≃-refl : ∀ {n} {A : Set n} → A ≃ A
-to ≃-refl = id
-from ≃-refl = id
-from-to ≃-refl _ = refl
-to-from ≃-refl _ = refl
 
-≃-trans : ∀ {n} {A B C : Set n} → A ≃ B → B ≃ C → A ≃ C
-to (≃-trans p q) = to q ∘ to p
-from (≃-trans p q) = from p ∘ from q
-from-to (≃-trans p q) a = trans (from-to p a) (cong (from p) (from-to q (to p a)))
-to-from (≃-trans p q) a = trans (to-from q a) (cong (to q) (to-from p (from q a)))
+open Data.FreshList.InductiveInductive.WithIrr _≤_ ≤-prop
+open Data.FreshList.InductiveInductive.WithEq _≤_ ≡-isEq ≤-resp-≡
+
+≡-prop : {x y : X} → Irrelevant (x ≡ y)
+≡-prop = Axiom.UniquenessOfIdentityProofs.Decidable⇒UIP.≡-irrelevant _≟_
+
+there-inj : {a x : X} {xs : SortedList} {x#xs : x # xs} {p q : a ∈ xs} → there {x = x} {xs} {x#xs} p ≡ there q → p ≡ q
+there-inj refl = refl
 
 peel-∈-iso-fun' : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
                → (iso : ∀ a → (a ∈ cons b xs b#xs) ≃ (a ∈ cons b ys b#ys))
@@ -142,8 +56,8 @@ peel-∈-iso-fun' : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
                → (to-there : a ∈ cons b ys b#ys)
                → to-there ≡ to (iso a) (there p)
                → a ∈ ys
-peel-∈-iso-fun' {b} iso a p (here refl) eq with to (iso a) (here refl) | inspect (to $ iso a) (here refl)
-... | here refl | [ eq' ] = ⊥-elim (here≢there (sym $ to-inj (iso a) (trans (sym eq) (sym eq'))))
+peel-∈-iso-fun' {b} iso a p (here a=b) eq with to (iso a) (here a=b) | inspect (to $ iso a) (here a=b)
+... | here a=b' | [ eq' ] = ⊥-elim (here≢there (sym $ to-inj (iso a) (trans (sym eq) (sym (trans eq' (cong here (≡-prop a=b' a=b)))))))
 ... | there u | _ = u
 peel-∈-iso-fun' {b} iso a p (there a∈ys) eq = a∈ys
 
@@ -151,9 +65,6 @@ peel-∈-iso-fun : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
                → (∀ a → (a ∈ cons b xs b#xs) ≃ (a ∈ cons b ys b#ys))
                → (∀ a → a ∈ xs → a ∈ ys)
 peel-∈-iso-fun iso a p = peel-∈-iso-fun' iso a p (to (iso a) (there p)) refl
-
-there-inj : {a x : X} {xs : SortedList} {x#xs : x # xs} {p q : a ∈ xs} → there {x = x} {xs} {x#xs} p ≡ there q → p ≡ q
-there-inj refl = refl
 
 from-to-peel' : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
               → (iso : ∀ a → (a ∈ cons b xs b#xs) ≃ (a ∈ cons b ys b#ys))
@@ -165,11 +76,11 @@ from-to-peel' : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
               → (eq' : from-there ≡ to (≃-sym (iso a)) (there (peel-∈-iso-fun' iso a p to-there eq)))
               → p ≡ peel-∈-iso-fun' (λ x → ≃-sym (iso x)) a (peel-∈-iso-fun' iso a p to-there eq) from-there eq'
 from-to-peel' iso a p (here refl) eq from-there eq' with to (iso a) (here refl) | inspect (to (iso a)) (here refl)
-... | here refl | [ v ] = ⊥-elim (here≢there (sym (to-inj (iso a) (trans (sym eq) (sym v)))))
+... | here a=a | [ v ] = ⊥-elim (here≢there (sym (to-inj (iso a) (trans (sym eq) (sym (trans v (cong here (≡-prop a=a refl))))))))
 from-to-peel' iso a p (here refl) eq (there q)   eq' | there u | [ v ] = ⊥-elim (here≢there (trans (from-to (iso a) (here refl)) (sym (subst (λ z → there q ≡ from (iso a) z) (sym v) eq'))))
-from-to-peel' iso a p (here refl) eq (here refl) eq' | there u | [ v ] with from (iso a) (here refl) | inspect (from (iso a)) (here refl)
-... | here refl | [ w ] = ⊥-elim (here≢there (sym (to-inj (≃-sym (iso a)) (trans (sym eq') (sym w)))))
-... | there f   | [ w ] = there-inj (trans (trans (from-to (iso a) (there p)) (sym $ cong (from $ iso a) eq)) w)
+from-to-peel' iso a p (here refl) eq (here a=a) eq' | there u | [ v ] with from (iso a) (here a=a) | inspect (from (iso a)) (here a=a)
+... | here a=a' | [ w ] = ⊥-elim (here≢there (sym (to-inj (≃-sym (iso a)) (trans (sym eq') (sym (trans w (cong here (≡-prop a=a' a=a ))))))))
+... | there f   | [ w ] = there-inj (trans (trans (from-to (iso a) (there p)) (sym $ cong (from $ iso a) eq)) (trans (cong (λ z → from (iso a) (here z)) (≡-prop refl a=a)) w))
 from-to-peel' iso a p (there a∈ys) eq .(to (≃-sym (iso a)) (there (peel-∈-iso-fun' iso a p (there a∈ys) eq))) refl
   = subst (λ z → ∀ q → p ≡ peel-∈-iso-fun' (λ x → ≃-sym (iso x)) a a∈ys (from (iso a) z) q)
           (sym eq)
@@ -204,9 +115,9 @@ extensionality (cons x xs x#xs) [] iso = ⊥-elim $ ¬any[] $ to (iso x) (here r
 extensionality (cons x xs x#xs) (cons y ys y#ys) iso = cons-cong x≡y xs≡ys where
   x≡y : x ≡ y
   x≡y with to (iso x) (here refl)
-  ... | here refl = refl
+  ... | here x≡y = x≡y
   ... | there x∈ys with from (iso y) (here refl)
-  ... | here refl = refl
+  ... | here y≡x = sym y≡x
   ... | there y∈xs = ≤-antisym (#-trans' ≤-trans x#xs y∈xs) (#-trans' ≤-trans y#ys x∈ys) -- x≤a for all a∈xs. y∈xs, so x≤y. y≤a for all a∈ys. x∈ys, so y≤x. so x≡y.
   -- Antisymmetry of R is used here to make the definition easier, but I think this should be possible for all fresh lists.
 
@@ -218,7 +129,7 @@ cons-∈-iso : {b : X} {xs ys : SortedList} {b#xs : b # xs} {b#ys : b # ys}
            → (∀ a → (a ∈ xs) ≃ (a ∈ ys))
            → (∀ a → (a ∈ cons b xs b#xs) ≃ (a ∈ cons b ys b#ys))
 to (cons-∈-iso iso a) (here p) = here p
-to (cons-∈-iso iso a) (there a∈xs) = there (to (iso a) a∈xs) 
+to (cons-∈-iso iso a) (there a∈xs) = there (to (iso a) a∈xs)
 from (cons-∈-iso iso a) (here p) = here p
 from (cons-∈-iso iso a) (there a∈ys) = there (from (iso a) a∈ys)
 from-to (cons-∈-iso iso a) (here x) = refl
@@ -260,16 +171,16 @@ wc-≗-lt {x} {y} {xs} {ys} x#xs y#ys x≢y x≤y eq a with a ≟ x | a ≟ y | 
 ... | yes refl | no a≠y   | p = ⊥-elim $ 1+n≢0 $ trans p (count-lem x≤y x≢y y#ys)
 ... | no _     | yes refl | p with x ≟ x | x ≟ y | eq x
 ... | no ¬refl | _        | _ = ⊥-elim (¬refl refl)
-... | yes refl | yes refl | _ = ⊥-elim (x≢y refl)
-... | yes refl | no _     | q = ⊥-elim $ 1+n≢0 $ trans q (count-lem x≤y x≢y y#ys)
+... | yes x=x | yes refl | _ = ⊥-elim (x≢y refl)
+... | yes x=x | no _     | q = ⊥-elim $ 1+n≢0 $ trans q (count-lem x≤y x≢y y#ys)
 
 wc-≗-eq : {a : X} {xs ys : SortedList} (a#xs : a # xs) (a#ys : a # ys)
         → count (cons a xs a#xs) ≗ count (cons a ys a#ys)
         → count xs ≗ count ys
 wc-≗-eq {x} {xs} {ys} a#xs a#ys eq a with a ≟ x | a ≟ a | eq a
 ... | _ | no ¬refl | _ = ⊥-elim (¬refl refl)
-... | yes refl | yes refl | p = suc-injective p
-... | no x≢a | yes refl | p = p
+... | yes refl | yes x=x | p = suc-injective p
+... | no x≢a | yes a=a | p = p
 
 weaken-count-≗ : {x y : X} {xs ys : SortedList} {x#xs : x # xs} {y#ys : y # ys}
                → count (cons x xs x#xs) ≗ count (cons y ys y#ys)
@@ -277,28 +188,29 @@ weaken-count-≗ : {x y : X} {xs ys : SortedList} {x#xs : x # xs} {y#ys : y # ys
 weaken-count-≗ {x} {y} {xs} {ys} {x#xs} {y#ys} eq a with x ≟ y | total x y
 ... | yes refl | _ = wc-≗-eq x#xs y#ys eq a
 ... | no x≠y   | inj₁ x≤y = wc-≗-lt x#xs y#ys x≠y x≤y eq a
-... | no x≠y   | inj₂ y≤x = sym $ wc-≗-lt y#ys x#xs (≢-sym x≠y) y≤x (λ s → sym $ eq s) a 
+... | no x≠y   | inj₂ y≤x = sym $ wc-≗-lt y#ys x#xs (≢-sym x≠y) y≤x (λ s → sym $ eq s) a
 
 eqCount→iso : (xs ys : SortedList)
             → count xs ≗ count ys
             → (∀ a → (a ∈ xs) ≃ (a ∈ ys))
 eqCount→iso [] [] eq a = ≃-refl
 eqCount→iso [] (cons y ys y#ys) eq a with y ≟ y | eq y
-... | yes refl | ()
+... | yes y=y | ()
 ... | no ¬refl | _ = ⊥-elim (¬refl refl)
 eqCount→iso (cons x xs x#xs) [] eq a with x ≟ x | eq x
-... | yes refl | ()
+... | yes x=x | ()
 ... | no ¬refl | _ = ⊥-elim (¬refl refl)
 eqCount→iso (cons x xs x#xs) (cons y ys y#ys) eq a with x ≟ y | x ≟ x | eq x
 ... | yes refl | _ | _ = cons-∈-iso {x} {xs} {ys} {x#xs} {y#ys} (eqCount→iso xs ys (weaken-count-≗ {x#xs = x#xs} {y#ys = y#ys} eq)) a
 ... | no x≠y | no ¬refl | _ = ⊥-elim (¬refl refl)
-... | no x≠y | yes refl | p = ⊥-elim $ 1+n≢n $ trans p (sym $ weaken-count-≗ {x#xs = x#xs} {y#ys = y#ys} eq x) 
-
+... | no x≠y | yes x=x | p = ⊥-elim $ 1+n≢n $ trans p (sym $ weaken-count-≗ {x#xs = x#xs} {y#ys = y#ys} eq x)
 
 eqCount→eq : {xs ys : SortedList}
            → count xs ≗ count ys
            → xs ≡ ys
 eqCount→eq {xs} {ys} eq = extensionality xs ys (eqCount→iso xs ys eq)
+
+
 
 -------------------------------------------------------------------
 -- Properties of Union / Towards the Commutative Monoid Instance --
@@ -400,7 +312,7 @@ union-comm xs ys (acc p) (acc q) = eqCount→eq (lem xs ys _ _) where
 ∪-comm xs ys = union-comm xs ys _ _
 
 SortedList-CommMon : IsCommutativeMonoid _≡_ _∪_ []
-IsMagma.isEquivalence (IsSemigroup.isMagma (IsMonoid.isSemigroup (IsCommutativeMonoid.isMonoid SortedList-CommMon))) = ≡-isEq
+IsMagma.isEquivalence (IsSemigroup.isMagma (IsMonoid.isSemigroup (IsCommutativeMonoid.isMonoid SortedList-CommMon))) = isEquivalence
 IsMagma.∙-cong (IsSemigroup.isMagma (IsMonoid.isSemigroup (IsCommutativeMonoid.isMonoid SortedList-CommMon))) = cong₂ _∪_
 IsSemigroup.assoc (IsMonoid.isSemigroup (IsCommutativeMonoid.isMonoid SortedList-CommMon)) a b c = sym $ ∪-assoc a b c
 IsMonoid.identity (IsCommutativeMonoid.isMonoid SortedList-CommMon) = ∪-idˡ , ∪-idʳ
@@ -411,10 +323,31 @@ union-cong : ∀ {xs ys xs' ys'} p q
        → union xs ys p ≡ union xs' ys' q
 union-cong {xs} {ys} p q refl refl = union-acc-irrelevant xs ys p q
 
-
 ------------------------------
 -- Ordering on Sorted Lists --
 ------------------------------
+
+_<_ : X → X → Set
+a < b = (a ≤ b) × (a ≢ b)
+
+<-tri : Trichotomous _≡_ _<_
+<-tri x y with total x y | x ≟ y
+... | _        | yes refl = tri≈ (λ p → proj₂ p refl) refl (λ p → proj₂ p refl)
+... | inj₁ x≤y | no x≢y   = tri< (x≤y , x≢y) x≢y (λ p → x≢y $ ≤-antisym x≤y (proj₁ p))
+... | inj₂ y≤x | no x≢y   = tri> (λ p → x≢y $ ≤-antisym (proj₁ p) y≤x) x≢y (y≤x , (≢-sym x≢y))
+
+<-trans : ∀ {a b c} → a < b → b < c → a < c
+<-trans {a} {b} {c} (a≤b , a≢b) (b≤c , b≢c) = a≤c , a≢c where
+  a≤c : a ≤ c
+  a≤c = ≤-trans a≤b b≤c
+
+  a≢c : a ≢ c
+  a≢c with a ≟ c
+  ... | no ¬q = ¬q
+  ... | yes refl = λ _ → a≢b (≤-antisym a≤b b≤c)
+
+<-prop : ∀ {x y} → Irrelevant (x < y)
+<-prop (p , q) (p' , q') = cong₂ _,_ (≤-prop p p') refl
 
 data _≤L_ : SortedList → SortedList → Set where
   [] : ∀ {xs} → [] ≤L xs
@@ -439,7 +372,7 @@ data _≤L_ : SortedList → SortedList → Set where
 ≤L-antisym (lt (x≤y , x≢y)) (lt (y≤x , _)) = ⊥-elim $ x≢y (≤-antisym x≤y y≤x)
 ≤L-antisym (lt (_ , ¬refl)) (eq refl _) = ⊥-elim $ ¬refl refl
 ≤L-antisym (eq refl _) (lt (_ , ¬refl)) = ⊥-elim $ ¬refl refl
-≤L-antisym (eq refl p) (eq refl q) = cons-cong refl (≤L-antisym p q)
+≤L-antisym (eq refl p) (eq x=x q) = cons-cong refl (≤L-antisym p q)
 
 ≤L-total : ∀ xs ys → (xs ≤L ys) ⊎ (ys ≤L xs)
 ≤L-total [] ys = inj₁ []
@@ -455,7 +388,7 @@ data _≤L_ : SortedList → SortedList → Set where
 ≤L-prop (lt p) (lt q) = cong lt (<-prop p q )
 ≤L-prop (lt (_ , ¬refl)) (eq refl q) = ⊥-elim $ ¬refl refl
 ≤L-prop (eq refl p) (lt (_ , ¬refl)) = ⊥-elim $ ¬refl refl
-≤L-prop (eq refl p) (eq refl q) = cong (eq refl) (≤L-prop p q)
+≤L-prop (eq refl p) (eq x=x q) = cong₂ eq (≡-prop refl x=x) (≤L-prop p q)
 
 _=L?_ : (xs ys : SortedList) → Dec (xs ≡ ys)
 [] =L? [] = yes refl
@@ -463,8 +396,8 @@ _=L?_ : (xs ys : SortedList) → Dec (xs ≡ ys)
 cons x xs x#xs =L? [] = no λ {()}
 cons x xs x#xs =L? cons y ys y#ys with x ≟ y | xs =L? ys
 ... | yes refl | yes refl = yes $ cons-cong refl refl
-... | yes refl | no xs≢ys = no λ {refl → xs≢ys refl}
-... | no x≢y   | _        = no λ {refl → x≢y refl}
+... | yes refl | no xs≢ys = no (λ p → xs≢ys (cons-injective-tail p))
+... | no x≢y   | _        = no (λ p → x≢y (cons-injective-head p))
 
 _≤L?_ : (xs ys : SortedList) → Dec (xs ≤L ys)
 [] ≤L? _ = yes []
@@ -479,11 +412,11 @@ cons x xs x#xs ≤L? cons y ys y#ys with <-tri x y | xs ≤L? ys
 ... | tri≈ x≮y refl x≯y | no xs≰ys  = no lem where
   lem : ¬ (cons x xs x#xs ≤L cons x ys y#ys)
   lem (lt x<y) = ⊥-elim (x≮y x<y)
-  lem (eq refl xs≤ys) = ⊥-elim (xs≰ys xs≤ys)
+  lem (eq x=x xs≤ys) = ⊥-elim (xs≰ys xs≤ys)
 
 
 SortedList-Order : IsPropDecTotalOrder _≡_ _≤L_
-IsPreorder.isEquivalence (IsPartialOrder.isPreorder (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order)))) = ≡-isEq
+IsPreorder.isEquivalence (IsPartialOrder.isPreorder (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order)))) = isEquivalence
 IsPreorder.reflexive (IsPartialOrder.isPreorder (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order)))) refl = ≤L-refl
 IsPreorder.trans (IsPartialOrder.isPreorder (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order)))) = ≤L-trans
 IsPartialOrder.antisym (IsTotalOrder.isPartialOrder (IsDecTotalOrder.isTotalOrder (IsPropDecTotalOrder.isDTO SortedList-Order))) = ≤L-antisym
@@ -497,17 +430,9 @@ SortedList-isOCM : IsOrderedCommutativeMonoid _≡_ _≤L_ _∪_ []
 IsOrderedCommutativeMonoid.isICM SortedList-isOCM = SortedList-CommMon
 IsOrderedCommutativeMonoid.isPDTO SortedList-isOCM = SortedList-Order
 
-
 -----------------------------------
--- Insertion, and its Properties --
+-- Properties of Insertion
 -----------------------------------
-
--- Can now define insert in terms of union
-insert' : X → (xs : SortedList) → Acc _<ℕ_ (suc (length xs)) → SortedList
-insert' x xs p = union (cons x [] []) xs p
-
-insert : X → SortedList → SortedList
-insert x xs = insert' x xs (<-wellFounded _)
 
 insert-countlem-yes : ∀ x xs a p
                     → a ≡ x

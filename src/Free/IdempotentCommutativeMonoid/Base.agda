@@ -11,7 +11,7 @@ open import Induction.WellFounded
 
 open import Algebra.Structure.OICM
 
-module Data.FreshList.FreeIdemCommMonoid
+module Free.IdempotentCommutativeMonoid.Base
   {X : Set} {_≈_ : X → X → Set} {_<_ : X → X → Set}
   (<-STO : IsPropStrictTotalOrder _≈_ _<_)
   where

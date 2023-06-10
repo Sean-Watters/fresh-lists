@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K  #-}
+{-# OPTIONS --safe --without-K  #-}
 
 open import Level renaming (suc to lsuc)
 open import Algebra
@@ -19,12 +19,12 @@ open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡
 open import Relation.Nullary
 open import Relation.Nullary.Decidable hiding (map)
 
-module Data.FreshList.FreeIdemCommMonoid.Adjunction where
+module Free.IdempotentCommutativeMonoid.Adjunction where
 
 open import Data.FreshList.InductiveInductive
-open import Data.FreshList.FreeIdemCommMonoid
-import Data.FreshList.FreeIdemCommMonoid.Properties as FICM
-open import Category
+open import Free.IdempotentCommutativeMonoid.Base
+import Free.IdempotentCommutativeMonoid.Properties as FICM
+open import Category.Base
 open import Algebra.Structure.OICM
 
 open Functor
@@ -125,21 +125,21 @@ preserves-ε (oicm-comp f g) = trans (cong (fun g) (preserves-ε f)) (preserves-
 preserves-∙ (oicm-comp f g) _ _ = trans (cong (fun g) (preserves-∙ f _ _)) (preserves-∙ g _ _)
 
 
-eqOicmMorphism : ∀ {A B} → {f g : OicmMorphism A B} → fun f ≡ fun g → f ≡ g
-eqOicmMorphism {A} {B} {MkOicmMorphism .f refl p∙} {MkOicmMorphism f q q∙} refl
+eqOicmMorphism : Extensionality _ _ →
+                 ∀ {A B} → {f g : OicmMorphism A B} → fun f ≡ fun g → f ≡ g
+eqOicmMorphism ext {A} {B} {MkOicmMorphism .f refl p∙} {MkOicmMorphism f q q∙} refl
   = cong₂ (MkOicmMorphism f) (uipB refl q) (ext λ x → ext λ y → uipB (p∙ x y) (q∙ x y))
   where
-    postulate ext : Extensionality _ _
     uipB = IsPropStrictTotalOrder.≈-prop (IsOrderedIdempotentCommutativeMonoid.isSTO (proof B))
 
-OICM : Category
-Category.Obj OICM = OrderedIdempotentCommutativeMonoid
-Category.Hom OICM = OicmMorphism
-Category.id OICM = oicm-id
-Category.comp OICM = oicm-comp
-Category.assoc OICM {A} {B} {C} {D} {f} {g} {h} = eqOicmMorphism refl
-Category.identityˡ OICM {A} {B} {f} = eqOicmMorphism refl
-Category.identityʳ OICM {A} {B} {f} = eqOicmMorphism refl
+OICM : Extensionality _ _ → Category
+Category.Obj (OICM ext) = OrderedIdempotentCommutativeMonoid
+Category.Hom (OICM ext) = OicmMorphism
+Category.id (OICM ext) = oicm-id
+Category.comp (OICM ext) = oicm-comp
+Category.assoc (OICM ext) {A} {B} {C} {D} {f} {g} {h} = eqOicmMorphism ext refl
+Category.identityˡ (OICM ext) {A} {B} {f} = eqOicmMorphism ext refl
+Category.identityʳ (OICM ext) {A} {B} {f} = eqOicmMorphism ext refl
 
 -----------------------------------------
 -- The Category of Strict Total Orders --
@@ -169,11 +169,11 @@ Category.identityʳ STO = refl
 
 open IsOrderedIdempotentCommutativeMonoid
 
-FORGET : Functor OICM STO
-act FORGET (MkOicm S _<_ _∙_ ε oicm) = MkSto S _<_ (isSTO oicm)
-fmap FORGET f = fun f
-identity FORGET = refl
-homomorphism FORGET = refl
+FORGET : (ext : Extensionality _ _) → Functor (OICM ext) STO
+act (FORGET _) (MkOicm S _<_ _∙_ ε oicm) = MkSto S _<_ (isSTO oicm)
+fmap (FORGET _) f = fun f
+identity (FORGET _) = refl
+homomorphism (FORGET _) = refl
 
 ----------------------
 -- The Free Functor --
@@ -245,14 +245,14 @@ SL-map-preserves-∪ {X} {Y} {f} xs ys = ≈L→≡ (proof Y) (FICM.extensionali
     ... | inj₂ a∈mapfys = SL-map-preserves-⊆ f ys (xs ∪X ys) (λ b∈ys → FICM.∈∪ʳ (proof X) xs b∈ys) a∈mapfys
 
 
-SORTEDLIST : Extensionality _ _ → Functor STO OICM
+SORTEDLIST : (ext : Extensionality _ _) → Functor STO (OICM ext)
 act (SORTEDLIST ext) (MkSto S _<_ sto) = MkOicm (SortedList sto) (FICM._<L_ sto) (_∪_ sto) [] (SL-isOICM sto)
 fmap (SORTEDLIST ext) {X} {Y} f = MkOicmMorphism (SL-map {X} {Y} f) refl SL-map-preserves-∪
-identity (SORTEDLIST ext) {X} = eqOicmMorphism (ext lem) where
+identity (SORTEDLIST ext) {X} = eqOicmMorphism ext (ext lem) where
   lem : ∀ xs → SL-map id xs ≡ xs
   lem [] = refl
   lem (cons x xs x#xs) = trans (cong (insert (proof X) x) (lem xs)) (FICM.insert-consview (proof X) x#xs)
-homomorphism (SORTEDLIST ext) {X} {Y} {Z} {f} {g} = eqOicmMorphism (ext lem) where
+homomorphism (SORTEDLIST ext) {X} {Y} {Z} {f} {g} = eqOicmMorphism ext (ext lem) where
   lem : ∀ xs
       → SL-map (g ∘ f) xs
       ≡ (SL-map {Y} {Z} g ∘ SL-map {X} {Y} f) xs
@@ -329,7 +329,7 @@ foldr-∙-preserves-∪ : (A : PropStrictTotalOrder) (B : OrderedIdempotentCommu
                   ≡ (_∙_ B) (foldr-∙ A B f xs) (foldr-∙ A B f ys)
 foldr-∙-preserves-∪ A B f xs ys = foldr-∙-preserves-union A B f xs ys _
 
-SL-Adjunction : (ext : Extensionality _ _) → (SORTEDLIST ext) ⊣ FORGET
+SL-Adjunction : (ext : Extensionality _ _) → (SORTEDLIST ext) ⊣ (FORGET ext)
 to (SL-Adjunction ext) f x = fun f (cons x [] [])
 
 fun (from (SL-Adjunction ext) {A} {B} f) = foldr-∙ A B f
@@ -337,7 +337,7 @@ preserves-ε (from (SL-Adjunction ext) f) = refl
 preserves-∙ (from (SL-Adjunction ext) {A} {B} f) = foldr-∙-preserves-∪ A B f
 
 left-inverse-of (SL-Adjunction ext) {A} {B} f
-  = eqOicmMorphism (ext (foldr-universal (fun f) (λ a → (_∙_ B) (fun f (cons a [] []))) (ε B)
+  = eqOicmMorphism ext (ext (foldr-universal (fun f) (λ a → (_∙_ B) (fun f (cons a [] []))) (ε B)
                                          (preserves-ε f)
                                          λ x xs x#xs → trans (cong (fun f) (sym (FICM.insert-consview (proof A) x#xs) ))
                                                              (preserves-∙ f (cons x [] []) xs)))

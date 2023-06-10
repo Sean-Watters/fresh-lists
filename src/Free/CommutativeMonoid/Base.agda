@@ -15,7 +15,7 @@ open import Function
 open import Induction.WellFounded
 open import Relation.Binary.PropositionalEquality
 
-module Data.FreshList.FreeCommMonoid
+module Free.CommutativeMonoid.Base
   {X : Set} {_≈_ : X → X → Set} {_≤_ : X → X → Set}
   (≤-PDTO : IsPropDecTotalOrder _≈_ _≤_)
   where

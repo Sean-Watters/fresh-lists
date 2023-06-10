@@ -1,8 +1,9 @@
-{-# OPTIONS --without-K #-}
-module Category where
+{-# OPTIONS --safe --without-K #-}
+module Category.Base where
 
 open import Level renaming (zero to lzero; suc to lsuc)
 
+open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Axiom.Extensionality.Propositional
 open import Function as Fun using (_∘′_)
@@ -174,6 +175,21 @@ Category.comp SET f g = g Fun.∘′ f
 Category.assoc SET = refl
 Category.identityˡ SET = refl
 Category.identityʳ SET = refl
+
+record hSet : Set₁ where
+  constructor hset
+  field
+    Carrier : Set
+    isSet : Irrelevant (_≡_ {A = Carrier})
+
+HSET : Category
+Category.Obj HSET = hSet
+Category.Hom HSET A B = hSet.Carrier A → hSet.Carrier B
+Category.id HSET = Fun.id
+Category.comp HSET f g = g Fun.∘′ f
+Category.assoc HSET = refl
+Category.identityˡ HSET = refl
+Category.identityʳ HSET = refl
 
 
 ----------------------------

@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 
 open import Function
 
@@ -20,12 +20,12 @@ open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡
 open import Relation.Nullary
 open import Relation.Nullary.Decidable hiding (map)
 
-module Data.FreshList.FreeCommMonoid.Adjunction where
+module Free.CommutativeMonoid.Adjunction where
 
 open import Data.FreshList.InductiveInductive
-open import Data.FreshList.FreeCommMonoid
-open import Data.FreshList.FreeCommMonoid.Properties
-open import Category
+open import Free.CommutativeMonoid.Base
+open import Free.CommutativeMonoid.Properties
+open import Category.Base
 open import Algebra.Structure.OICM
 
 open Functor
@@ -72,21 +72,21 @@ preserves-ε (ocm-comp f g) = trans (cong (fun g) (preserves-ε f)) (preserves-�
 preserves-∙ (ocm-comp f g) _ _ = trans (cong (fun g) (preserves-∙ f _ _)) (preserves-∙ g _ _)
 
 
-eqOcmMorphism : ∀ {A B} → {f g : OcmMorphism A B} → fun f ≡ fun g → f ≡ g
-eqOcmMorphism {A} {B} {MkOcmMorphism .f refl p∙} {MkOcmMorphism f q q∙} refl
+eqOcmMorphism : Extensionality _ _ →
+                ∀ {A B} → {f g : OcmMorphism A B} → fun f ≡ fun g → f ≡ g
+eqOcmMorphism ext {A} {B} {MkOcmMorphism .f refl p∙} {MkOcmMorphism f q q∙} refl
   = cong₂ (MkOcmMorphism f) (uipB refl q) (ext λ x → ext λ y → uipB (p∙ x y) (q∙ x y))
   where
-    postulate ext : Extensionality _ _
     uipB = ≡-prop (IsOrderedCommutativeMonoid.isPDTO (proof B))
 
-OCM : Category
-Category.Obj OCM = OrderedCommutativeMonoid
-Category.Hom OCM = OcmMorphism
-Category.id OCM = ocm-id
-Category.comp OCM = ocm-comp
-Category.assoc OCM = eqOcmMorphism refl
-Category.identityˡ OCM = eqOcmMorphism refl
-Category.identityʳ OCM = eqOcmMorphism refl
+OCM : Extensionality _ _ → Category
+Category.Obj (OCM ext) = OrderedCommutativeMonoid
+Category.Hom (OCM ext) = OcmMorphism
+Category.id (OCM ext) = ocm-id
+Category.comp (OCM ext) = ocm-comp
+Category.assoc (OCM ext) = eqOcmMorphism ext refl
+Category.identityˡ (OCM ext) = eqOcmMorphism ext refl
+Category.identityʳ (OCM ext) = eqOcmMorphism ext refl
 
 --------------------------------------------------------
 -- The Category of Decidable Proposional Total Orders --
@@ -113,11 +113,11 @@ Category.identityʳ PDTO = refl
 -- The Forgetful Functor --
 ---------------------------
 
-FORGET : Functor OCM PDTO
-act FORGET (MkOCM X _≤_ _ _ proof) = MkTo X _≤_ (IsOrderedCommutativeMonoid.isPDTO proof)
-fmap FORGET f x = fun f x
-identity FORGET = refl
-homomorphism FORGET = refl
+FORGET : (ext : Extensionality _ _) → Functor (OCM ext) PDTO
+act (FORGET _) (MkOCM X _≤_ _ _ proof) = MkTo X _≤_ (IsOrderedCommutativeMonoid.isPDTO proof)
+fmap (FORGET _) f x = fun f x
+identity (FORGET _) = refl
+homomorphism (FORGET _) = refl
 
 ----------------------
 -- The Free Functor --
@@ -262,11 +262,11 @@ SL-map-comp X Y Z f g (cons x xs x#xs) =
     SL-map Y Z g (SL-map X Y f (cons x xs x#xs))
   ∎ where open ≡-Reasoning
 
-SORTEDLIST : Extensionality _ _ → Functor PDTO OCM
+SORTEDLIST : (ext : Extensionality _ _) → Functor PDTO (OCM ext)
 act (SORTEDLIST ext) (MkTo X _≤_ proof) = MkOCM (SortedList proof) (_≤L_ proof) (_∪_ proof ) [] (SortedList-isOCM proof)
 fmap (SORTEDLIST ext) {X} {Y} f = MkOcmMorphism (SL-map X Y f) refl (λ xs ys → SL-map-preserves-∪ X Y f xs ys _ _)
-identity (SORTEDLIST ext) {X} = eqOcmMorphism (ext (SL-map-id X))
-homomorphism (SORTEDLIST ext) {X} {Y} {Z} {f} {g} = eqOcmMorphism (ext (SL-map-comp X Y Z f g))
+identity (SORTEDLIST ext) {X} = eqOcmMorphism ext (ext (SL-map-id X))
+homomorphism (SORTEDLIST ext) {X} {Y} {Z} {f} {g} = eqOcmMorphism ext (ext (SL-map-comp X Y Z f g))
 
 --------------------
 -- The Adjunction --
@@ -312,10 +312,10 @@ foldr-∙-preserves-∙ A B f (cons x xs x#xs) (cons y ys y#ys) (acc p) with IsP
     fxs = foldr-∙ A B f xs
     fys = foldr-∙ A B f ys
 
-SL-Adjunction : (ext : Extensionality _ _) → (SORTEDLIST ext) ⊣ FORGET
+SL-Adjunction : (ext : Extensionality _ _) → (SORTEDLIST ext) ⊣ (FORGET ext)
 to (SL-Adjunction ext) f x = fun f (cons x [] [])
 from (SL-Adjunction ext) {A} {B} f = MkOcmMorphism (foldr-∙ A B f) refl (λ xs ys → foldr-∙-preserves-∙ A B f xs ys _)
-left-inverse-of (SL-Adjunction ext) {A} {B} h = eqOcmMorphism (ext $ foldr-universal
+left-inverse-of (SL-Adjunction ext) {A} {B} h = eqOcmMorphism ext (ext $ foldr-universal
   (fun h)
   (λ x → B ∙ fun h (cons x [] []))
   (ε B)

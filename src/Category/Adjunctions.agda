@@ -8,10 +8,10 @@ open import Function as Fun using (_∘′_)
 
 open import Axiom.Extensionality.Propositional
 
-open import Category
+open import Category.Base
 open import Category.Solver
 
-open Category.Category
+open Category
 open Functor
 open NaturalTransformation
 
@@ -45,7 +45,7 @@ from-natural {C} {D} {F} {G} F⊣G f g = SET ⊧begin
 -- Special cases of naturality (not very insightful)
 ---------------------------------------------------------------------------
 
-open Category.Category
+open Category
 open Functor
 open Adjunction
 

@@ -15,3 +15,6 @@ R⊥ _ _ = ⊥
 
 R⊤-irr : ∀ {A} {x y : A} → Irrelevant (R⊤ x y)
 R⊤-irr tt tt = refl
+
+R⊥-irr : ∀ {A} {x y : A} → Irrelevant (R⊥ x y)
+R⊥-irr ()

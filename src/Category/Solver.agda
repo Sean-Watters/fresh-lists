@@ -6,9 +6,9 @@ open import Relation.Binary.Construct.Closure.ReflexiveTransitive
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive.Properties
 open import Function hiding (id)
 
-open import Category
+open import Category.Base
 
-open Category.Category
+open Category
 open Functor
 
 

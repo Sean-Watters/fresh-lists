@@ -2,22 +2,20 @@
 
 open import Algebra.Structure.OICM
 
-module Data.FreshList.FreeLeftRegularMonoid.Properties
+module Free.LeftRegularMonoid.Properties
   {X : Set} {_≈_ : X → X → Set} {_≠_ : X → X → Set}
   (≠-AR : IsPropDecApartnessRelation _≈_ _≠_)
   where
 
 open import Data.Empty
 open import Data.FreshList.InductiveInductive
--- open import Function
--- open import Relation.Binary.Isomorphism
 open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEquivalence)
 open import Relation.Nullary
 open import Data.Sum
 open import Data.Product
 open import Algebra.Structures
 
-open import Data.FreshList.FreeLeftRegularMonoid ≠-AR
+open import Free.LeftRegularMonoid.Base ≠-AR
 
 private
   ≠-irrefl  = IsPropDecApartnessRelation.irrefl ≠-AR
