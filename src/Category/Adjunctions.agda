@@ -1,3 +1,4 @@
+{-# OPTIONS --with-K #-}
 module Category.Adjunctions where
 
 open import Data.Product
@@ -10,34 +11,16 @@ open import Axiom.Extensionality.Propositional
 open import Category
 open import Category.Solver
 
-----------------------------
--- Adjunctions
-----------------------------
+open Category.Category
+open Functor
+open NaturalTransformation
 
-record Adjunction {C D : Category}
-                  (F : Functor C D)
-                  (G : Functor D C) : Set₁ where
-
-  open Category.Category
-  open Functor
-  open NaturalTransformation
-
-  field
-    to   : {X : Obj C}{B : Obj D} -> Hom D (act F X)        B  -> Hom C X         (act G B)
-    from : {X : Obj C}{B : Obj D} -> Hom C X         (act G B) -> Hom D (act F X)        B
-    left-inverse-of : ∀ {X B} →  (h : Hom D (act F X) B) -> from (to h) ≡ h
-    right-inverse-of : ∀ {X B} → (k : Hom C X (act G B)) -> to (from k) ≡ k
-
-    to-natural : {X X' : Obj C}{B B' : Obj D} (f : Hom C X' X)(g : Hom D B B') ->
-                   (λ h → comp C f (comp C h (fmap G g))) ∘′ (to {X} {B})
-                     ≡
-                   (to {X'} {B'}) ∘′ (λ k → comp D (fmap F f) (comp D k g))
-
-  from-natural : {X X' : Obj C}{B B' : Obj D} (f : Hom C X' X)(g : Hom D B B') ->
-                 (λ k → comp D (fmap F f) (comp D k g)) ∘′ (from {X} {B})
-                   ≡
-                 (from {X'} {B'}) ∘′ (λ h → comp C f (comp C h (fmap G g)))
-  from-natural f g = SET ⊧begin
+from-natural : {C D : Category}{F : Functor C D}{G : Functor D C} → (F⊣G : Adjunction F G) →
+               {X X' : Obj C}{B B' : Obj D} (f : Hom C X' X)(g : Hom D B B') ->
+               (λ k → comp D (fmap F f) (comp D k g)) ∘′ (Adjunction.from F⊣G {X} {B})
+                 ≡
+               (Adjunction.from F⊣G {X'} {B'}) ∘′ (λ h → comp C f (comp C h (fmap G g)))
+from-natural {C} {D} {F} {G} F⊣G f g = SET ⊧begin
     < (λ k → comp D (fmap F f) (comp D k g)) > ∘Syn < from >
       ≡⟦ solveCat refl ⟧
     -[ idSyn ]- ∘Syn < (λ k → comp D (fmap F f) (comp D k g)) > ∘Syn < from >
@@ -55,9 +38,9 @@ record Adjunction {C D : Category}
     < from > ∘Syn < (λ h → comp C f (comp C h (fmap G g))) >
       ⟦∎⟧
     where
-      postulate ext : Extensionality _ _
+      open Adjunction F⊣G
+      postulate ext : ∀ {a} {b} → Extensionality a b
 
-_⊣_ = Adjunction
 ---------------------------------------------------------------------------
 -- Special cases of naturality (not very insightful)
 ---------------------------------------------------------------------------

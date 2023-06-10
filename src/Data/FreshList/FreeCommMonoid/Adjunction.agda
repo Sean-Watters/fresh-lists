@@ -1,11 +1,7 @@
-{-# OPTIONS --with-K #-}
--- Accepting heartache to keep the headache at bay --
+{-# OPTIONS --without-K #-}
 
--- open import Level renaming (suc to lsuc)
--- open import Algebra
 open import Function
 
-open import Axiom.UniquenessOfIdentityProofs.WithK
 open import Axiom.Extensionality.Propositional
 
 open import Data.Nat using (ℕ; zero; suc; _+_; z≤n; s≤s) renaming (_<_ to _<ℕ_)
@@ -30,7 +26,6 @@ open import Data.FreshList.InductiveInductive
 open import Data.FreshList.FreeCommMonoid
 open import Data.FreshList.FreeCommMonoid.Properties
 open import Category
-open import Category.Adjunctions
 open import Algebra.Structure.OICM
 
 open Functor
@@ -78,9 +73,11 @@ preserves-∙ (ocm-comp f g) _ _ = trans (cong (fun g) (preserves-∙ f _ _)) (p
 
 
 eqOcmMorphism : ∀ {A B} → {f g : OcmMorphism A B} → fun f ≡ fun g → f ≡ g
-eqOcmMorphism {A} {B} {MkOcmMorphism .f refl p∙} {MkOcmMorphism f refl q∙} refl
-  = cong (MkOcmMorphism f refl) (ext λ x → ext λ y → uip (p∙ x y) (q∙ x y))
-  where postulate ext : Extensionality _ _
+eqOcmMorphism {A} {B} {MkOcmMorphism .f refl p∙} {MkOcmMorphism f q q∙} refl
+  = cong₂ (MkOcmMorphism f) (uipB refl q) (ext λ x → ext λ y → uipB (p∙ x y) (q∙ x y))
+  where
+    postulate ext : Extensionality _ _
+    uipB = ≡-prop (IsOrderedCommutativeMonoid.isPDTO (proof B))
 
 OCM : Category
 Category.Obj OCM = OrderedCommutativeMonoid

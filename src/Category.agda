@@ -1,10 +1,10 @@
+{-# OPTIONS --without-K #-}
 module Category where
 
 open import Level renaming (zero to lzero; suc to lsuc)
 
 open import Relation.Binary.PropositionalEquality
 open import Axiom.Extensionality.Propositional
-open import Axiom.UniquenessOfIdentityProofs.WithK
 open import Function as Fun using (_∘′_)
 open import Data.Product hiding (map)
 
@@ -51,7 +51,7 @@ record Functor (C D : Category) : Set₁ where
                    fmap (C.comp f g) ≡ D.comp (fmap f) (fmap g)
 open Functor
 
-
+{-
 -- How to prove Functors equal
 eqFunctor : {C D : Category}{F G : Functor C D} ->
             (p : act F ≡ act G) ->
@@ -75,6 +75,7 @@ eqFunctor {G = G} refl q with iext (λ {A} → iext (λ {B} → q {A} {B}))
              _≡_ {A = Functor C D} (record { act = act G; fmap = fmap G; identity = identity'; homomorphism = homomorphism' })
                                    (record { act = act G; fmap = fmap G; identity = identity''; homomorphism = homomorphism'' })
   eqFunctor' refl refl = refl
+-}
 
 idFunctor : {C : Category} -> Functor C C
 act idFunctor X = X
@@ -118,6 +119,7 @@ record NaturalTransformation {C D : Category}
                   D.comp (F.fmap f) (transform Y) ≡ D.comp (transform X) (G.fmap f)
 open NaturalTransformation
 
+{-
 -- How to prove natural transformations equal
 eqNatTrans : {C D : Category}{F G : Functor C D} ->
              (η ρ : NaturalTransformation F G) ->
@@ -133,6 +135,32 @@ eqNatTrans {C} η ρ p with ext p
                 subst (λ z → (X Y : Category.Obj C)(f : Category.Hom C X Y) → Category.comp D (fmap F f) (z Y) ≡ Category.comp D (z X) (fmap G f)) p (natural η) ≡ (natural ρ) ->
                η ≡ ρ
   eqNatTrans' η ρ refl refl = refl
+-}
+
+----------------------------
+-- Adjunctions
+----------------------------
+
+record Adjunction {C D : Category}
+                  (F : Functor C D)
+                  (G : Functor D C) : Set₁ where
+
+  open Category
+  open Functor
+  open NaturalTransformation
+
+  field
+    to   : {X : Obj C}{B : Obj D} -> Hom D (act F X)        B  -> Hom C X         (act G B)
+    from : {X : Obj C}{B : Obj D} -> Hom C X         (act G B) -> Hom D (act F X)        B
+    left-inverse-of : ∀ {X B} →  (h : Hom D (act F X) B) -> from (to h) ≡ h
+    right-inverse-of : ∀ {X B} → (k : Hom C X (act G B)) -> to (from k) ≡ k
+
+    to-natural : {X X' : Obj C}{B B' : Obj D} (f : Hom C X' X)(g : Hom D B B') ->
+                   (λ h → comp C f (comp C h (fmap G g))) ∘′ (to {X} {B})
+                     ≡
+                   (to {X'} {B'}) ∘′ (λ k → comp D (fmap F f) (comp D k g))
+
+_⊣_ = Adjunction
 
 ----------------------------
 -- The category of Sets

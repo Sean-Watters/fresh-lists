@@ -11,6 +11,18 @@ open import Data.Sum
 
 module Algebra.Structure.OICM where
 
+record IsPropStrictTotalOrder
+  { S : Set }
+  ( _≈_ : S → S → Set )
+  ( _<_ : S → S → Set )
+  : Set where
+  constructor MkDto
+  field
+    isSTO : IsStrictTotalOrder _≈_ _<_
+    ≈-prop : ∀ {x y} → Irrelevant (x ≈ y)
+    <-prop : ∀ {x y} → Irrelevant (x < y)
+  open IsStrictTotalOrder isSTO public
+
 record IsPropDecTotalOrder
   { S : Set }
   ( _≈_ : S → S → Set )
@@ -76,7 +88,7 @@ record IsOrderedIdempotentCommutativeMonoid
   : Set where
   field
     isICM : IsIdempotentCommutativeMonoid _≈_ _∙_ ε
-    isSTO : IsStrictTotalOrder _≈_ _<_
+    isSTO : IsPropStrictTotalOrder _≈_ _<_
 
     -- This is a sensible thing to ask, but is not true for sorted lists with lexicographic order.
     -- ∙-preservesˡ-< : ∀ {a b} x → a < b → (x ∙ a) < (x ∙ b)

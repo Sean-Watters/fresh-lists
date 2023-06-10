@@ -60,6 +60,18 @@ module _
     ¬any[] : ∀ {o} {P : X → Set o} → ¬ (Any {R = R} P [])
     ¬any[] ()
 
+    all-map : ∀ {a b} {P : X → Set a}{Q : X → Set b} → ∀ {xs : List# R} → (∀ {x} → P x → Q x) → All P xs → All Q xs
+    all-map p⇒q []       = []
+    all-map p⇒q (p ∷ ps) = p⇒q p ∷ all-map p⇒q ps
+
+    fresh→all : {x : X} {xs : List# R} -> x # xs -> All (R x) xs
+    fresh→all [] = []
+    fresh→all (rx ∷ x#xs) = rx ∷ fresh→all x#xs
+
+    all→fresh : {x : X} {xs : List# R} -> All (R x) xs -> x # xs
+    all→fresh [] = []
+    all→fresh (rx ∷ as) = rx ∷ all→fresh as
+
     here≢there : ∀ {o} {P : X → Set o} {x : X} {xs : List# R} {x#xs : x # xs}
                → {px : P x} {q : Any P xs}
                → here {x#xs = x#xs} px ≢ there q

@@ -1,18 +1,18 @@
+{-# OPTIONS --without-K #-}
 module Data.FreshList.FreeLeftRegularMonoid.Adjunction where
 
 open import Data.Empty
 open import Data.Sum
 open import Data.Product
 
-open import Relation.Nullary
+open import Relation.Nullary hiding (Irrelevant)
 open import Relation.Binary
 open import Relation.Binary.Structures
 open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEquivalence)
 open import Function
 
 open import Axiom.Extensionality.Propositional
-
-open import Axiom.UniquenessOfIdentityProofs.WithK
+open import Axiom.UniquenessOfIdentityProofs
 
 open import Algebra.Structures
 open import Algebra.Structure.OICM
@@ -23,7 +23,6 @@ open import Data.FreshList.FreeLeftRegularMonoid.Properties
 
 
 open import Category
-open import Category.Adjunctions
 
 module _
   {X : Set}
@@ -77,9 +76,17 @@ preserves-∙ (lrb-comp f g) _ _ = trans (cong (fun g) (preserves-∙ f _ _)) (p
 
 
 eqLrbMorphism : ∀ {A B} → {f g : LrbMorphism A B} → fun f ≡ fun g → f ≡ g
-eqLrbMorphism {A} {B} {MkLrbMorphism .f refl p∙} {MkLrbMorphism f refl q∙} refl
-  = cong (MkLrbMorphism f refl) ((ext λ x → ext λ y → uip (p∙ x y) (q∙ x y)))
-  where postulate ext : Extensionality _ _
+eqLrbMorphism {A} {B} {MkLrbMorphism .f refl p∙} {MkLrbMorphism f q q∙} refl
+  = cong₂ (MkLrbMorphism f) (uipB refl q) ((ext λ x → ext λ y → uipB (p∙ x y) (q∙ x y)))
+  where
+    postulate ext : Extensionality _ _
+    uipB : Irrelevant (_≡_ {A = Carrier B})
+    uipB = Axiom.UniquenessOfIdentityProofs.Decidable⇒UIP.≡-irrelevant decB
+      where
+        decB : Decidable (_≡_ {A = Carrier B})
+        decB x y with IsLeftRegularMonoidWithPropDecApartness.dec (proof B) x y
+        ... | inj₁ x≡y = yes x≡y
+        ... | inj₂ x≠y = no λ x≡y → IsPropDecApartnessRelation.irrefl (IsLeftRegularMonoidWithPropDecApartness.isApartness (proof B)) x≡y x≠y
 
 LRB : Category
 Category.Obj LRB = LeftRegularMonoidWithPropDecApartness
