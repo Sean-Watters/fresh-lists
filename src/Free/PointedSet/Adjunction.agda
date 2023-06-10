@@ -1,6 +1,5 @@
 {-# OPTIONS --safe --without-K #-}
-
-open import Axiom.Extensionality.Propositional
+module Free.PointedSet.Adjunction where
 
 open import Level
 open import Algebra.Definitions
@@ -13,17 +12,17 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 open import Relation.Const
 
-
 open import Data.FreshList.InductiveInductive
-open import Category.Base
-
-
-
-
-module Free.PointedSet.Adjunction where
-
 open import Free.PointedSet.Base
 open import Free.PointedSet.Properties
+
+open import Category.Base
+
+open import Axiom.Extensionality.Propositional
+
+-----------------------------
+-- Category of pointed set --
+-----------------------------
 
 record PointedSet : Set₁ where
   constructor PSet
@@ -55,7 +54,6 @@ pset-comp : ∀ {A B C} → PointedSetMorphism A B → PointedSetMorphism B C �
 PointedSetMorphism.fun (pset-comp f g) = (fun g) ∘ (fun f)
 PointedSetMorphism.preserves-ε (pset-comp f g) = trans (cong (fun g) (preserves-ε f)) (preserves-ε g)
 
-
 PSET : Category
 Category.Obj PSET = PointedSet
 Category.Hom PSET = PointedSetMorphism
@@ -65,18 +63,23 @@ Category.assoc PSET = eqPsetMorphism refl
 Category.identityˡ PSET = eqPsetMorphism refl
 Category.identityʳ PSET = eqPsetMorphism refl
 
+
+-----------------------
+-- Forgetful functor --
+-----------------------
+
 open Functor
 
--- forgetful functor
-Forget : Functor PSET HSET
-act Forget x = hset (Carrier x) (isSet x)
-fmap Forget f x = (fun f) x
-identity Forget = refl
-homomorphism Forget = refl
+FORGET : Functor PSET HSET
+act FORGET x = hset (Carrier x) (isSet x)
+fmap FORGET f x = (fun f) x
+identity FORGET = refl
+homomorphism FORGET = refl
 
 
-
--- free functor
+------------------
+-- Free functor --
+------------------
 
 Maybe' : hSet → PointedSet
 Carrier (Maybe' X) = Maybe (hSet.Carrier X)
@@ -88,17 +91,20 @@ fmap-maybe : {X Y : hSet} → (hSet.Carrier X → hSet.Carrier Y) → PointedSet
 fun (fmap-maybe f) = map-maybe f
 preserves-ε (fmap-maybe f) = refl
 
-FreePSet : (ext : Extensionality _ _) → Functor HSET PSET
-act (FreePSet ext) X = Maybe' X
-fmap (FreePSet ext) = fmap-maybe
-identity (FreePSet ext) = eqPsetMorphism (ext (λ { [] → refl ; (just x) → refl}))
-homomorphism (FreePSet ext) = eqPsetMorphism (ext (λ { [] → refl ; (just x) → refl}))
+MAYBE : (ext : Extensionality _ _) → Functor HSET PSET
+act (MAYBE ext) X = Maybe' X
+fmap (MAYBE ext) = fmap-maybe
+identity (MAYBE ext) = eqPsetMorphism (ext (λ { [] → refl ; (just x) → refl}))
+homomorphism (MAYBE ext) = eqPsetMorphism (ext (λ { [] → refl ; (just x) → refl}))
 
--- adjunction
+
+----------------
+-- Adjunction --
+----------------
 
 open Adjunction
 
-PSetAdjunction : (ext : Extensionality _ _) → (FreePSet ext) ⊣ Forget
+PSetAdjunction : (ext : Extensionality _ _) → (MAYBE ext) ⊣ FORGET
 to (PSetAdjunction ext) f x = fun f (just x)
 fun (from (PSetAdjunction ext) {B = B} f) [] = ε B
 fun (from (PSetAdjunction ext) f) (just x) = f x

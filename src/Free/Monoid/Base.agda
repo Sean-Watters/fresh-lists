@@ -1,19 +1,20 @@
 {-# OPTIONS --without-K --safe #-}
-open import Algebra.Definitions
-open import Algebra.Structures
+module Free.Monoid.Base where
 
 open import Data.FreshList.InductiveInductive
 open import Data.Unit
 open import Data.Empty
 open import Data.Product
-
 open import Function
+
+open import Algebra.Definitions
+open import Algebra.Structures
 
 open import Relation.Const
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary
 
-module Free.Monoid.Base where
+
 
 List : Set → Set
 List X = List# {A = X} R⊤
@@ -57,8 +58,12 @@ map-list-preserves-∙ : ∀ {X} {Y} (f : X → Y)
 map-list-preserves-∙ f [] ys = refl
 map-list-preserves-∙ f (cons x xs x#xs) ys = cong (λ z → cons (f x) z tt#) (map-list-preserves-∙ f xs ys)
 
--- List preserves hsets (in fact all hlevels >= 2), by the standard encode-decode proof
-module _ {X : Set} (prop-X : Irrelevant (_≡_ {A = X})) where
+--------------------------
+-- List preserves hsets --
+--------------------------
+
+-- The standard encode-decode proof
+module _ {X : Set} where
 
   Code : List X → List X → Set
   Code [] [] = ⊤
@@ -88,16 +93,16 @@ module _ {X : Set} (prop-X : Irrelevant (_≡_ {A = X})) where
   decodeEncode : {xs ys : List X} → (p : xs ≡ ys) → decode (encode p) ≡ p
   decodeEncode refl = decodeEncodeRefl _
 
-  prop-Code : Irrelevant Code
-  prop-Code {[]} {[]} p q = refl
-  prop-Code {cons x xs x#xs} {cons y ys y#ys} (p , p') (q , q') = cong₂ _,_ (prop-X p q) (prop-Code p' q')
+  prop-Code : (prop-X : Irrelevant (_≡_ {A = X})) → Irrelevant Code
+  prop-Code prop-X {[]} {[]} p q = refl
+  prop-Code prop-X {cons x xs x#xs} {cons y ys y#ys} (p , p') (q , q') = cong₂ _,_ (prop-X p q) (prop-Code prop-X p' q')
 
-  ListhSet : Irrelevant (_≡_ {A = List X})
-  ListhSet p q = begin
+  ListhSet : Irrelevant (_≡_ {A = X}) → Irrelevant (_≡_ {A = List X})
+  ListhSet prop-X p q = begin
     p
       ≡⟨ sym (decodeEncode p) ⟩
     decode (encode p)
-      ≡⟨ cong decode (prop-Code (encode p) (encode q)) ⟩
+      ≡⟨ cong decode (prop-Code prop-X (encode p) (encode q)) ⟩
     decode (encode q)
       ≡⟨ decodeEncode q ⟩
     q

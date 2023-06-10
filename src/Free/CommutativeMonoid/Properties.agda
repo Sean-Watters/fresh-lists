@@ -21,12 +21,13 @@ open import Induction.WellFounded
 
 open import Relation.Binary hiding (Irrelevant)
 open import Relation.Binary.Isomorphism
+open _≃_
 open import Relation.Nullary
 open import Axiom.UniquenessOfIdentityProofs
 
 open import Data.FreshList.InductiveInductive
 open import Free.CommutativeMonoid.Base ≤-PDTO
-open _≃_
+
 
 private
   ≤-prop = IsPropDecTotalOrder.≤-prop ≤-PDTO

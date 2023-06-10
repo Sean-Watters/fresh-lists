@@ -21,7 +21,6 @@ open import Data.FreshList.InductiveInductive
 open import Free.LeftRegularMonoid.Base
 open import Free.LeftRegularMonoid.Properties
 
-
 open import Category.Base
 
 module _
@@ -336,4 +335,4 @@ left-inverse-of (UL-Adjunction ext) {X} {B} h = eqLrbMorphism ext (ext lemma)
         _-[_]X = _-[_] (proof X)
         unionX = union (proof X)
 right-inverse-of (UL-Adjunction ext) {X} {B} f = ext (λ x → proj₂ (IsLeftRegularMonoidWithPropDecApartness.identity (proof B)) (f x))
-to-natural (UL-Adjunction ext) f g = ext λ _ → ext λ _ → refl
+to-natural (UL-Adjunction ext) f g = ext (λ _ → ext (λ _ → refl))

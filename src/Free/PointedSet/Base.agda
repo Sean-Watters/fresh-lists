@@ -13,3 +13,4 @@ pattern just x = cons x [] []
 map-maybe : {X Y : Set} → (X → Y) → Maybe X → Maybe Y
 map-maybe f [] = []
 map-maybe f (just x) = just (f x)
+-- Note Agda is clever enough to not consider `cons x xs x#xs`, because x#xs : ⊥

@@ -34,10 +34,6 @@ record IsPropDecTotalOrder
     ≤-prop : ∀ {x y} → Irrelevant (x ≤ y)
   open IsDecTotalOrder isDTO public
 
--- This is going to be such a pain
--- irrelevant : {S : Set} {_≈_ _≤_ : S → S → Set} → Irrelevant (IsPropDecTotalOrder _≈_ _≤_)
--- irrelevant S T = {!IsPropDecTotalOrder.≤-prop S!}
-
 record IsPropDecApartnessRelation
   { S : Set }
   ( _≈_ : S → S → Set )
@@ -98,19 +94,6 @@ record IsOrderedIdempotentCommutativeMonoid
 
   open IsStrictTotalOrder
   open IsIdempotentCommutativeMonoid hiding (refl; sym; trans) public
-
-  -- These follow from ∙-preservesˡ-<
-  {-
-  ∙-preservesʳ-< : ∀ {a b} x → a < b → (a ∙ x) < (b ∙ x)
-  ∙-preservesʳ-< {a} {b} x a<b = <-respˡ-≈ isSTO (comm isICM x a) (<-respʳ-≈ isSTO (comm isICM x b) (∙-preservesˡ-< x a<b))
-
-  ∙-preserves-< : ∀ {x y x' y'} → x < x' → y < y' → (x ∙ y) < (x' ∙ y')
-  ∙-preserves-< {x} {y' = y'} px py = IsStrictTotalOrder.trans isSTO (∙-preservesˡ-< x py) (∙-preservesʳ-< y' px)
-  -}
-
---apparently partially ordered monoids are monoidal categories that are both skeletal and thin.
---(is that with the ∙-preserves-< condition???)
---wonder what the categorical view on totally ordered idempotent commmutative monoids are.
 
 record IsLeftRegularMonoidWithPropDecApartness
   { S : Set }

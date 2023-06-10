@@ -11,9 +11,11 @@ open import Data.Empty
 
 open import Free.PointedSet.Base
 
+---------------------------
+-- Maybe preserves hsets --
+---------------------------
 
--- Maybe preserves hsets (in fact all hlevels >= 2), by the standard encode-decode proof
-module _ {X : Set} (prop-X : Irrelevant (_≡_ {A = X})) where
+module _ {X : Set} where
 
   Code : Maybe X → Maybe X → Set
   Code [] [] = ⊤
@@ -40,17 +42,17 @@ module _ {X : Set} (prop-X : Irrelevant (_≡_ {A = X})) where
   decodeEncode : {x y : Maybe X} → (p : x ≡ y) → decode (encode p) ≡ p
   decodeEncode refl = decodeEncodeRefl _
 
-  prop-Code : Irrelevant Code
-  prop-Code {[]} {[]} p q = refl
-  prop-Code {[]} {just x} ()
-  prop-Code {just x} {just y} p q = prop-X p q
+  prop-Code : Irrelevant (_≡_ {A = X}) → Irrelevant Code
+  prop-Code prop-X {[]} {[]} p q = refl
+  prop-Code prop-X {[]} {just x} ()
+  prop-Code prop-X {just x} {just y} p q = prop-X p q
 
-  MaybehSet : Irrelevant (_≡_ {A = Maybe X})
-  MaybehSet p q = begin
+  MaybehSet : Irrelevant (_≡_ {A = X}) → Irrelevant (_≡_ {A = Maybe X})
+  MaybehSet prop-X p q = begin
     p
       ≡⟨ sym (decodeEncode p) ⟩
     decode (encode p)
-      ≡⟨ cong decode (prop-Code (encode p) (encode q)) ⟩
+      ≡⟨ cong decode (prop-Code prop-X (encode p) (encode q)) ⟩
     decode (encode q)
       ≡⟨ decodeEncode q ⟩
     q

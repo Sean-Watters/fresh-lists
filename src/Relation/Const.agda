@@ -6,10 +6,11 @@ open import Relation.Binary.PropositionalEquality
 
 module Relation.Const where
 
-
+-- Constantly true
 R⊤ : {A B : Set} → (a : A) (b : B) → Set
 R⊤ _ _ = ⊤
 
+-- Constantly false
 R⊥ : {A B : Set} → (a : A) (b : B) → Set
 R⊥ _ _ = ⊥
 

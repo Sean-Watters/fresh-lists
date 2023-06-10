@@ -8,16 +8,8 @@ module Free.LeftRegularMonoid.Base
   where
 
 open import Data.FreshList.InductiveInductive
---open import Data.Nat
---  using (ℕ; zero; suc; _+_; z≤n; s≤s)
---  renaming (_≤_ to _≤ℕ_; _<_ to _<ℕ_)
---open import Data.Nat.Properties
---  using (1+n≢n; 1+n≢0; +-identityʳ; m≤m+n; +-suc; suc-injective; +-assoc; +-comm)
---  renaming (≤-step to ≤ℕ-step; ≤-refl to ≤ℕ-refl; ≤-trans to ≤ℕ-trans; ≤-reflexive to ≤ℕ-reflexive)
---open import Data.Nat.Induction
 open import Data.Sum
---open import Function
---open import Induction.WellFounded
+
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary
 open import Relation.Nullary using (Dec; yes; no)
@@ -88,6 +80,7 @@ mutual
 -- Merge Sort --
 ----------------
 
+-- We remove later elements in the list, if they occur
 union : UniqueList → UniqueList  → UniqueList
 union [] ys = ys
 union (cons x xs x#xs) ys = cons x (union xs ys -[ x ]) (remove-removes (union xs ys) x)

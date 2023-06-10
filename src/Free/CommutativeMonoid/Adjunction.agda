@@ -1,26 +1,21 @@
 {-# OPTIONS --safe --without-K #-}
-
-open import Function
-
-open import Axiom.Extensionality.Propositional
+module Free.CommutativeMonoid.Adjunction where
 
 open import Data.Nat using (ℕ; zero; suc; _+_; z≤n; s≤s) renaming (_<_ to _<ℕ_)
-open import Data.Nat.Induction
 open import Data.Nat.Properties renaming (≤-refl to ≤ℕ-refl)
+open import Data.Nat.Induction
+open import Induction.WellFounded
 open import Data.Product hiding (map)
 open import Data.Sum
 open import Data.Unit using (⊤; tt)
 open import Data.Bool hiding (_≤_)
 open import Data.Bool.Properties using (push-function-into-if)
-
-open import Induction.WellFounded
+open import Function
 
 open import Relation.Binary hiding (NonEmpty; TotalOrder; Irrelevant)
 open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEquivalence)
 open import Relation.Nullary
 open import Relation.Nullary.Decidable hiding (map)
-
-module Free.CommutativeMonoid.Adjunction where
 
 open import Data.FreshList.InductiveInductive
 open import Free.CommutativeMonoid.Base
@@ -28,15 +23,11 @@ open import Free.CommutativeMonoid.Properties
 open import Category.Base
 open import Algebra.Structure.OICM
 
-open Functor
-open Adjunction
-
+open import Axiom.Extensionality.Propositional
 
 ------------------------------------------------------------
 -- The Category of Ordered Commutative Idempotent Monoids --
 ------------------------------------------------------------
-
-
 
 record OrderedCommutativeMonoid : Set₁ where
   constructor MkOCM
@@ -112,6 +103,8 @@ Category.identityʳ PDTO = refl
 ---------------------------
 -- The Forgetful Functor --
 ---------------------------
+
+open Functor
 
 FORGET : (ext : Extensionality _ _) → Functor (OCM ext) PDTO
 act (FORGET _) (MkOCM X _≤_ _ _ proof) = MkTo X _≤_ (IsOrderedCommutativeMonoid.isPDTO proof)
@@ -271,6 +264,8 @@ homomorphism (SORTEDLIST ext) {X} {Y} {Z} {f} {g} = eqOcmMorphism ext (ext (SL-m
 --------------------
 -- The Adjunction --
 --------------------
+
+open Adjunction
 
 foldr-∙ : (A : PropDecTotalOrder) (B : OrderedCommutativeMonoid)
         → (Carrier A → Carrier B) → SortedList (proof A) → Carrier B

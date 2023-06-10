@@ -10,15 +10,15 @@ open import Relation.Const
 -- Definitions of categories, functors, adjunctions
 open import Category.Base
 
--- Freshlists for a reflexive total order
-open import Free.CommutativeMonoid.Base
-open import Free.CommutativeMonoid.Properties
-open import Free.CommutativeMonoid.Adjunction
-
 -- Freshlists for a strict total order
 open import Free.IdempotentCommutativeMonoid.Base
 open import Free.IdempotentCommutativeMonoid.Properties
 open import Free.IdempotentCommutativeMonoid.Adjunction
+
+-- Freshlists for a reflexive total order
+open import Free.CommutativeMonoid.Base
+open import Free.CommutativeMonoid.Properties
+open import Free.CommutativeMonoid.Adjunction
 
 -- Freshlists for an apartness relation
 open import Free.LeftRegularMonoid.Base

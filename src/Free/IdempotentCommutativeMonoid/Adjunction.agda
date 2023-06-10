@@ -1,11 +1,8 @@
 {-# OPTIONS --safe --without-K  #-}
+module Free.IdempotentCommutativeMonoid.Adjunction where
 
-open import Level renaming (suc to lsuc)
 open import Algebra
 open import Function
-
-open import Axiom.UniquenessOfIdentityProofs
-open import Axiom.Extensionality.Propositional
 
 open import Data.Product hiding (map)
 open import Data.Sum
@@ -19,25 +16,22 @@ open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡
 open import Relation.Nullary
 open import Relation.Nullary.Decidable hiding (map)
 
-module Free.IdempotentCommutativeMonoid.Adjunction where
-
 open import Data.FreshList.InductiveInductive
 open import Free.IdempotentCommutativeMonoid.Base
 import Free.IdempotentCommutativeMonoid.Properties as FICM
 open import Category.Base
 open import Algebra.Structure.OICM
 
-open Functor
-open Adjunction
+open import Axiom.UniquenessOfIdentityProofs
+open import Axiom.Extensionality.Propositional
 
 --------------------------------------------------
 -- Algebraic Structure on Sorted Lists
 --------------------------------------------------
 
--- Because we're working with _≡_ here, we actually need to spend extra effort fixing up
--- some types from _≈_, _≈L_, etc.
--- The alternative is working in full generality with those, but losing the ease of use
--- of propositional equality for later proofs.
+-- We now instantiate ≈ to be real equality ≡. First we need to do a
+-- little plumbing to show that the pointwise lifting ≈L of equality
+-- is equality.
 
 module _ {X : Set} {_<_ : X → X → Set} (<-STO : IsPropStrictTotalOrder _≡_ _<_)  where
 
@@ -46,7 +40,6 @@ module _ {X : Set} {_<_ : X → X → Set} (<-STO : IsPropStrictTotalOrder _≡_
   ≈L→≡ : ∀ {xs ys} → _≈L_ xs ys → xs ≡ ys
   ≈L→≡ [] = refl
   ≈L→≡ (cons x=x' xs=xs') = WithIrr.cons-cong _<_ (IsPropStrictTotalOrder.<-prop <-STO) x=x' (≈L→≡ xs=xs')
-
 
   Tri≈L→Tri≡ : ∀ {a c lt gt} x y → Tri {a} {c = c} lt (_≈L_  x y) gt -> Tri lt (x ≡ y) gt
   Tri≈L→Tri≡ x y (tri< a ¬b ¬c) = tri< a (λ { refl → ¬b ≈L-refl}) ¬c
@@ -59,6 +52,8 @@ module _ {X : Set} {_<_ : X → X → Set} (<-STO : IsPropStrictTotalOrder _≡_
   open IsMonoid
   open IsSemigroup
   open IsMagma
+
+  -- we repackage all the structures using the above
 
   SL-isM : IsMonoid _≡_ (_∪_ <-STO) []
   IsMagma.isEquivalence (IsSemigroup.isMagma (IsMonoid.isSemigroup SL-isM)) = ≡-isEquivalence
@@ -78,7 +73,9 @@ module _ {X : Set} {_<_ : X → X → Set} (<-STO : IsPropStrictTotalOrder _≡_
   IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO SL-isSTO) = ≡-isEquivalence
   IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO SL-isSTO) = <L-trans
   IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO SL-isSTO) x y = Tri≈L→Tri≡ x y (compareL x y)
-  IsPropStrictTotalOrder.≈-prop SL-isSTO = Axiom.UniquenessOfIdentityProofs.Decidable⇒UIP.≡-irrelevant (WithIrr.lift-decEq _<_ (IsPropStrictTotalOrder.<-prop <-STO) (IsPropStrictTotalOrder._≟_ <-STO))
+  IsPropStrictTotalOrder.≈-prop SL-isSTO
+    = Axiom.UniquenessOfIdentityProofs.Decidable⇒UIP.≡-irrelevant
+        (WithIrr.lift-decEq _<_ (IsPropStrictTotalOrder.<-prop <-STO) (IsPropStrictTotalOrder._≟_ <-STO))
   IsPropStrictTotalOrder.<-prop SL-isSTO = <L-prop
 
   SL-isOICM : IsOrderedIdempotentCommutativeMonoid _≡_ _<L_ (_∪_ <-STO) []
@@ -89,8 +86,6 @@ module _ {X : Set} {_<_ : X → X → Set} (<-STO : IsPropStrictTotalOrder _≡_
 ------------------------------------------------------------
 -- The Category of Ordered Idempotent Commutative Monoids --
 ------------------------------------------------------------
-
-
 
 record OrderedIdempotentCommutativeMonoid : Set₁ where
   constructor MkOicm
@@ -123,7 +118,6 @@ oicm-comp : ∀ {A B C} → OicmMorphism A B → OicmMorphism B C → OicmMorphi
 fun (oicm-comp f g) = (fun g) ∘ (fun f)
 preserves-ε (oicm-comp f g) = trans (cong (fun g) (preserves-ε f)) (preserves-ε g)
 preserves-∙ (oicm-comp f g) _ _ = trans (cong (fun g) (preserves-∙ f _ _)) (preserves-∙ g _ _)
-
 
 eqOicmMorphism : Extensionality _ _ →
                  ∀ {A B} → {f g : OicmMorphism A B} → fun f ≡ fun g → f ≡ g
@@ -166,6 +160,7 @@ Category.identityʳ STO = refl
 -- The Forgetful Functor --
 ---------------------------
 
+open Functor
 
 open IsOrderedIdempotentCommutativeMonoid
 
@@ -183,15 +178,16 @@ SL-map : {X Y : PropStrictTotalOrder} → (Carrier X → Carrier Y) → SortedLi
 SL-map f [] = []
 SL-map {X} {Y} f (cons x xs fx) = insert (proof Y) (f x) (SL-map {X} {Y} f xs)
 
-SL-map-lem : ∀ {X Y : PropStrictTotalOrder} →
-           let _∈X_ = FICM._∈_ (proof X)
-               _∈Y_ = FICM._∈_ (proof Y) in
-           (f : Carrier X → Carrier Y)
-           → (a : Carrier X) (xs : SortedList (proof X))
-           → a ∈X xs
-           → (f a) ∈Y (SL-map {X} {Y} f xs)
-SL-map-lem {X} {Y} f a (cons .a xs x#xs) (here refl) = FICM.∈∪ˡ (proof Y) (here refl) (SL-map {X} {Y} f xs)
-SL-map-lem {X} {Y} f a (cons x xs x#xs) (there p) = FICM.∈∪ʳ (proof Y) (cons (f x) [] []) (SL-map-lem {X} {Y} f a xs p)
+SL-map-preserves-∈ : ∀ {X Y : PropStrictTotalOrder} →
+                     let _∈X_ = FICM._∈_ (proof X)
+                         _∈Y_ = FICM._∈_ (proof Y) in
+                     (f : Carrier X → Carrier Y) →
+                     (a : Carrier X) (xs : SortedList (proof X)) →
+                     a ∈X xs → (f a) ∈Y (SL-map {X} {Y} f xs)
+SL-map-preserves-∈ {X} {Y} f a (cons .a xs x#xs) (here refl)
+  = FICM.∈∪ˡ (proof Y) (here refl) (SL-map {X} {Y} f xs)
+SL-map-preserves-∈ {X} {Y} f a (cons x xs x#xs) (there p)
+  = FICM.∈∪ʳ (proof Y) (cons (f x) [] []) (SL-map-preserves-∈ {X} {Y} f a xs p)
 
 SL-map-preserves-⊆ : ∀ {X Y : PropStrictTotalOrder} →
            let _⊆X_ = FICM._⊆_ (proof X)
@@ -200,15 +196,21 @@ SL-map-preserves-⊆ : ∀ {X Y : PropStrictTotalOrder} →
            → (xs ys : SortedList (proof X))
            → xs ⊆X ys
            → (SL-map {X} {Y} f xs) ⊆Y (SL-map {X} {Y} f ys)
-SL-map-preserves-⊆ {X} {Y} f (cons x xs x#xs) ys xs⊆ys {a} a∈mapfxxs with FICM.∪∈ (proof Y) {xs = cons (f x) [] []} {SL-map {X} {Y} f xs} a∈mapfxxs
-... | inj₁ (here refl) = SL-map-lem f x ys (xs⊆ys {x} (here refl))
+SL-map-preserves-⊆ {X} {Y} f (cons x xs x#xs) ys xs⊆ys {a} a∈mapfxxs
+  with FICM.∪∈ (proof Y) {xs = cons (f x) [] []} {SL-map {X} {Y} f xs} a∈mapfxxs
+... | inj₁ (here refl) = SL-map-preserves-∈ f x ys (xs⊆ys {x} (here refl))
 ... | inj₂ a∈mapfxs = SL-map-preserves-⊆ f xs ys (λ b∈xs → xs⊆ys (there b∈xs)) a∈mapfxs
 
-SL-map-preserves-∪ : {X Y : PropStrictTotalOrder}
-                   → {f : Carrier X → Carrier Y}
-                   → (xs ys : SortedList (proof X))
-                   → SL-map {X} {Y} f (_∪_ (proof X) xs ys) ≡ _∪_ (proof Y) (SL-map {X} {Y} f xs) (SL-map {X} {Y} f ys)
-SL-map-preserves-∪ {X} {Y} {f} xs ys = ≈L→≡ (proof Y) (FICM.extensionality (proof Y) (SL-map {X} {Y} f (_∪_ (proof X) xs ys)) (_∪_ (proof Y) (SL-map {X} {Y} f xs) (SL-map {X} {Y} f ys)) λ a → (λ p → FICM.∈∪ (proof Y) (lem1 a xs ys _ p) ) , lem2 a xs ys)
+SL-map-preserves-∪ : {X Y : PropStrictTotalOrder} →
+                     let _∪X_ = _∪_ (proof X)
+                         _∪Y_ = _∪_ (proof Y) in
+                     {f : Carrier X → Carrier Y} →
+                     (xs ys : SortedList (proof X)) →
+                     SL-map {X} {Y} f (xs ∪X  ys) ≡ (SL-map {X} {Y} f xs) ∪Y (SL-map {X} {Y} f ys)
+SL-map-preserves-∪ {X} {Y} {f} xs ys = ≈L→≡ (proof Y) (FICM.extensionality (proof Y)
+                                                                           (SL-map {X} {Y} f (xs ∪X  ys))
+                                                                           ((SL-map {X} {Y} f xs) ∪Y (SL-map {X} {Y} f ys))
+                                                                           (λ a → (λ p → FICM.∈∪ (proof Y) (lem1 a xs ys _ p) ) , lem2 a xs ys))
   where
     _∈X_ = FICM._∈_ (proof X)
     _∈Y_ = FICM._∈_ (proof Y)
@@ -263,6 +265,8 @@ homomorphism (SORTEDLIST ext) {X} {Y} {Z} {f} {g} = eqOicmMorphism ext (ext lem)
 -----------------------------------
 -- The Free-Forgetful Adjunction --
 -----------------------------------
+
+open Adjunction
 
 foldr-∙ : (A : PropStrictTotalOrder)
         → (B : OrderedIdempotentCommutativeMonoid)

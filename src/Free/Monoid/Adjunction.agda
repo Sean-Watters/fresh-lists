@@ -14,9 +14,9 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Binary
 open import Relation.Const
 
-
-open Functor
-open Adjunction
+-------------------------
+-- Category of monoids --
+-------------------------
 
 record Monoid : Set₁ where
   constructor Mon
@@ -67,13 +67,23 @@ Category.assoc (MON ext) = eqMonMorphism ext refl
 Category.identityˡ (MON ext) = eqMonMorphism ext refl
 Category.identityʳ (MON ext) = eqMonMorphism ext refl
 
--- forgetful functor
 
-Forget : (ext : Extensionality _ _) → Functor (MON ext) HSET
-act (Forget _) X = hset (Carrier X) (isSet X)
-fmap (Forget _) f x = fun f x
-identity (Forget _) = refl
-homomorphism (Forget _) = refl
+-----------------------
+-- Forgetful functor --
+-----------------------
+
+open Functor
+
+FORGET : (ext : Extensionality _ _) → Functor (MON ext) HSET
+act (FORGET _) X = hset (Carrier X) (isSet X)
+fmap (FORGET _) f x = fun f x
+identity (FORGET _) = refl
+homomorphism (FORGET _) = refl
+
+
+------------------
+-- Free functor --
+------------------
 
 List' : hSet → Monoid
 Carrier (List' X) = List (hSet.Carrier X)
@@ -82,20 +92,25 @@ _∙_ (List' X) = _++_
 proof (List' X) = ListMonoid
 isSet (List' X) = ListhSet (hSet.isSet X)
 
-
-FreeMonoid : (ext : Extensionality _ _) → Functor HSET (MON ext)
-act (FreeMonoid ext) = List'
-fun (fmap (FreeMonoid ext) f) = map-list-fun f
-preserves-ε (fmap (FreeMonoid ext) f) = refl
-preserves-∙ (fmap (FreeMonoid ext) f) = map-list-preserves-∙ f
-identity (FreeMonoid ext) {X} = eqMonMorphism ext (ext lem) where
+FREEMONOID : (ext : Extensionality _ _) → Functor HSET (MON ext)
+act (FREEMONOID ext) = List'
+fun (fmap (FREEMONOID ext) f) = map-list-fun f
+preserves-ε (fmap (FREEMONOID ext) f) = refl
+preserves-∙ (fmap (FREEMONOID ext) f) = map-list-preserves-∙ f
+identity (FREEMONOID ext) {X} = eqMonMorphism ext (ext lem) where
   lem : ∀ xs → map-list-fun id xs ≡ xs
   lem [] = refl
   lem (cons x xs x#xs) = trans (cong (λ z → cons x z tt#) (lem xs)) (cong (cons x xs) (WithIrr.#-irrelevant R⊤ (λ {tt tt → refl}) tt# x#xs))
-homomorphism (FreeMonoid ext) {X} {Y} {Z} {f} {g} = eqMonMorphism ext (ext lem) where
+homomorphism (FREEMONOID ext) {X} {Y} {Z} {f} {g} = eqMonMorphism ext (ext lem) where
   lem : ∀ xs → map-list-fun (λ x → g (f x)) xs ≡ map-list-fun g (map-list-fun f xs)
   lem [] = refl
   lem (cons x xs x#xs) = cong (λ z → cons (g (f x)) z tt#) (lem xs)
+
+----------------
+-- Adjunction --
+----------------
+
+open Adjunction
 
 fold-∙ : {A : Set} (B : Monoid) → (A → Carrier B) → List A → Carrier B
 fold-∙ {A} B f = foldr (λ a b → _∙_ B (f a) b) (ε B)
@@ -106,7 +121,7 @@ fold-∙-preserves-∙ (Mon _ _ _ p _) f [] y = sym $ proj₁ (IsMonoid.identity
 fold-∙-preserves-∙ B f (cons x xs x#xs) y = trans (cong (_∙_ B (f x)) (fold-∙-preserves-∙ B f xs y)) (sym $ (IsSemigroup.assoc $ IsMonoid.isSemigroup $ proof B) (f x) (fold-∙ B f xs) (fold-∙ B f y))
 
 
-MonoidAdjunction : (ext : Extensionality _ _) → (FreeMonoid ext) ⊣ (Forget ext)
+MonoidAdjunction : (ext : Extensionality _ _) → (FREEMONOID ext) ⊣ (FORGET ext)
 to (MonoidAdjunction ext) f x = fun f (cons x [] [])
 fun (from (MonoidAdjunction ext) {A} {B} f) = fold-∙ B f
 preserves-ε (from (MonoidAdjunction ext) f) = refl

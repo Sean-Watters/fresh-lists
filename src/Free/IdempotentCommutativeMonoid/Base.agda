@@ -22,12 +22,17 @@ private
   <-tri = IsPropStrictTotalOrder.compare <-STO
   <-trans = IsPropStrictTotalOrder.trans <-STO
   <-resp-≈ = IsPropStrictTotalOrder.<-resp-≈ <-STO
-
-open WithEq _<_ ≈-Eq <-resp-≈
+  open WithEq _<_ ≈-Eq <-resp-≈
 
 SortedList : Set
 SortedList = List# _<_
 
+
+-- The union or merge of two lists is defined using wellfounded
+-- recursion on their total length; sometimes we decrease the length
+-- of the first list, sometimes the second. We also simultaneously
+-- prove that if a is fresh for two lists, then it is also fresh for
+-- their union.
 union : (xs ys : SortedList) → Acc _<ℕ_ (length xs + length ys) → SortedList
 union-fresh : {a : X} {xs ys : SortedList} {p : Acc _<ℕ_ (length xs + length ys)} → a # xs → a # ys → a # (union xs ys p)
 
@@ -45,7 +50,7 @@ union-fresh {a} {cons x xs x#xs} {cons y ys y#ys} {acc rs} (a<x ∷ a#xs) (a<y �
 ... | tri≈ x≮y x≈y y≮x = a<x ∷ (union-fresh a#xs a#ys)
 ... | tri> x≮y x≉y y<x = a<y ∷ union-fresh (a<x ∷ a#xs) a#ys
 
-
+-- The top-level operation we really want
 _∪_ : SortedList → SortedList → SortedList
 xs ∪ ys = union xs ys (<-wellFounded (length xs + length ys))
 
