@@ -139,6 +139,11 @@ module _
                         → cons x xs x#xs ≡ cons y ys y#ys → xs ≡ ys
     cons-injective-tail refl = refl
 
+    ∷-injective-head : ∀ {x y : X}{xs : List# R}{y#xs : y # xs} →
+                       {p q : R x y} → {ps qs : x # xs} →
+                       _#_._∷_ {x#xs = y#xs} p ps ≡ q ∷ qs → p ≡ q
+    ∷-injective-head refl = refl
+
 -- Fix a proof-irrelevant R
 module WithIrr
     {n m : Level}
@@ -169,6 +174,10 @@ module WithIrr
     lift-decEq dec (cons x xs x#xs) (cons y ys y#ys) | no ¬x≡y
       = no λ x∷xs≡y∷ys → ⊥-elim (¬x≡y (cons-injective-head x∷xs≡y∷ys))
 
+#-irrelevant-iff : {n m : Level}{X : Set n}(R : X → X → Set m) →
+                   ((x : X)(xs : List# R) → Irrelevant (x # xs)) →
+                   (x y : X) → Irrelevant (R x y)
+#-irrelevant-iff R prop-# x y p q = ∷-injective-head (prop-# x (cons y [] []) (p ∷ []) (q ∷ []))
 
 -- Fix an R and some notion of equality.
 module WithEq
