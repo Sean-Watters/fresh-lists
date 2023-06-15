@@ -201,11 +201,15 @@ module WithEq
     _⊈_ : (xs ys : List# R) -> Set (n ⊔ m)
     xs ⊈ ys = ¬ (xs ⊆ ys)
 
-    open IsEquivalence
+    open IsEquivalence renaming (refl to ≈-refl)
 
-    #-trans' : Transitive R → {a b : X} {xs : List# R} → a # xs → b ∈ xs → R a b
-    #-trans' R-trans {a} {b} {cons x xs x#xs} (Rax ∷ a#xs) (here b≈x) = proj₁ R-resp-≈ (sym ≈-isEq b≈x) Rax 
-    #-trans' R-trans {a} {b} {cons x xs x#xs} (Rax ∷ a#xs) (there p∈xs) = #-trans' R-trans a#xs p∈xs
+    #-trans' : {a b : X} {xs : List# R} → a # xs → b ∈ xs → R a b
+    #-trans' {a} {b} {cons x xs x#xs} (Rax ∷ a#xs) (here b≈x) = proj₁ R-resp-≈ (sym ≈-isEq b≈x) Rax
+    #-trans' {a} {b} {cons x xs x#xs} (Rax ∷ a#xs) (there p∈xs) = #-trans' a#xs p∈xs
+
+    #-trans'-iff : {a : X} {xs : List# R} → (∀ {b} → b ∈ xs → R a b) → a # xs
+    #-trans'-iff {xs = []} Rab = []
+    #-trans'-iff {xs = cons x xs x#xs} Rab = Rab (here (≈-refl ≈-isEq)) ∷ #-trans'-iff {xs = xs} (λ z → Rab (there z))
 
     ∉-weaken : {a x : X} {xs : List# R} {x#xs : x # xs} → a ∉ (cons x xs x#xs) → a ∉ xs
     ∉-weaken ¬p q = ⊥-elim (¬p (there q))
