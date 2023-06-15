@@ -119,7 +119,7 @@ extensionality (cons x xs x#xs) (cons y ys y#ys) iso = cons-cong x≡y xs≡ys w
   ... | here x≡y = x≡y
   ... | there x∈ys with from (iso y) (here refl)
   ... | here y≡x = sym y≡x
-  ... | there y∈xs = ≤-antisym (#-trans' ≤-trans x#xs y∈xs) (#-trans' ≤-trans y#ys x∈ys) -- x≤a for all a∈xs. y∈xs, so x≤y. y≤a for all a∈ys. x∈ys, so y≤x. so x≡y.
+  ... | there y∈xs = ≤-antisym (#-trans' x#xs y∈xs) (#-trans' y#ys x∈ys) -- x≤a for all a∈xs. y∈xs, so x≤y. y≤a for all a∈ys. x∈ys, so y≤x. so x≡y.
   -- Antisymmetry of R is used here to make the definition easier, but I think this should be possible for all fresh lists.
 
   xs≡ys : xs ≡ ys
