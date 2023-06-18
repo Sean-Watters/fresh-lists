@@ -139,6 +139,7 @@ module Sec4
 module _ where
   open import Free.IdempotentCommutativeMonoid.Base
   open import Free.IdempotentCommutativeMonoid.Properties
+  open import OrderingPrinciple.Base
 
   open IdCMon.PropStrictTotalOrder
 
@@ -158,6 +159,13 @@ module _ where
 
   Theorem-20 : (ext : Extensionality _ _) → Functor STO (OICM ext)
   Theorem-20 = IdCMon.SORTEDLIST
+
+  Proposition-21a : (ext : Extensionality _ _)
+                  → OrderingPrinciple → IsEquiv FORGETSTO × IsEquiv (FORGETOICM ext)
+  Proposition-21a ext OP = (OP-gives-STO≃Set OP) , (OP-gives-OICM≃ICM ext OP)
+
+  Proposition-21b : IsEquiv FORGETSTO → OrderingPrinciple
+  Proposition-21b = STO≃Set-gives-OP
 
 -------- The line
 
