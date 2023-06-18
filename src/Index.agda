@@ -118,6 +118,44 @@ module Sec4
   Proposition-13 : IsIdempotentCommutativeMonoid _≡_ _∪_ []
   Proposition-13 = SL-isICM <-STO
 
+  Definition-14 : Category
+  Definition-14 = STO
+
+  Definition-15 : Extensionality _ _ → Category
+  Definition-15 = OICM
+
+  open OicmMorphism
+  Lemma-16 : Extensionality _ _
+           → ∀ {A B} → {f g : OicmMorphism A B}
+           → (fun f ≡ fun g) ↔ (f ≡ g)
+  Lemma-16 ext = (eqOicmMorphism ext) , λ {refl → refl}
+
+  Proposition-17 : IsPropStrictTotalOrder _≈L_ _<-lex_
+  Proposition-17 = <-lex-STO
+
+module _ where
+  open import Free.IdempotentCommutativeMonoid.Base
+  open import Free.IdempotentCommutativeMonoid.Properties
+  open import Free.IdempotentCommutativeMonoid.Adjunction
+  open PropStrictTotalOrder
+
+  Definition-18 : {X Y : PropStrictTotalOrder}
+                → (Carrier X → Carrier Y)
+                → SortedList (proof X)
+                → SortedList (proof Y)
+  Definition-18 = SL-map
+
+  Lemma-19 : {X Y : PropStrictTotalOrder} →
+           let _∪X_ = _∪_ (proof X)
+               _∪Y_ = _∪_ (proof Y) in
+           {f : Carrier X → Carrier Y} →
+           (xs ys : SortedList (proof X)) →
+           SL-map {X} {Y} f (xs ∪X  ys) ≡ (SL-map {X} {Y} f xs) ∪Y (SL-map {X} {Y} f ys)
+  Lemma-19 = SL-map-preserves-∪
+
+  Theorem-20 : (ext : Extensionality _ _) → Functor STO (OICM ext)
+  Theorem-20 = SORTEDLIST
+
 -------- The line
 
 ---------------
