@@ -3,12 +3,15 @@
 open import Level
 
 open import Algebra.Structure.OICM
+open import Algebra.Structures
 
 open import Data.Nat hiding (_⊔_)
 open import Data.Product
 open import Data.Sum
 open import Data.Unit
 open import Data.Empty
+
+open import Function hiding (_↔_)
 
 open import Relation.Nullary
 open import Relation.Binary hiding (Irrelevant)
@@ -87,16 +90,33 @@ Proposition-8b = foldr-universal
 ---------------
 
 module Sec4
-  {X : Set} {_≈_ : X → X → Set} {_<_ : X → X → Set}
-  (<-STO : IsPropStrictTotalOrder _≈_ _<_) -- fix a propositional strict total order <
+  {X : Set} {_<_ : X → X → Set}
+  (<-STO : IsPropStrictTotalOrder _≡_ _<_) -- fix a propositional strict total order <
   where
 
   open import Free.IdempotentCommutativeMonoid.Base <-STO
+  open import Free.IdempotentCommutativeMonoid.Properties <-STO
+  open import Free.IdempotentCommutativeMonoid.Adjunction
 
   Definition-9 = SortedList
 
   Proposition-10 : (xs ys : SortedList) → SortedList
   Proposition-10 = _∪_
+
+  Lemma-11a : {a x : X} {xs : SortedList} {fx : x # xs} -> a < x -> a ∉ (cons x xs fx)
+  Lemma-11a = ext-lem
+
+  --seems to not be used in theorem 12? am I blind?
+  Lemma-11b : {!!}
+  Lemma-11b = {!!}
+
+  Theorem-12 : (xs ys : SortedList)
+             -> (∀ x -> ((x ∈ xs) -> (x ∈ ys)) × ((x ∈ ys) -> (x ∈ xs)))
+             -> xs ≡ ys
+  Theorem-12 xs ys p = ≈L→≡ <-STO (extensionality xs ys p)
+
+  Proposition-13 : IsIdempotentCommutativeMonoid _≡_ _∪_ []
+  Proposition-13 = SL-isICM <-STO
 
 -------- The line
 
