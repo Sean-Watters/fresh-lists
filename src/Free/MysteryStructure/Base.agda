@@ -43,13 +43,13 @@ module FL-≡ (A : Set)(A-set : Irrelevant (_≡_ {A = A})) where
   from (inj₁ _) = []
   from (inj₂ (a , (n , _))) = repeat a n
 
-  from-to : (x : ⊤ ⊎ (A × ℕ⁺)) → to (from x) ≡ x
-  from-to (inj₁ _) = refl
-  from-to (inj₂ (a , suc n , record { nonZero = tt })) rewrite length-repeat a n = refl
+  to-from : (x : ⊤ ⊎ (A × ℕ⁺)) → to (from x) ≡ x
+  to-from (inj₁ _) = refl
+  to-from (inj₂ (a , suc n , record { nonZero = tt })) rewrite length-repeat a n = refl
 
-  to-from : (xs :  MA) → from (to xs) ≡ xs
-  to-from [] = refl
-  to-from (cons x xs x#xs) = cons-cong refl (lemma xs x#xs)
+  from-to : (xs :  MA) → from (to xs) ≡ xs
+  from-to [] = refl
+  from-to (cons x xs x#xs) = cons-cong refl (lemma xs x#xs)
     where
       lemma : ∀ {x} xs → x # xs → repeat x (length xs) ≡ xs
       lemma [] p = refl

@@ -24,11 +24,14 @@ module Index where
 _↔_ : ∀ {a b} → (A : Set a) → (B : Set b) → Set _
 A ↔ B = (A → B) × (B → A)
 
+open import Relation.Binary.Isomorphism
 
 open import Category.Base
 
 open import Data.FreshList.InductiveInductive
 
+
+open import Free.CommutativeMonoid.Adjunction as CMon
 open import Free.Monoid.Adjunction as Mon
 open import Free.PointedSet.Adjunction as Pointed
 open import Free.LeftRegularMonoid.Adjunction as LRMon
@@ -159,6 +162,46 @@ module _ where
 -------- The line
 
 ---------------
+-- Section 5 --
+---------------
+
+module Sec5
+  {X : Set} {_≤_ : X → X → Set}
+  (≤-PDTO : IsPropDecTotalOrder _≡_ _≤_)
+  where
+
+  open import Free.CommutativeMonoid.Base ≤-PDTO
+  open import Free.CommutativeMonoid.Properties ≤-PDTO
+  open Data.FreshList.InductiveInductive.WithEq
+         _≤_ isEquivalence ((λ { refl x → x }) , (λ { refl x → x }))
+
+  Proposition-26 : (xs ys : SortedList) →
+                   ((a : X) → count xs a ≡ count ys a) →
+                   ((a : X) → (a ∈ xs) ≃ (a ∈ ys))
+  Proposition-26 = eqCount→iso
+
+
+  Lemma-27 : {b : X}{xs ys : SortedList}{p : b # xs}{q : b # ys} →
+             ((a : X) → (a ∈ cons b xs p) ≃ (a ∈ cons b ys q)) →
+             ((a : X) → (a ∈ xs) ≃ (a ∈ ys))
+  Lemma-27 = peel-∈-iso
+
+  Proposition-28 : (xs ys : SortedList) →
+                   ((a : X) → (a ∈ xs) ≃ (a ∈ ys)) → xs ≡ ys
+  Proposition-28 = extensionality
+
+  Theorem-29 : (xs ys : SortedList) →
+               ((a : X) → count xs a ≡ count ys a) → xs ≡ ys
+  Theorem-29 xs ys = eqCount→eq {xs} {ys}
+
+  Proposition-30 : IsOrderedCommutativeMonoid _≡_ _≤L_ _∪_ []
+  Proposition-30 = SortedList-isOCM
+
+Proposition-31 : (ext : Extensionality _ _) →
+                 (CMon.SORTEDLIST ext) ⊣ (CMon.FORGET ext)
+Proposition-31 = CMon.SL-Adjunction
+
+---------------
 -- Section 6 --
 ---------------
 
@@ -175,13 +218,11 @@ Proposition-35 : (ext : Extensionality _ _) →
                  (UNIQUELIST ext) ⊣ (LRMon.FORGET ext)
 Proposition-35 = UL-Adjunction
 
-Proposition-36 : (ext : Extensionality _ _) →
-                 (A : Set) → (A-is-set : {x y : A} → Irrelevant (x ≡ y)) →
-                 Iso TYPE (List# {A = A} _≡_)
-                          (⊤ ⊎ (A × (Σ[ n ∈ ℕ ] (NonZero n))))
-Proposition-36 ext A A-is-set =
+Proposition-36 : (A : Set) → (A-is-set : {x y : A} → Irrelevant (x ≡ y)) →
+                 (List# {A = A} _≡_) ≃ (⊤ ⊎ (A × (Σ[ n ∈ ℕ ] (NonZero n))))
+Proposition-36 A A-is-set =
   record { to = FL-≡.to A A-is-set
          ; from = FL-≡.from A A-is-set
-         ; to-from = ext (FL-≡.to-from A A-is-set)
-         ; from-to = ext (FL-≡.from-to A A-is-set)
+         ; to-from = λ x → sym (FL-≡.to-from A A-is-set x)
+         ; from-to = λ xs → sym (FL-≡.from-to A A-is-set xs)
          }
