@@ -26,3 +26,10 @@ Corollary-3 = WithIrr.cons-cong
 Lemma-4 : {n m : Level} {X : Set n} {R : X → X → Set m}
         → Transitive R → (a x : X) (xs : List# R) → R a x → x # xs → a # xs
 Lemma-4 = #-trans
+
+Definition-5 = Any
+
+Definition-6 : {n m : Level} {X : Set n} (R : X → X → Set m)
+             → {_≈_ : X → X → Set m} (≈-isEq : IsEquivalence _≈_) (R-resp-≈ : R Respects₂ _≈_)
+             → X → List# R → Set (n ⊔ m)
+Definition-6 = WithEq._∈_
