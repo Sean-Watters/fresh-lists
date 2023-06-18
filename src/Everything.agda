@@ -33,3 +33,6 @@ open import Free.Monoid.Adjunction
 open import Free.PointedSet.Base
 open import Free.PointedSet.Properties
 open import Free.PointedSet.Adjunction
+
+-- Freshlists for equality relation
+open import Free.MysteryStructure.Base
