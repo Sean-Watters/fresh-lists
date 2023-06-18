@@ -2,6 +2,7 @@
 
 open import Level
 open import Relation.Nullary
+open import Relation.Binary hiding (Irrelevant)
 open import Relation.Binary.PropositionalEquality
 
 module Index where
@@ -21,3 +22,7 @@ Corollary-3 : {n m : Level} {X : Set n}
             → x ≡ y → xs ≡ ys
             → cons x xs x#xs ≡ cons y ys y#ys
 Corollary-3 = WithIrr.cons-cong
+
+Lemma-4 : {n m : Level} {X : Set n} {R : X → X → Set m}
+        → Transitive R → (a x : X) (xs : List# R) → R a x → x # xs → a # xs
+Lemma-4 = #-trans
