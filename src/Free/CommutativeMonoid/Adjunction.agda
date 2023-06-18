@@ -25,9 +25,9 @@ open import Algebra.Structure.OICM
 
 open import Axiom.Extensionality.Propositional
 
-------------------------------------------------------------
--- The Category of Ordered Commutative Idempotent Monoids --
-------------------------------------------------------------
+-------------------------------------------------
+-- The Category of Ordered Commutative Monoids --
+-------------------------------------------------
 
 record OrderedCommutativeMonoid : Set₁ where
   constructor MkOCM
