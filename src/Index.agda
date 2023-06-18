@@ -161,8 +161,6 @@ module _ where
   Proposition-21b : IsEquiv FORGETSTO → OrderingPrinciple
   Proposition-21b = STO≃Set-gives-OP
 
--------- The line
-
 ---------------
 -- Section 5 --
 ---------------
