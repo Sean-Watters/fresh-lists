@@ -88,9 +88,12 @@ module Sec4
   (<-STO : IsPropStrictTotalOrder _≈_ _<_) -- fix a propositional strict total order <
   where
 
-  open import Free.IdempotentCommutativeMonoid.Base
+  open import Free.IdempotentCommutativeMonoid.Base <-STO
 
   Definition-9 = SortedList
+
+  Proposition-10 : (xs ys : SortedList) → SortedList
+  Proposition-10 = _∪_
 
 -------- The line
 
