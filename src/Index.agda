@@ -175,6 +175,12 @@ module Sec5
   open Data.FreshList.InductiveInductive.WithEq
          _≤_ isEquivalence ((λ { refl x → x }) , (λ { refl x → x }))
 
+  Definition-22 : Set
+  Definition-22 = SortedList
+
+  Proposition-23 : SortedList → SortedList → SortedList
+  Proposition-23 = _∪_
+
   Definition-24 : SortedList → X → ℕ
   Definition-24 = count
 
