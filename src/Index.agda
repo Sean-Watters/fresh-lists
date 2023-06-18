@@ -175,6 +175,17 @@ module Sec5
   open Data.FreshList.InductiveInductive.WithEq
          _≤_ isEquivalence ((λ { refl x → x }) , (λ { refl x → x }))
 
+  Definition-24 : SortedList → X → ℕ
+  Definition-24 = count
+
+  Lemma-25 : ((x : X) → (ys : SortedList) → x ∉ ys → count ys x ≡ 0)
+           × ({x y : X}{xs ys : SortedList}{p : x # xs}{q : y # ys} →
+              ((a : X) → count (cons x xs p) a ≡ count (cons y ys q) a) →
+              ((a : X) → count xs a ≡ count ys a))
+  Lemma-25 = (λ x ys → count-lem2 {x} {ys})
+           , (λ {x} {y} {xs} {ys} {p} {q} →
+                 weaken-count-≗ {x} {y} {xs} {ys} {p} {q})
+
   Proposition-26 : (xs ys : SortedList) →
                    ((a : X) → count xs a ≡ count ys a) →
                    ((a : X) → (a ∈ xs) ≃ (a ∈ ys))
