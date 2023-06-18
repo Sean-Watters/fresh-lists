@@ -2,18 +2,30 @@
 
 open import Level
 
+open import Data.Nat hiding (_⊔_)
 open import Data.Product
+open import Data.Sum
+open import Data.Unit
+open import Data.Empty
 
 open import Relation.Nullary
 open import Relation.Binary hiding (Irrelevant)
 open import Relation.Binary.PropositionalEquality
+
+open import Axiom.Extensionality.Propositional
 
 module Index where
 
 _↔_ : ∀ {a b} → (A : Set a) → (B : Set b) → Set _
 A ↔ B = (A → B) × (B → A)
 
+
+open import Category.Base
+
 open import Data.FreshList.InductiveInductive
+
+open import Free.MysteryStructure.Base
+
 
 Definition-1 = List#
 
@@ -39,3 +51,17 @@ Definition-6 : {n m : Level} {X : Set n} (R : X → X → Set m)
              → {_≈_ : X → X → Set m} (≈-isEq : IsEquivalence _≈_) (R-resp-≈ : R Respects₂ _≈_)
              → X → List# R → Set (n ⊔ m)
 Definition-6 = WithEq._∈_
+
+
+-------- The line
+
+Proposition-36 : (ext : Extensionality _ _) →
+                 (A : Set) → (A-is-set : {x y : A} → Irrelevant (x ≡ y)) →
+                 Iso TYPE (List# {A = A} _≡_)
+                          (⊤ ⊎ (A × (Σ[ n ∈ ℕ ] (NonZero n))))
+Proposition-36 ext A A-is-set =
+  record { to = FL-≡.to A A-is-set
+         ; from = FL-≡.from A A-is-set
+         ; to-from = ext (FL-≡.to-from A A-is-set)
+         ; from-to = ext (FL-≡.from-to A A-is-set)
+         }
