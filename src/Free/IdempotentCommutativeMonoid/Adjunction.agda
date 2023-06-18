@@ -1,7 +1,7 @@
 {-# OPTIONS --safe --without-K  #-}
 module Free.IdempotentCommutativeMonoid.Adjunction where
 
-open import Algebra
+open import Algebra hiding (IdempotentCommutativeMonoid)
 open import Function
 
 open import Data.Product hiding (map)
@@ -13,7 +13,7 @@ open import Induction.WellFounded
 
 open import Relation.Binary hiding (NonEmpty; StrictTotalOrder)
 open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEquivalence)
-open import Relation.Nullary
+open import Relation.Nullary hiding (Irrelevant)
 open import Relation.Nullary.Decidable hiding (map)
 
 open import Data.FreshList.InductiveInductive
@@ -135,6 +135,61 @@ Category.assoc (OICM ext) {A} {B} {C} {D} {f} {g} {h} = eqOicmMorphism ext refl
 Category.identityˡ (OICM ext) {A} {B} {f} = eqOicmMorphism ext refl
 Category.identityʳ (OICM ext) {A} {B} {f} = eqOicmMorphism ext refl
 
+------------------------------------------------------------
+-- The Category of Idempotent Commutative Monoids --
+------------------------------------------------------------
+
+record IdempotentCommutativeMonoid : Set₁ where
+  constructor MkIcm
+  field
+    Carrier : Set
+    _∙_ : Carrier → Carrier → Carrier
+    ε : Carrier
+    proof : IsIdempotentCommutativeMonoid _≡_ _∙_ ε
+    ≡-prop : Irrelevant (_≡_ {A = Carrier})
+open IdempotentCommutativeMonoid
+
+
+record IcmMorphism (A B : IdempotentCommutativeMonoid) : Set where
+  constructor MkIcmMorphism
+  private
+    module A = IdempotentCommutativeMonoid A
+    module B = IdempotentCommutativeMonoid B
+
+  field
+    fun : A.Carrier → B.Carrier
+    preserves-ε : fun (A.ε) ≡ B.ε
+    preserves-∙ : ∀ x y → fun (x A.∙ y) ≡ (fun x) B.∙ (fun y)
+open IcmMorphism
+
+icm-id : ∀ {A} → IcmMorphism A A
+fun icm-id = Function.id
+preserves-ε icm-id = refl
+preserves-∙ icm-id _ _ = refl
+
+icm-comp : ∀ {A B C} → IcmMorphism A B → IcmMorphism B C → IcmMorphism A C
+fun (icm-comp f g) = (fun g) ∘ (fun f)
+preserves-ε (icm-comp f g) = trans (cong (fun g) (preserves-ε f)) (preserves-ε g)
+preserves-∙ (icm-comp f g) _ _ = trans (cong (fun g) (preserves-∙ f _ _)) (preserves-∙ g _ _)
+
+eqIcmMorphism : Extensionality _ _ →
+                 ∀ {A B} → {f g : IcmMorphism A B} → fun f ≡ fun g → f ≡ g
+eqIcmMorphism ext {A} {B} {MkIcmMorphism .f refl p∙} {MkIcmMorphism f q q∙} refl
+  = cong₂ (MkIcmMorphism f) (uipB refl q) (ext λ x → ext λ y → uipB (p∙ x y) (q∙ x y))
+  where
+    uipB : Irrelevant (_≡_ {A = Carrier B})
+    uipB = ≡-prop  B
+
+ICM : Extensionality _ _ → Category
+Category.Obj (ICM ext) = IdempotentCommutativeMonoid
+Category.Hom (ICM ext) = IcmMorphism
+Category.id (ICM ext) = icm-id
+Category.comp (ICM ext) = icm-comp
+Category.assoc (ICM ext) {A} {B} {C} {D} {f} {g} {h} = eqIcmMorphism ext refl
+Category.identityˡ (ICM ext) {A} {B} {f} = eqIcmMorphism ext refl
+Category.identityʳ (ICM ext) {A} {B} {f} = eqIcmMorphism ext refl
+
+
 -----------------------------------------
 -- The Category of Strict Total Orders --
 -----------------------------------------
@@ -164,7 +219,7 @@ open Functor
 
 open IsOrderedIdempotentCommutativeMonoid
 
-FORGET : (ext : Extensionality _ _) → Functor (OICM ext) STO
+FORGET : (@0 ext : Extensionality _ _) → Functor (OICM ext) STO
 act (FORGET _) (MkOicm S _<_ _∙_ ε oicm) = MkSto S _<_ (isSTO oicm)
 fmap (FORGET _) f = fun f
 identity (FORGET _) = refl

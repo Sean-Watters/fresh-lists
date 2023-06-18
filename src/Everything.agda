@@ -36,3 +36,6 @@ open import Free.PointedSet.Adjunction
 
 -- Freshlists for equality relation
 open import Free.MysteryStructure.Base
+
+-- Equivalence between Ordering Principle and Set ≃ STO
+open import OrderingPrinciple.Base

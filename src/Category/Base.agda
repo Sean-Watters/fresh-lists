@@ -167,14 +167,16 @@ _⊣_ = Adjunction
 -- The category of Sets
 ----------------------------
 
-SET : Category
-Category.Obj SET = Set
-Category.Hom SET A B = A -> B
-Category.id SET = Fun.id
-Category.comp SET f g = g Fun.∘′ f
-Category.assoc SET = refl
-Category.identityˡ SET = refl
-Category.identityʳ SET = refl
+
+-- Note: these are really wild categories, so TYPE is a category (not an ∞-category)
+TYPE : Category
+Category.Obj TYPE = Set
+Category.Hom TYPE A B = A -> B
+Category.id TYPE = Fun.id
+Category.comp TYPE f g = g Fun.∘′ f
+Category.assoc TYPE = refl
+Category.identityˡ TYPE = refl
+Category.identityʳ TYPE = refl
 
 record hSet : Set₁ where
   constructor hset
@@ -221,33 +223,13 @@ record Monad (C : Category) : Set₁ where
   open Functor M
 
 
----------------------------
--- Equivalence of Cats
----------------------------
+--------------------------------
+-- Isomorphisms in a category --
+--------------------------------
 
-record _≅_ (C D : Category) : Set₁ where
-  constructor MkCatIso
+record Iso (C : Category)(X Y : Obj C) : Set₁ where
   field
-    S : Functor C D
-    T : Functor D C
-    idL : compFunctor S T ≡ idFunctor
-    idR : compFunctor T S ≡ idFunctor
-open _≅_
-
------------------
--- Anafunctors --
------------------
-
-record Anafunctor (C D : Category) : Set₁ where
-  constructor MkAnafunctor
-  field
-    SpecF : Set    -- Set of specifications of F
-    σ : SpecF → Obj C  -- An object of C for each spec
-    τ : SpecF → Obj D  -- An object of D for each spec
-
-  -- What it means for y to be the specified object of F at x.
-  specified : (x : Obj C) (y : Obj D) → Set₁
-  specified x y = Σ[ s ∈ SpecF ] (x ≡ σ s) × (y ≡ τ s) -- s "specifies" y at x
-
-  field
-    map : (s t : SpecF) → Hom C (σ s) (σ t) → Hom D (τ s) (τ t)
+    to : Hom C X Y
+    from : Hom C Y X
+    to-from : comp C to from ≡ id C
+    from-to : comp C from to ≡ id C

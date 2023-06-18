@@ -123,7 +123,7 @@ Category.identityʳ AT = refl
 
 open Functor
 
-FORGET : (ext : Extensionality _ _) → Functor (LRB ext) AT
+FORGET : (@0 ext : Extensionality _ _) → Functor (LRB ext) AT
 act (FORGET _) (MkLrb S _¬≈_ _∙_ ε lrb) = MkAT S _¬≈_ (IsLeftRegularMonoidWithPropDecApartness.isApartness lrb)
 fmap (FORGET _) f = fun f
 identity (FORGET _) = refl
