@@ -63,29 +63,25 @@ Lemma-4 = #-trans
 Definition-5 = Any
 
 Definition-6 : {n m : Level} {X : Set n} (R : X → X → Set m)
-             → {_≈_ : X → X → Set m} (≈-isEq : IsEquivalence _≈_) (R-resp-≈ : R Respects₂ _≈_)
              → X → List# R → Set (n ⊔ m)
-Definition-6 = WithEq._∈_
+Definition-6 R = WithEq._∈_ R isEquivalence ((λ {refl p → p}) , λ {refl p → p})
 
--- Maybe ought to show both directions of iff separately; types seem to get messy otherwise
 Lemma-7 : {A : Set} {R : A → A → Set}
         → (a : A) (xs : List# R) →
-        let _∈A_ = WithEq._∈_ R isEquivalence ((λ {refl p → p}) , λ {refl p → p})
-        in (a # xs) ↔ (∀ {b : A} → (b ∈A xs) → R a b)
-Lemma-7 {R = R} a xs = {!WithEq.#-trans' R isEquivalence ((λ {refl p → p}) , λ {refl p → p})!} , {!!}
+        let open WithEq R isEquivalence ((λ {refl p → p}) , λ {refl p → p})
+        in (a # xs) ↔ (∀ {b : A} → (b ∈ xs) → R a b)
+Lemma-7 {R = R} a xs = (λ a#xs {b} → #-trans' {a} {b} {xs} a#xs)
+                     , #-trans'-iff
+  where open WithEq R isEquivalence ((λ {refl p → p}) , λ {refl p → p})
 
-Proposition-8a : {X Y : Set} → {R : X → X → Set}
-               → (X → Y → Y) → Y → List# R → Y
-Proposition-8a = foldr
-
-
-Proposition-8b : {X Y : Set} → {R : X → X → Set}
-               → (h : List# R → Y)
-               → (f : X → Y → Y) (e : Y)
-               → (h [] ≡ e)
-               → (∀ x xs (fx : x # xs) → h (cons x xs fx) ≡ f x (h xs))
-               → foldr f e ≗ h
-Proposition-8b = foldr-universal
+Proposition-8 : {X Y : Set} → {R : X → X → Set}
+              → Σ[ foldr ∈ ((X → Y → Y) → Y → List# R → Y) ]
+                 ((h : List# R → Y) →
+                 (f : X → Y → Y) (e : Y) →
+                 (h [] ≡ e) →
+                 (∀ x xs (fx : x # xs) → h (cons x xs fx) ≡ f x (h xs)) →
+                 foldr f e ≗ h)
+Proposition-8 = (foldr , foldr-universal)
 
 
 ---------------
@@ -94,7 +90,7 @@ Proposition-8b = foldr-universal
 
 module Sec4
   {X : Set} {_<_ : X → X → Set}
-  (<-STO : IsPropStrictTotalOrder _≡_ _<_) -- fix a propositional strict total order <
+  (<-STO : IsPropStrictTotalOrder _≡_ _<_)
   where
 
   open import Free.IdempotentCommutativeMonoid.Base <-STO
@@ -106,12 +102,10 @@ module Sec4
   Proposition-10 : (xs ys : SortedList) → SortedList
   Proposition-10 = _∪_
 
-  Lemma-11a : {a x : X} {xs : SortedList} {fx : x # xs} -> a < x -> a ∉ (cons x xs fx)
-  Lemma-11a = ext-lem
-
-  --seems to not be used in theorem 12? am I blind?
-  Lemma-11b : {!!}
-  Lemma-11b = {!!}
+  Lemma-11 : {a x : X} {xs : SortedList} {p : x # xs} ->
+             (a < x -> a ∉ (cons x xs p))
+           × (a # xs → a ∉ xs)
+  Lemma-11 = (ext-lem , λ a#xs a∈xs → all<-irrefl a∈xs (fresh→all a#xs))
 
   Theorem-12 : (xs ys : SortedList)
              -> (∀ x -> ((x ∈ xs) -> (x ∈ ys)) × ((x ∈ ys) -> (x ∈ xs)))

@@ -181,24 +181,24 @@ module WithIrr
 
 -- Fix an R and some notion of equality.
 module WithEq
-    {n m : Level}
+    {n m k : Level}
     {X : Set n}
     (R : X → X → Set m)
-    {_≈_ : X → X → Set m}
+    {_≈_ : X → X → Set k}
     (≈-isEq : IsEquivalence _≈_)
     (R-resp-≈ : R Respects₂ _≈_)
     where
 
-    _∈_ : X → List# R → Set (n ⊔ m)
+    _∈_ : X → List# R → Set (n ⊔ m ⊔ k)
     x ∈ xs = Any (x ≈_) xs
 
-    _∉_ : X → List# R → Set (n ⊔ m)
+    _∉_ : X → List# R → Set (n ⊔ m ⊔ k)
     x ∉ xs = ¬ (x ∈ xs)
 
-    _⊆_ : (xs ys : List# R) -> Set (n ⊔ m)
+    _⊆_ : (xs ys : List# R) -> Set (n ⊔ m ⊔ k)
     xs ⊆ ys = ∀ {a} -> a ∈ xs -> a ∈ ys
 
-    _⊈_ : (xs ys : List# R) -> Set (n ⊔ m)
+    _⊈_ : (xs ys : List# R) -> Set (n ⊔ m ⊔ k)
     xs ⊈ ys = ¬ (xs ⊆ ys)
 
     open IsEquivalence renaming (refl to ≈-refl)
