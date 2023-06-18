@@ -2,6 +2,8 @@
 
 open import Level
 
+open import Algebra.Structure.OICM
+
 open import Data.Nat hiding (_⊔_)
 open import Data.Product
 open import Data.Sum
@@ -26,6 +28,9 @@ open import Data.FreshList.InductiveInductive
 
 open import Free.MysteryStructure.Base
 
+---------------
+-- Section 3 --
+---------------
 
 Definition-1 = List#
 
@@ -53,6 +58,39 @@ Definition-6 : {n m : Level} {X : Set n} (R : X → X → Set m)
              → X → List# R → Set (n ⊔ m)
 Definition-6 = WithEq._∈_
 
+-- Maybe ought to show both directions of iff separately; types seem to get messy otherwise
+Lemma-7 : {A : Set} {R : A → A → Set}
+        → (a : A) (xs : List# R) →
+        let _∈A_ = WithEq._∈_ R isEquivalence ((λ {refl p → p}) , λ {refl p → p})
+        in (a # xs) ↔ (∀ {b : A} → (b ∈A xs) → R a b)
+Lemma-7 {R = R} a xs = {!WithEq.#-trans' R isEquivalence ((λ {refl p → p}) , λ {refl p → p})!} , {!!}
+
+Proposition-8a : {X Y : Set} → {R : X → X → Set}
+               → (X → Y → Y) → Y → List# R → Y
+Proposition-8a = foldr
+
+
+Proposition-8b : {X Y : Set} → {R : X → X → Set}
+               → (h : List# R → Y)
+               → (f : X → Y → Y) (e : Y)
+               → (h [] ≡ e)
+               → (∀ x xs (fx : x # xs) → h (cons x xs fx) ≡ f x (h xs))
+               → foldr f e ≗ h
+Proposition-8b = foldr-universal
+
+
+---------------
+-- Section 4 --
+---------------
+
+module Sec4
+  {X : Set} {_≈_ : X → X → Set} {_<_ : X → X → Set}
+  (<-STO : IsPropStrictTotalOrder _≈_ _<_) -- fix a propositional strict total order <
+  where
+
+  open import Free.IdempotentCommutativeMonoid.Base
+
+  Definition-9 = SortedList
 
 -------- The line
 
