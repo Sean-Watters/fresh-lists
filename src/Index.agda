@@ -1,11 +1,17 @@
 {-# OPTIONS --safe --without-K #-}
 
 open import Level
+
+open import Data.Product
+
 open import Relation.Nullary
 open import Relation.Binary hiding (Irrelevant)
 open import Relation.Binary.PropositionalEquality
 
 module Index where
+
+_↔_ : ∀ {a b} → (A : Set a) → (B : Set b) → Set _
+A ↔ B = (A → B) × (B → A)
 
 open import Data.FreshList.InductiveInductive
 
