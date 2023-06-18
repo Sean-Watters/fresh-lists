@@ -26,6 +26,9 @@ open import Category.Base
 
 open import Data.FreshList.InductiveInductive
 
+open import Free.Monoid.Adjunction as Mon
+open import Free.PointedSet.Adjunction as Pointed
+open import Free.LeftRegularMonoid.Adjunction as LRMon
 open import Free.MysteryStructure.Base
 
 ---------------
@@ -96,6 +99,23 @@ module Sec4
   Proposition-10 = _∪_
 
 -------- The line
+
+---------------
+-- Section 6 --
+---------------
+
+Proposition-32 : (ext : Extensionality _ _) → FREEMONOID ext ⊣ (Mon.FORGET ext)
+Proposition-32 = MonoidAdjunction
+
+Proposition-33 : (ext : Extensionality _ _) → (MAYBE ext) ⊣ Pointed.FORGET
+Proposition-33 = PSetAdjunction
+
+Definition-34 : Set₁
+Definition-34 = LeftRegularMonoidWithPropDecApartness
+
+Proposition-35 : (ext : Extensionality _ _) →
+                 (UNIQUELIST ext) ⊣ (LRMon.FORGET ext)
+Proposition-35 = UL-Adjunction
 
 Proposition-36 : (ext : Extensionality _ _) →
                  (A : Set) → (A-is-set : {x y : A} → Irrelevant (x ≡ y)) →
