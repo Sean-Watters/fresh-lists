@@ -30,7 +30,7 @@ open import Category.Base
 
 open import Data.FreshList.InductiveInductive
 
-
+open import Free.IdempotentCommutativeMonoid.Adjunction as IdCMon
 open import Free.CommutativeMonoid.Adjunction as CMon
 open import Free.Monoid.Adjunction as Mon
 open import Free.PointedSet.Adjunction as Pointed
@@ -139,25 +139,25 @@ module Sec4
 module _ where
   open import Free.IdempotentCommutativeMonoid.Base
   open import Free.IdempotentCommutativeMonoid.Properties
-  open import Free.IdempotentCommutativeMonoid.Adjunction
-  open PropStrictTotalOrder
+
+  open IdCMon.PropStrictTotalOrder
 
   Definition-18 : {X Y : PropStrictTotalOrder}
                 → (Carrier X → Carrier Y)
                 → SortedList (proof X)
                 → SortedList (proof Y)
-  Definition-18 = SL-map
+  Definition-18 {X} {Y} = IdCMon.SL-map {X} {Y}
 
   Lemma-19 : {X Y : PropStrictTotalOrder} →
            let _∪X_ = _∪_ (proof X)
                _∪Y_ = _∪_ (proof Y) in
            {f : Carrier X → Carrier Y} →
            (xs ys : SortedList (proof X)) →
-           SL-map {X} {Y} f (xs ∪X  ys) ≡ (SL-map {X} {Y} f xs) ∪Y (SL-map {X} {Y} f ys)
-  Lemma-19 = SL-map-preserves-∪
+           IdCMon.SL-map {X} {Y} f (xs ∪X  ys) ≡ (IdCMon.SL-map {X} {Y} f xs) ∪Y (IdCMon.SL-map {X} {Y} f ys)
+  Lemma-19 = IdCMon.SL-map-preserves-∪
 
   Theorem-20 : (ext : Extensionality _ _) → Functor STO (OICM ext)
-  Theorem-20 = SORTEDLIST
+  Theorem-20 = IdCMon.SORTEDLIST
 
 -------- The line
 
