@@ -1,31 +1,37 @@
 {-# OPTIONS --safe --without-K #-}
+----------------------------------------------------------------------------------------------------
+-- Index of the Formalized Proofs in the paper
+--
+--     A Fresh Look at Commutativity: Free Algebraic Structures via Fresh ListS
+--
+--         Submitted to APLAS'23.
+----------------------------------------------------------------------------------------------------
+--
+-- Source files can be found at
+--
+--   https://github.com/aplas23-freecomm/freecomm-agda
+--
+-- See `README.md` for versions of Agda and the standard library that these
+-- files are tested with.
+
+module index where
 
 open import Level
-
-open import Algebra.Structure.OICM
-open import Algebra.Structures
-
 open import Data.Nat hiding (_⊔_)
 open import Data.Product
 open import Data.Sum
 open import Data.Unit
 open import Data.Empty
-
 open import Function hiding (_↔_)
+open import Algebra.Structures
 
 open import Relation.Nullary
 open import Relation.Binary hiding (Irrelevant)
 open import Relation.Binary.PropositionalEquality
-
 open import Axiom.Extensionality.Propositional
 
-module Index where
-
-_↔_ : ∀ {a b} → (A : Set a) → (B : Set b) → Set _
-A ↔ B = (A → B) × (B → A)
-
 open import Relation.Binary.Isomorphism
-
+open import Algebra.Structure.OICM
 open import Category.Base
 
 open import Data.FreshList.InductiveInductive
@@ -36,6 +42,18 @@ open import Free.Monoid.Adjunction as Mon
 open import Free.PointedSet.Adjunction as Pointed
 open import Free.LeftRegularMonoid.Adjunction as LRMon
 open import Free.MysteryStructure.Base
+
+_↔_ : ∀ {a b} → (A : Set a) → (B : Set b) → Set _
+A ↔ B = (A → B) × (B → A)
+
+-- The following file gives an overview of the development
+open import Everything
+
+----------------------
+-- Sections 1 and 2 --
+----------------------
+
+-- No formalisable content
 
 ---------------
 -- Section 3 --
@@ -161,6 +179,7 @@ module _ where
   Proposition-21b : IsEquiv FORGETSTO → OrderingPrinciple
   Proposition-21b = STO≃Set-gives-OP
 
+
 ---------------
 -- Section 5 --
 ---------------
@@ -218,6 +237,7 @@ Proposition-31 : (ext : Extensionality _ _) →
                  (CMon.SORTEDLIST ext) ⊣ (CMon.FORGET ext)
 Proposition-31 = CMon.SL-Adjunction
 
+
 ---------------
 -- Section 6 --
 ---------------
@@ -243,3 +263,9 @@ Proposition-36 A A-is-set =
          ; to-from = λ x → sym (FL-≡.to-from A A-is-set x)
          ; from-to = λ xs → sym (FL-≡.from-to A A-is-set xs)
          }
+
+---------------
+-- Section 7 --
+---------------
+
+-- No formalisable content
