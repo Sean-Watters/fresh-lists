@@ -2,7 +2,7 @@
 ----------------------------------------------------------------------------------------------------
 -- Index of the Formalized Proofs in the paper
 --
---     A Fresh Look at Commutativity: Free Algebraic Structures via Fresh ListS
+--     A Fresh Look at Commutativity: Free Algebraic Structures via Fresh Lists
 --
 --         Submitted to APLAS'23.
 ----------------------------------------------------------------------------------------------------
