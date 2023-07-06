@@ -97,7 +97,6 @@ module _
         h (cons x xs x#xs)
       ∎ where open ≡-Reasoning
 
-
 {-
     -- Concatenation of fresh lists.
     -- Requires a "gluability" condition proving that the two lists may actually be concatenated
@@ -143,6 +142,11 @@ module _
                        {p q : R x y} → {ps qs : x # xs} →
                        _#_._∷_ {x#xs = y#xs} p ps ≡ q ∷ qs → p ≡ q
     ∷-injective-head refl = refl
+
+    open import Data.List
+    toList : List# R → List X
+    toList [] = []
+    toList (cons x xs _) = x ∷ (toList xs)
 
 -- Fix a proof-irrelevant R
 module WithIrr

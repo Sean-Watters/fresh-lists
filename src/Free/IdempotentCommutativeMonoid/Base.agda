@@ -1,11 +1,13 @@
 {-# OPTIONS --safe --without-K #-}
 open import Relation.Binary
 open import Data.FreshList.InductiveInductive
+open import Data.List using (List; []; _∷_)
 open import Data.Nat renaming (_<_ to _<ℕ_)
 open import Data.Nat.Properties renaming (<-trans to <ℕ-trans)
 open import Data.Nat.Induction
 open import Data.Sum
 open import Function
+open import Relation.Nullary.Decidable
 open import Relation.Binary.PropositionalEquality
 open import Induction.WellFounded
 
@@ -22,6 +24,7 @@ private
   <-tri = IsPropStrictTotalOrder.compare <-STO
   <-trans = IsPropStrictTotalOrder.trans <-STO
   <-resp-≈ = IsPropStrictTotalOrder.<-resp-≈ <-STO
+  _<'?_ = IsPropStrictTotalOrder._<?_ <-STO
   open WithEq _<_ ≈-Eq <-resp-≈
 
 SortedList : Set
@@ -56,3 +59,13 @@ xs ∪ ys = union xs ys (<-wellFounded (length xs + length ys))
 
 insert : X → SortedList → SortedList
 insert x xs = cons x [] [] ∪ xs
+
+_∩_ : SortedList -> SortedList -> SortedList
+[] ∩ ys = []
+_∩_ (cons x xs p) ys with any? (x <'?_) ys
+... | yes _ = insert x (xs ∩ ys)
+... | no  _ = xs ∩ ys
+
+insertion-sort : List X → SortedList
+insertion-sort [] = []
+insertion-sort (x ∷ xs) = insert x (insertion-sort xs)

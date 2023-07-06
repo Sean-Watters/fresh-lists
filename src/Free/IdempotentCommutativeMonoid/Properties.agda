@@ -13,14 +13,16 @@ open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
 open import Data.Unit
 open import Data.Empty
-open import Data.Nat hiding (_<?_; compare)  renaming (_<_ to _<ℕ_)
+open import Data.Nat hiding (_<?_; compare) renaming (_<_ to _<ℕ_)
 open import Data.Nat.Properties hiding (<-trans; <-asym; <-irrefl; _<?_)
 open import Data.Nat.Induction
+open import Data.Fin using (Fin) renaming (zero to fzero; suc to fsuc)
 
 open import Function
 open import Induction.WellFounded
 
 open import Relation.Binary hiding (NonEmpty; StrictTotalOrder)
+open import Relation.Binary.Isomorphism
 open import Relation.Binary.PropositionalEquality hiding (isEquivalence)
 open import Relation.Nullary hiding (Irrelevant)
 open import Relation.Nullary.Decidable hiding (map)
@@ -44,7 +46,7 @@ private
   _<?_     = IsPropStrictTotalOrder._<?_ <-STO
   _≈?_     = IsPropStrictTotalOrder._≟_ <-STO
   compare  = IsPropStrictTotalOrder.compare <-STO
-
+  open import Relation.Unary.Finiteness (record {Carrier = X; _≈_ = _≈_; isEquivalence = ≈-Eq}) renaming (Enumerated to isEnumerated-X)
 
 -- Since < is transitive, it suffices to know that z < head to cons z,
 cons-head-< : ∀ {x y} {xs : SortedList} {fx : x # xs} -> y < x -> All (y <_) (cons x xs fx)
@@ -201,6 +203,9 @@ module ≈L-Reasoning where
   syntax step-≈  x y≈z x≈y = x ≈⟨  x≈y ⟩ y≈z
   syntax step-≈˘ x y≈z y≈x = x ≈˘⟨ y≈x ⟩ y≈z
 
+nil≉cons : {x : X} {xs : SortedList} {x#xs : x # xs} → ¬ ([] ≈L cons x xs x#xs)
+nil≉cons ()
+
 
 ------------------------
 -- Preservation of ≈L --
@@ -263,29 +268,6 @@ extensionality (cons x xs fx) (cons y ys fy) p with compare x y
 ... | tri< lt ¬eq ¬gt = ⊥-elim (ext-lem (lt) (proj₁ (p x) (here ≈-refl)))
 ... | tri> ¬lt ¬eq gt = ⊥-elim (ext-lem (gt) (proj₂ (p y) (here ≈-refl)))
 
-
------------------------------
--- Intersection (not used) --
------------------------------
-
--- Intersection of sorted lists
-_∩_ : SortedList -> SortedList -> SortedList
-[] ∩ ys = []
-_∩_ (cons x xs p) ys with any? (x <?_) ys
-... | yes _ = insert x (xs ∩ ys)
-... | no  _ = xs ∩ ys
-
-
------------------------
--- Insert Properties --
------------------------
-
-insert-consview : ∀ {x} {xs : SortedList} -> (fx : x # xs) -> insert x xs ≡ cons x xs fx
-insert-consview {xs = []} [] = refl
-insert-consview {x} {xs = cons y ys y#ys} x#xs with compare x y
-... | tri< _ _ _ = WithIrr.cons-cong _<_ (IsPropStrictTotalOrder.<-prop <-STO) refl refl
-insert-consview {x} {cons y ys y#ys} (x<y ∷ x#xs) | tri≈ _ x≈y _ = ⊥-elim (<-irrefl x≈y x<y)
-insert-consview {x} {cons y ys y#ys} (x<y ∷ x#ys) | tri> _ _ y<x = ⊥-elim (<-irrefl (≈-refl {x}) (<-trans x<y y<x))
 
 -----------------------
 -- Length Properties --
@@ -418,6 +400,25 @@ proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
     ... | inj₁ x∈ys = ∈∪ˡ (∈∪ʳ xs x∈ys) zs
     ... | inj₂ x∈zs = ∈∪ʳ (xs ∪ ys) x∈zs
 
+-----------------------
+-- Insert Properties --
+-----------------------
+
+insert-consview : ∀ {x} {xs : SortedList} -> (fx : x # xs) -> insert x xs ≡ cons x xs fx
+insert-consview {xs = []} [] = refl
+insert-consview {x} {xs = cons y ys y#ys} x#xs with compare x y
+... | tri< _ _ _ = WithIrr.cons-cong _<_ (IsPropStrictTotalOrder.<-prop <-STO) refl refl
+insert-consview {x} {cons y ys y#ys} (x<y ∷ x#xs) | tri≈ _ x≈y _ = ⊥-elim (<-irrefl x≈y x<y)
+insert-consview {x} {cons y ys y#ys} (x<y ∷ x#ys) | tri> _ _ y<x = ⊥-elim (<-irrefl (≈-refl {x}) (<-trans x<y y<x))
+
+∈insertˡ : (x : X) (xs : SortedList) → x ∈ (insert x xs)
+∈insertˡ x xs = ∈∪ˡ (here ≈-refl) xs
+
+insert∈ : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ a ∈ xs
+insert∈ {a} {x} {xs} p with ∪∈ {a} {cons x [] []} {xs} p
+... | inj₁ (here p) = inj₁ p
+... | inj₂ p = inj₂ p
+
 ----------------------------
 -- Lexicographic Ordering --
 ----------------------------
@@ -490,3 +491,134 @@ IsIdempotentCommutativeMonoid.idem isIdemCommMonoid = ∪-idempotent
 isOICM : IsOrderedIdempotentCommutativeMonoid _≈L_ _<-lex_ _∪_ []
 IsOrderedIdempotentCommutativeMonoid.isICM isOICM = isIdemCommMonoid
 IsOrderedIdempotentCommutativeMonoid.isSTO isOICM = <-lex-STO
+
+
+-----------------------
+-- Properties of _∩_ --
+-----------------------
+
+∈∩ˡ : {x : X} {xs ys : SortedList} → x ∈ (xs ∩ ys) → x ∈ xs
+∈∩ˡ {a} {cons x xs x#xs} {ys} p with any? (x <?_) ys
+... | no ¬q = there $ ∈∩ˡ {a} {xs} {ys} p
+... | yes q with insert∈ {a} {x} {xs ∩ ys} p
+... | inj₁ r = here r
+... | inj₂ r = there $ ∈∩ˡ {a} {xs} {ys} r
+
+∩-assoc : Associative _≈L_ _∩_
+∩-assoc xs ys zs = extensionality _ _ λ x → f x , g x where
+  f : (x : X) → x ∈ ((xs ∩ ys) ∩ zs) → x ∈ (xs ∩ (ys ∩ zs))
+  f = {!!}
+
+  g : (x : X) → x ∈ (xs ∩ (ys ∩ zs)) → x ∈ ((xs ∩ ys) ∩ zs)
+  g = {!!}
+
+∩-comm : Commutative _≈L_ _∩_
+∩-comm = {!!}
+
+∩-preserves-≈L : ∀ {x y u v} → x ≈L y → u ≈L v → (x ∩ u) ≈L (y ∩ v)
+∩-preserves-≈L {xs} {ys} {us} {vs} p q = extensionality (xs ∩ us) (ys ∩ vs) λ x → f x , g x where
+  f : (x : X) → x ∈ (xs ∩ us) → x ∈ (ys ∩ vs)
+  f = {!!}
+
+  g : (x : X) → x ∈ (ys ∩ vs) → x ∈ (xs ∩ us)
+  g = {!!}
+
+∩-annihilatesˡ : LeftZero _≈L_ [] _∩_
+∩-annihilatesˡ _ = []
+
+∩-annihilatesʳ : RightZero _≈L_ [] _∩_
+∩-annihilatesʳ [] = []
+∩-annihilatesʳ (cons x xs x#xs) = ∩-annihilatesʳ xs
+
+∩-isSemigroup : IsSemigroup _≈L_ _∩_
+IsMagma.isEquivalence (IsSemigroup.isMagma ∩-isSemigroup) = isEquivalence
+IsMagma.∙-cong (IsSemigroup.isMagma ∩-isSemigroup) = ∩-preserves-≈L
+IsSemigroup.assoc ∩-isSemigroup = ∩-assoc
+
+-- if there exists an element which is not in xs, then xs cannot be the unit of ∩
+∩-id-lem : (xs : SortedList) → (∃[ x ] x ∉ xs) → ¬ (LeftIdentity _≈L_ xs _∩_)
+∩-id-lem xs (x , x∉xs) id = x∉xs (∈∩ˡ (≈L-preserves-∈ (∈insertˡ x xs) (≈L-sym (id (insert x xs)))))
+
+-- Relationship between _∩_ having a unit, and finiteness of the carrier set.
+-- TODO: repeat for right unit via commutativity?
+module _ where
+  open import Data.List as L
+  open import Data.List.Membership.Setoid as L using ()
+  open import Data.List.Relation.Unary.Any
+  _∈'_ = L._∈_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
+
+  ∩-id→X-fin : (Σ[ ε ∈ SortedList ] LeftIdentity _≈L_ ε _∩_) → isEnumerated-X
+  ∩-id→X-fin (xs , id) = {!!}
+
+  X-fin→∩-id : isEnumerated-X → (Σ[ ε ∈ SortedList ] LeftIdentity _≈L_ ε _∩_)
+  X-fin→∩-id (xs , isEnum) = {!!}
+
+  -- Intersection has a unit iff X is finite
+  -- TODO: switch to a less annoying def of ↔ ?
+  ∩-id↔X-fin : (Σ[ ε ∈ SortedList ] LeftIdentity _≈L_ ε _∩_) ↔ isEnumerated-X
+  ∩-id↔X-fin = {!!}
+
+----------------------------------------
+-- Properties of _∩_ and _∪_ together --
+----------------------------------------
+
+∩-distrib-∪ˡ : _DistributesOverˡ_ _≈L_ _∩_ _∪_
+∩-distrib-∪ˡ xs ys zs = extensionality _ _ λ x → f x , g x where
+  f : (x : X) → x ∈ (xs ∩ (ys ∪ zs)) → x ∈ ((xs ∩ ys) ∪ (xs ∩ zs))
+  f = {!!}
+
+  g : (x : X) → x ∈ ((xs ∩ ys) ∪ (xs ∩ zs)) → x ∈ (xs ∩ (ys ∪ zs))
+  g = {!!}
+
+∩-distrib-∪ʳ : _DistributesOverʳ_ _≈L_ _∩_ _∪_
+∩-distrib-∪ʳ xs ys zs = extensionality _ _ λ x → f x , g x where
+  f : (x : X) → x ∈ ((ys ∪ zs) ∩ xs) → x ∈ ((ys ∩ xs) ∪ (zs ∩ xs))
+  f = {!!}
+
+  g : (x : X) → x ∈ ((ys ∩ xs) ∪ (zs ∩ xs)) → x ∈ ((ys ∪ zs) ∩ xs)
+  g = {!!}
+
+isPreSemiring : IsSemiringWithoutOne _≈L_ _∪_ _∩_ []
+IsSemiringWithoutOne.+-isCommutativeMonoid isPreSemiring = isCommMonoid
+IsSemiringWithoutOne.*-cong isPreSemiring = ∩-preserves-≈L
+IsSemiringWithoutOne.*-assoc isPreSemiring = ∩-assoc
+IsSemiringWithoutOne.distrib isPreSemiring = ∩-distrib-∪ˡ , ∩-distrib-∪ʳ
+IsSemiringWithoutOne.zero isPreSemiring = ∩-annihilatesˡ , ∩-annihilatesʳ
+
+-- TODO: isCommutativePreSemiring
+
+-------------------------------------------------
+-- Properties of _∩_ with a Finite Carrier Set --
+-------------------------------------------------
+
+module WithFinCarrier (isEnum : isEnumerated-X) where
+  ∩-Unit : SortedList
+  ∩-Unit = insertion-sort (proj₁ isEnum)
+
+  ∩-idˡ : LeftIdentity _≈L_ ∩-Unit _∩_
+  ∩-idˡ = {!!}
+
+  ∩-idʳ : RightIdentity _≈L_ ∩-Unit _∩_
+  ∩-idʳ = {!!}
+
+  isSemiring : IsSemiring _≈L_ _∪_ _∩_ [] ∩-Unit
+  IsSemiringWithoutAnnihilatingZero.+-isCommutativeMonoid (IsSemiring.isSemiringWithoutAnnihilatingZero isSemiring) = isCommMonoid
+  IsSemiringWithoutAnnihilatingZero.*-cong (IsSemiring.isSemiringWithoutAnnihilatingZero isSemiring) = ∩-preserves-≈L
+  IsSemiringWithoutAnnihilatingZero.*-assoc (IsSemiring.isSemiringWithoutAnnihilatingZero isSemiring) = ∩-assoc
+  IsSemiringWithoutAnnihilatingZero.*-identity (IsSemiring.isSemiringWithoutAnnihilatingZero isSemiring) = ∩-idˡ , ∩-idʳ
+  IsSemiringWithoutAnnihilatingZero.distrib (IsSemiring.isSemiringWithoutAnnihilatingZero isSemiring) = ∩-distrib-∪ˡ , ∩-distrib-∪ʳ
+  IsSemiring.zero isSemiring = ∩-annihilatesˡ , ∩-annihilatesʳ
+
+  isCommSemiring : IsCommutativeSemiring _≈L_ _∪_ _∩_ [] ∩-Unit
+  IsCommutativeSemiring.isSemiring isCommSemiring = isSemiring
+  IsCommutativeSemiring.*-comm isCommSemiring = ∩-comm
+
+---------------------
+-- Properties of ⊆ --
+---------------------
+
+⊆-isDTO : {!!}
+⊆-isDTO = {!!}
+
+⊆-isLattice : {!!}
+⊆-isLattice = {!!}
