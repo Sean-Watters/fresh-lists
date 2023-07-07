@@ -411,8 +411,14 @@ insert-consview {x} {xs = cons y ys y#ys} x#xs with compare x y
 insert-consview {x} {cons y ys y#ys} (x<y ∷ x#xs) | tri≈ _ x≈y _ = ⊥-elim (<-irrefl x≈y x<y)
 insert-consview {x} {cons y ys y#ys} (x<y ∷ x#ys) | tri> _ _ y<x = ⊥-elim (<-irrefl (≈-refl {x}) (<-trans x<y y<x))
 
+∈insertˡ' : {a x : X} {xs : SortedList} → a ≈ x → a ∈ (insert x xs)
+∈insertˡ' {xs = xs} p = ∈∪ˡ (here p) xs
+
 ∈insertˡ : (x : X) (xs : SortedList) → x ∈ (insert x xs)
 ∈insertˡ x xs = ∈∪ˡ (here ≈-refl) xs
+
+∈insertʳ : {a x : X} {xs : SortedList} → a ∈ xs → a ∈ (insert x xs)
+∈insertʳ {x = x} = ∈∪ʳ (cons x [] [])
 
 insert∈ : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ a ∈ xs
 insert∈ {a} {x} {xs} p with ∪∈ {a} {cons x [] []} {xs} p
@@ -497,41 +503,47 @@ IsOrderedIdempotentCommutativeMonoid.isSTO isOICM = <-lex-STO
 -- Properties of _∩_ --
 -----------------------
 
-∈∩ˡ : {x : X} {xs ys : SortedList} → x ∈ (xs ∩ ys) → x ∈ xs
+-- Left elimination principle for membership in an intersection
+∈∩ˡ : {a : X} {xs ys : SortedList} → a ∈ (xs ∩ ys) → a ∈ xs
 ∈∩ˡ {a} {cons x xs x#xs} {ys} p with any? (x ≈?_) ys
 ... | no ¬q = there $ ∈∩ˡ {a} {xs} {ys} p
 ... | yes q with insert∈ {a} {x} {xs ∩ ys} p
 ... | inj₁ r = here r
 ... | inj₂ r = there $ ∈∩ˡ {a} {xs} {ys} r
 
-∈∩ʳ : {x : X} {xs ys : SortedList} → x ∈ (xs ∩ ys) → x ∈ ys
+-- Right elimination principle for membership in an intersection
+∈∩ʳ : {a : X} {xs ys : SortedList} → a ∈ (xs ∩ ys) → a ∈ ys
 ∈∩ʳ {a} {cons x xs x#xs} {ys} p with any? (x ≈?_) ys
 ... | no ¬q = ∈∩ʳ {a} {xs} {ys} p
 ... | yes q with insert∈ {a} {x} {xs ∩ ys} p
 ... | inj₁ r = ≈-preserves-∈ q (≈-sym r)
 ... | inj₂ r = ∈∩ʳ {a} {xs} {ys} r
 
-∩∈ : {x : X} {xs ys : SortedList} → x ∈ xs → x ∈ ys → x ∈ (xs ∩ ys)
-∩∈ = {!!}
+-- Introduction principle for membership in an intersection
+∩∈ : {a : X} {xs ys : SortedList} → a ∈ xs → a ∈ ys → a ∈ (xs ∩ ys)
+∩∈ {a} {cons x xs x#xs} {ys} p q with any? (x ≈?_) ys
+∩∈ {a} {cons x xs x#xs} {ys} (here a≈x) q | yes u = ∈insertˡ' {xs = xs ∩ ys} a≈x
+∩∈ {a} {cons x xs x#xs} {ys} (there p) q | yes u = ∈insertʳ (∩∈ p q)
+∩∈ {a} {cons x xs x#xs} {ys} (here a≈x) q | no ¬u = ⊥-elim (¬u (≈-preserves-∈ q a≈x))
+∩∈ {a} {cons x xs x#xs} {ys} (there p) q | no ¬u = ∩∈ p q
 
 ∩-assoc : Associative _≈L_ _∩_
 ∩-assoc xs ys zs = extensionality _ _ λ x → f x , g x where
   f : (a : X) → a ∈ ((xs ∩ ys) ∩ zs) → a ∈ (xs ∩ (ys ∩ zs))
-  f a p = {!!}
+  f a p = ∩∈ {a} {xs} {ys ∩ zs} (∈∩ˡ (∈∩ˡ p)) (∩∈ {a} {ys} {zs} (∈∩ʳ {a} {xs} {ys} (∈∩ˡ p)) (∈∩ʳ {xs = xs ∩ ys} p))
 
   g : (a : X) → a ∈ (xs ∩ (ys ∩ zs)) → a ∈ ((xs ∩ ys) ∩ zs)
-  g = {!!}
+  g a p = ∩∈ {a} {xs ∩ ys} {zs} (∩∈ {a} {xs} {ys} (∈∩ˡ p) (∈∩ˡ (∈∩ʳ {a} {xs} {ys ∩ zs} p))) (∈∩ʳ {a} {ys} {zs} (∈∩ʳ {a} {xs} {ys ∩ zs} p))
 
 ∩-comm : Commutative _≈L_ _∩_
-∩-comm = {!!}
+∩-comm xs ys = extensionality _ _ λ a → f a xs ys , f a ys xs where
+  f : (a : X) (xs ys : SortedList) → a ∈ (xs ∩ ys) → a ∈ (ys ∩ xs)
+  f a xs ys p = ∩∈ {a} {ys} {xs} (∈∩ʳ {a} {xs} p) (∈∩ˡ p)
 
 ∩-preserves-≈L : ∀ {x y u v} → x ≈L y → u ≈L v → (x ∩ u) ≈L (y ∩ v)
-∩-preserves-≈L {xs} {ys} {us} {vs} p q = extensionality (xs ∩ us) (ys ∩ vs) λ x → f x , g x where
-  f : (a : X) → a ∈ (xs ∩ us) → a ∈ (ys ∩ vs)
-  f = {!!}
-
-  g : (a : X) → a ∈ (ys ∩ vs) → a ∈ (xs ∩ us)
-  g = {!!}
+∩-preserves-≈L {xs} {ys} {us} {vs} p q = extensionality (xs ∩ us) (ys ∩ vs) λ x → f {x} p q , f {x} (≈L-sym p) (≈L-sym q) where
+  f : ∀ {a xs us ys vs} → xs ≈L ys → us ≈L vs → a ∈ (xs ∩ us) → a ∈ (ys ∩ vs)
+  f {a} {xs} {us} {ys} {vs} p q r = ∩∈ {a} {ys} {vs} (≈L-preserves-∈ (∈∩ˡ r) p) (≈L-preserves-∈ (∈∩ʳ {xs = xs} r) q)
 
 ∩-annihilatesˡ : LeftZero _≈L_ [] _∩_
 ∩-annihilatesˡ _ = []
