@@ -561,7 +561,7 @@ IsSemigroup.assoc ∩-isSemigroup = ∩-assoc
 ∩-id-lem : (xs : SortedList) → (∃[ x ] x ∉ xs) → ¬ (LeftIdentity _≈L_ xs _∩_)
 ∩-id-lem xs (x , x∉xs) id = x∉xs (∈∩ˡ (≈L-preserves-∈ (∈insertˡ x xs) (≈L-sym (id (insert x xs)))))
 
--- Relationship between _∩_ having a unit, and finiteness of the carrier set.
+-- _∩_ has a unit iff the carrier set is finite (ie, enumerable)
 module _ where
   open import Data.List as L
   open import Data.List.Membership.Setoid as L using ()
@@ -587,11 +587,15 @@ module _ where
 
 ∩-distrib-∪ˡ : _DistributesOverˡ_ _≈L_ _∩_ _∪_
 ∩-distrib-∪ˡ xs ys zs = extensionality _ _ λ x → f x , g x where
-  f : (x : X) → x ∈ (xs ∩ (ys ∪ zs)) → x ∈ ((xs ∩ ys) ∪ (xs ∩ zs))
-  f = {!!}
+  f : (a : X) → a ∈ (xs ∩ (ys ∪ zs)) → a ∈ ((xs ∩ ys) ∪ (xs ∩ zs))
+  f a p with ∪∈ {a} {ys} {zs} (∈∩ʳ {a} {xs} {ys ∪ zs} p)
+  ... | inj₁ a∈ys = ∈∪ˡ {a} {xs ∩ ys} (∩∈ {a} {xs} {ys} (∈∩ˡ p) a∈ys) (xs ∩ zs)
+  ... | inj₂ a∈zs = ∈∪ʳ {a} {xs ∩ zs} (xs ∩ ys) (∩∈ {a} {xs} {zs} (∈∩ˡ p) a∈zs)
 
-  g : (x : X) → x ∈ ((xs ∩ ys) ∪ (xs ∩ zs)) → x ∈ (xs ∩ (ys ∪ zs))
-  g = {!!}
+  g : (a : X) → a ∈ ((xs ∩ ys) ∪ (xs ∩ zs)) → a ∈ (xs ∩ (ys ∪ zs))
+  g a p with ∪∈ {a} {xs ∩ ys} {xs ∩ zs} p
+  ... | inj₁ q = ∩∈ {a} {xs} {ys ∪ zs} (∈∩ˡ q) (∈∪ˡ (∈∩ʳ {a} {xs} {ys} q) zs)
+  ... | inj₂ q = ∩∈ {a} {xs} {ys ∪ zs} (∈∩ˡ q) (∈∪ʳ ys (∈∩ʳ {a} {xs} {zs} q))
 
 ∩-distrib-∪ʳ : _DistributesOverʳ_ _≈L_ _∩_ _∪_
 ∩-distrib-∪ʳ xs ys zs = extensionality _ _ λ x → f x , g x where
