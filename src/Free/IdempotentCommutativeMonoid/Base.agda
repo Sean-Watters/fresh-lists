@@ -24,7 +24,7 @@ private
   <-tri = IsPropStrictTotalOrder.compare <-STO
   <-trans = IsPropStrictTotalOrder.trans <-STO
   <-resp-≈ = IsPropStrictTotalOrder.<-resp-≈ <-STO
-  _<'?_ = IsPropStrictTotalOrder._<?_ <-STO
+  _≈?_ = IsPropStrictTotalOrder._≟_ <-STO
   open WithEq _<_ ≈-Eq <-resp-≈
 
 SortedList : Set
@@ -62,7 +62,7 @@ insert x xs = cons x [] [] ∪ xs
 
 _∩_ : SortedList -> SortedList -> SortedList
 [] ∩ ys = []
-_∩_ (cons x xs p) ys with any? (x <'?_) ys
+_∩_ (cons x xs p) ys with any? (x ≈?_) ys
 ... | yes _ = insert x (xs ∩ ys)
 ... | no  _ = xs ∩ ys
 

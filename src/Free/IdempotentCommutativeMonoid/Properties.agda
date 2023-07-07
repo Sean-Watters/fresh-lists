@@ -10,7 +10,7 @@ module Free.IdempotentCommutativeMonoid.Properties
 open import Level renaming (suc to lsuc)
 open import Algebra
 open import Data.Product hiding (map)
-open import Data.Sum hiding (map)
+open import Data.Sum hiding (map )
 open import Data.Unit
 open import Data.Empty
 open import Data.Nat hiding (_<?_; compare) renaming (_<_ to _<ℕ_)
@@ -46,7 +46,7 @@ private
   _<?_     = IsPropStrictTotalOrder._<?_ <-STO
   _≈?_     = IsPropStrictTotalOrder._≟_ <-STO
   compare  = IsPropStrictTotalOrder.compare <-STO
-  open import Relation.Unary.Finiteness (record {Carrier = X; _≈_ = _≈_; isEquivalence = ≈-Eq}) renaming (Enumerated to isEnumerated-X)
+  open import Relation.Unary.Finiteness (record {Carrier = X; _≈_ = _≈_; isEquivalence = ≈-Eq})
 
 -- Since < is transitive, it suffices to know that z < head to cons z,
 cons-head-< : ∀ {x y} {xs : SortedList} {fx : x # xs} -> y < x -> All (y <_) (cons x xs fx)
@@ -498,18 +498,28 @@ IsOrderedIdempotentCommutativeMonoid.isSTO isOICM = <-lex-STO
 -----------------------
 
 ∈∩ˡ : {x : X} {xs ys : SortedList} → x ∈ (xs ∩ ys) → x ∈ xs
-∈∩ˡ {a} {cons x xs x#xs} {ys} p with any? (x <?_) ys
+∈∩ˡ {a} {cons x xs x#xs} {ys} p with any? (x ≈?_) ys
 ... | no ¬q = there $ ∈∩ˡ {a} {xs} {ys} p
 ... | yes q with insert∈ {a} {x} {xs ∩ ys} p
 ... | inj₁ r = here r
 ... | inj₂ r = there $ ∈∩ˡ {a} {xs} {ys} r
 
+∈∩ʳ : {x : X} {xs ys : SortedList} → x ∈ (xs ∩ ys) → x ∈ ys
+∈∩ʳ {a} {cons x xs x#xs} {ys} p with any? (x ≈?_) ys
+... | no ¬q = ∈∩ʳ {a} {xs} {ys} p
+... | yes q with insert∈ {a} {x} {xs ∩ ys} p
+... | inj₁ r = ≈-preserves-∈ q (≈-sym r)
+... | inj₂ r = ∈∩ʳ {a} {xs} {ys} r
+
+∩∈ : {x : X} {xs ys : SortedList} → x ∈ xs → x ∈ ys → x ∈ (xs ∩ ys)
+∩∈ = {!!}
+
 ∩-assoc : Associative _≈L_ _∩_
 ∩-assoc xs ys zs = extensionality _ _ λ x → f x , g x where
-  f : (x : X) → x ∈ ((xs ∩ ys) ∩ zs) → x ∈ (xs ∩ (ys ∩ zs))
-  f = {!!}
+  f : (a : X) → a ∈ ((xs ∩ ys) ∩ zs) → a ∈ (xs ∩ (ys ∩ zs))
+  f a p = {!!}
 
-  g : (x : X) → x ∈ (xs ∩ (ys ∩ zs)) → x ∈ ((xs ∩ ys) ∩ zs)
+  g : (a : X) → a ∈ (xs ∩ (ys ∩ zs)) → a ∈ ((xs ∩ ys) ∩ zs)
   g = {!!}
 
 ∩-comm : Commutative _≈L_ _∩_
@@ -517,10 +527,10 @@ IsOrderedIdempotentCommutativeMonoid.isSTO isOICM = <-lex-STO
 
 ∩-preserves-≈L : ∀ {x y u v} → x ≈L y → u ≈L v → (x ∩ u) ≈L (y ∩ v)
 ∩-preserves-≈L {xs} {ys} {us} {vs} p q = extensionality (xs ∩ us) (ys ∩ vs) λ x → f x , g x where
-  f : (x : X) → x ∈ (xs ∩ us) → x ∈ (ys ∩ vs)
+  f : (a : X) → a ∈ (xs ∩ us) → a ∈ (ys ∩ vs)
   f = {!!}
 
-  g : (x : X) → x ∈ (ys ∩ vs) → x ∈ (xs ∩ us)
+  g : (a : X) → a ∈ (ys ∩ vs) → a ∈ (xs ∩ us)
   g = {!!}
 
 ∩-annihilatesˡ : LeftZero _≈L_ [] _∩_
@@ -540,23 +550,24 @@ IsSemigroup.assoc ∩-isSemigroup = ∩-assoc
 ∩-id-lem xs (x , x∉xs) id = x∉xs (∈∩ˡ (≈L-preserves-∈ (∈insertˡ x xs) (≈L-sym (id (insert x xs)))))
 
 -- Relationship between _∩_ having a unit, and finiteness of the carrier set.
--- TODO: repeat for right unit via commutativity?
 module _ where
   open import Data.List as L
   open import Data.List.Membership.Setoid as L using ()
   open import Data.List.Relation.Unary.Any
   _∈'_ = L._∈_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
 
-  ∩-id→X-fin : (Σ[ ε ∈ SortedList ] LeftIdentity _≈L_ ε _∩_) → isEnumerated-X
-  ∩-id→X-fin (xs , id) = {!!}
+  ∩-idˡ→X-fin : (ε : List X) → LeftIdentity _≈L_ (insertion-sort ε) _∩_ → is-enumeration ε
+  ∩-idˡ→X-fin xs id = {!!}
 
-  X-fin→∩-id : isEnumerated-X → (Σ[ ε ∈ SortedList ] LeftIdentity _≈L_ ε _∩_)
-  X-fin→∩-id (xs , isEnum) = {!!}
+  ∩-idʳ→X-fin : (ε : List X) → RightIdentity _≈L_(insertion-sort ε) _∩_ → is-enumeration ε
+  ∩-idʳ→X-fin xs id = {!!}
 
-  -- Intersection has a unit iff X is finite
-  -- TODO: switch to a less annoying def of ↔ ?
-  ∩-id↔X-fin : (Σ[ ε ∈ SortedList ] LeftIdentity _≈L_ ε _∩_) ↔ isEnumerated-X
-  ∩-id↔X-fin = {!!}
+  X-fin→∩-idˡ : (ε : List X) → is-enumeration ε → LeftIdentity _≈L_ (insertion-sort ε) _∩_
+  X-fin→∩-idˡ xs isEnum = {!!}
+
+  X-fin→∩-idʳ : (ε : List X) → is-enumeration ε → RightIdentity _≈L_ (insertion-sort ε) _∩_
+  X-fin→∩-idʳ xs isEnum = {!!}
+
 
 ----------------------------------------
 -- Properties of _∩_ and _∪_ together --
@@ -591,15 +602,15 @@ IsSemiringWithoutOne.zero isPreSemiring = ∩-annihilatesˡ , ∩-annihilatesʳ
 -- Properties of _∩_ with a Finite Carrier Set --
 -------------------------------------------------
 
-module WithFinCarrier (isEnum : isEnumerated-X) where
+module WithFinCarrier (isEnum : Enumerated) where
   ∩-Unit : SortedList
   ∩-Unit = insertion-sort (proj₁ isEnum)
 
   ∩-idˡ : LeftIdentity _≈L_ ∩-Unit _∩_
-  ∩-idˡ = {!!}
+  ∩-idˡ = X-fin→∩-idˡ (proj₁ isEnum) (proj₂ isEnum)
 
   ∩-idʳ : RightIdentity _≈L_ ∩-Unit _∩_
-  ∩-idʳ = {!!}
+  ∩-idʳ = X-fin→∩-idʳ (proj₁ isEnum) (proj₂ isEnum)
 
   isSemiring : IsSemiring _≈L_ _∪_ _∩_ [] ∩-Unit
   IsSemiringWithoutAnnihilatingZero.+-isCommutativeMonoid (IsSemiring.isSemiringWithoutAnnihilatingZero isSemiring) = isCommMonoid

@@ -21,10 +21,13 @@ open import Data.List.Membership.Setoid X
 open import Data.Vec.Relation.Unary.Unique.Setoid X
 open Setoid
 
+is-enumeration : (L : List (Carrier X)) → Set (a ⊔ b)
+is-enumeration L = (x : Carrier X) → x ∈ L
+
 -- An enumerated type is one where there exists some list
 -- L which contains all of the elements of the type.
 Enumerated : Set (a ⊔ b)
-Enumerated = ∃[ L ] ((x : Carrier X) → x ∈ L)
+Enumerated = ∃[ L ] (is-enumeration L)
 
 
 {-
