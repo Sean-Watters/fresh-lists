@@ -404,7 +404,7 @@ proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
 -- Insert Properties --
 -----------------------
 
-insert-consview : ∀ {x} {xs : SortedList} -> (fx : x # xs) -> insert x xs ≡ cons x xs fx
+insert-consview : ∀ {x} {xs : SortedList} → (fx : x # xs) → insert x xs ≡ cons x xs fx
 insert-consview {xs = []} [] = refl
 insert-consview {x} {xs = cons y ys y#ys} x#xs with compare x y
 ... | tri< _ _ _ = WithIrr.cons-cong _<_ (IsPropStrictTotalOrder.<-prop <-STO) refl refl
@@ -424,6 +424,26 @@ insert∈ : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ 
 insert∈ {a} {x} {xs} p with ∪∈ {a} {cons x [] []} {xs} p
 ... | inj₁ (here p) = inj₁ p
 ... | inj₂ p = inj₂ p
+
+insert-preserves-≈L : {x y : X} {xs ys : SortedList} → x ≈ y → xs ≈L ys → insert x xs ≈L insert y ys
+insert-preserves-≈L p q = ∪-preserves-≈L (cons p []) q
+
+-------------------------------
+-- Insertion Sort Properties --
+-------------------------------
+
+module _ where
+  private
+    open import Data.List as L
+    open import Data.List.Membership.Setoid as L using ()
+    open import Data.List.Relation.Unary.Any as L using ()
+    _∈'_ = L._∈_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
+
+  insertion-sort-preserves-∈ : {a : X} {xs : List X} → a ∈' xs → a ∈ (insertion-sort xs)
+  insertion-sort-preserves-∈ {a} {x ∷ xs} (L.here p) = ∈insertˡ' {a} {x} {insertion-sort xs} p
+  insertion-sort-preserves-∈ {a} {x ∷ xs} (L.there p) = ∈insertʳ {a} {x} (insertion-sort-preserves-∈ p) 
+
+
 
 ----------------------------
 -- Lexicographic Ordering --
@@ -558,27 +578,34 @@ IsMagma.∙-cong (IsSemigroup.isMagma ∩-isSemigroup) = ∩-preserves-≈L
 IsSemigroup.assoc ∩-isSemigroup = ∩-assoc
 
 -- if there exists an element which is not in xs, then xs cannot be the unit of ∩
-∩-id-lem : (xs : SortedList) → (∃[ x ] x ∉ xs) → ¬ (LeftIdentity _≈L_ xs _∩_)
-∩-id-lem xs (x , x∉xs) id = x∉xs (∈∩ˡ (≈L-preserves-∈ (∈insertˡ x xs) (≈L-sym (id (insert x xs)))))
+∩-id-lem : {x : X} {xs : SortedList} → x ∉ xs → ¬ (LeftIdentity _≈L_ xs _∩_)
+∩-id-lem {x} {xs} x∉xs id = x∉xs (∈∩ˡ (≈L-preserves-∈ (∈insertˡ x xs) (≈L-sym (id (insert x xs)))))
 
 -- _∩_ has a unit iff the carrier set is finite (ie, enumerable)
 module _ where
-  open import Data.List as L
-  open import Data.List.Membership.Setoid as L using ()
-  open import Data.List.Relation.Unary.Any
-  _∈'_ = L._∈_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
+  private
+    open import Data.List as L
+    open import Data.List.Membership.Setoid as L using ()
+    open import Data.List.Relation.Unary.Any as L using ()
+    _∈'_ = L._∈_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
 
   ∩-idˡ→X-fin : (ε : List X) → LeftIdentity _≈L_ (insertion-sort ε) _∩_ → is-enumeration ε
-  ∩-idˡ→X-fin xs id = {!!}
+  ∩-idˡ→X-fin ε id = {!!}
 
   ∩-idʳ→X-fin : (ε : List X) → RightIdentity _≈L_(insertion-sort ε) _∩_ → is-enumeration ε
-  ∩-idʳ→X-fin xs id = {!!}
+  ∩-idʳ→X-fin ε id = {!!}
 
   X-fin→∩-idˡ : (ε : List X) → is-enumeration ε → LeftIdentity _≈L_ (insertion-sort ε) _∩_
-  X-fin→∩-idˡ xs isEnum = {!!}
+  X-fin→∩-idˡ xs isEnum [] = ∩-annihilatesʳ (insertion-sort xs)
+  X-fin→∩-idˡ [] isEnum (cons y ys p) with isEnum y
+  ... | ()
+  X-fin→∩-idˡ (x ∷ xs) isEnum (cons y ys p) = {!!}
 
   X-fin→∩-idʳ : (ε : List X) → is-enumeration ε → RightIdentity _≈L_ (insertion-sort ε) _∩_
-  X-fin→∩-idʳ xs isEnum = {!!}
+  X-fin→∩-idʳ xs isEnum [] = ∩-annihilatesˡ (insertion-sort xs)
+  X-fin→∩-idʳ xs isEnum (cons y ys p) with any? (y ≈?_) (insertion-sort xs)
+  ... | yes q = ≈L-trans (insert-preserves-≈L ≈-refl (X-fin→∩-idʳ xs isEnum ys)) (≡→≈L $ insert-consview p)
+  ... | no ¬q = ⊥-elim $ ¬q (insertion-sort-preserves-∈ {y} {xs} (isEnum y))
 
 
 ----------------------------------------
