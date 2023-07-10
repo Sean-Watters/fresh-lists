@@ -36,6 +36,8 @@ private
   -- Some more convenient names for the fields and subfields of the STO proof
   <-SPO    = IsPropStrictTotalOrder.isStrictPartialOrder <-STO
   ≈-Eq     = IsPropStrictTotalOrder.isEquivalence <-STO
+  ≈-prop     = IsPropStrictTotalOrder.≈-prop <-STO
+  <-prop     = IsPropStrictTotalOrder.<-prop <-STO
   <-trans  = IsPropStrictTotalOrder.trans <-STO
   <-irrefl = IsStrictPartialOrder.irrefl <-SPO
   <-asym   = IsStrictPartialOrder.asym <-SPO
@@ -234,9 +236,9 @@ all-resp-≈L : ∀ {xs ys : SortedList} {P : X -> Set}
 all-resp-≈L f [] pxs = pxs
 all-resp-≈L f (cons x≈y xs≈ys) (px ∷ pxs) = f x≈y px ∷ all-resp-≈L f xs≈ys pxs
 
--- ----------------------------
--- -- SortedList Extensionality --
--- ----------------------------
+-------------------------------
+-- SortedList Extensionality --
+-------------------------------
 
 -- Something which is smaller than the head cannot appear elsewhere in the list.
 ext-lem : {a x : X} {xs : SortedList} {fx : x # xs} -> a < x -> a ∉ (cons x xs fx)
@@ -255,7 +257,6 @@ extensionality (cons x xs fx) [] p with (proj₁ (p x)) (here ≈-refl)
 ... | ()
 extensionality (cons x xs fx) (cons y ys fy) p with compare x y
 ... | tri≈ ¬lt x≈y ¬gt = cons x≈y (extensionality xs ys (λ z → f z , g z)) where
-
   f : ∀ z -> z ∈ xs -> z ∈ ys
   f z z∈xs with proj₁ (p z) (there z∈xs)
   ... | here z≈y = ⊥-elim (all<-irrefl z∈xs (fresh→all (≈-preserves-# fx (≈-trans x≈y (≈-sym z≈y)))))
@@ -547,6 +548,18 @@ IsOrderedIdempotentCommutativeMonoid.isSTO isOICM = <-lex-STO
 ∩∈ {a} {cons x xs x#xs} {ys} (here a≈x) q | no ¬u = ⊥-elim (¬u (≈-preserves-∈ q a≈x))
 ∩∈ {a} {cons x xs x#xs} {ys} (there p) q | no ¬u = ∩∈ p q
 
+-- Negative right introduction principle for membership in an intersection
+∉∩-introʳ : {a : X} {xs ys : SortedList} → a ∉ ys → a ∉ (xs ∩ ys)
+∉∩-introʳ {a} {xs} {ys} ¬p q = ¬p $ ∈∩ʳ {a} {xs} {ys} q
+
+-- Negative left introduction principle for membership in an intersection
+∉∩-introˡ : {a : X} {xs ys : SortedList} → a ∉ xs → a ∉ (xs ∩ ys)
+∉∩-introˡ {a} {xs} {ys} ¬p q = ¬p $ ∈∩ˡ {a} {xs} {ys} q
+
+-- Negative elimination principle for membership in an intersection
+∉∩-elim : {a : X} {xs ys : SortedList} → a ∉ (xs ∩ ys) → (a ∉ xs) ⊎ (a ∉ ys)
+∉∩-elim {a} {xs} {ys} ¬p = ? -- proof probably follows by some decidability argument
+
 ∩-assoc : Associative _≈L_ _∩_
 ∩-assoc xs ys zs = extensionality _ _ λ x → f x , g x where
   f : (a : X) → a ∈ ((xs ∩ ys) ∩ zs) → a ∈ (xs ∩ (ys ∩ zs))
@@ -581,6 +594,7 @@ IsSemigroup.assoc ∩-isSemigroup = ∩-assoc
 ∩-id-lem : {x : X} {xs : SortedList} → x ∉ xs → ¬ (LeftIdentity _≈L_ xs _∩_)
 ∩-id-lem {x} {xs} x∉xs id = x∉xs (∈∩ˡ (≈L-preserves-∈ (∈insertˡ x xs) (≈L-sym (id (insert x xs)))))
 
+
 -- _∩_ has a unit iff the carrier set is finite (ie, enumerable)
 module _ where
   private
@@ -597,9 +611,7 @@ module _ where
 
   X-fin→∩-idˡ : (ε : List X) → is-enumeration ε → LeftIdentity _≈L_ (insertion-sort ε) _∩_
   X-fin→∩-idˡ xs isEnum [] = ∩-annihilatesʳ (insertion-sort xs)
-  X-fin→∩-idˡ [] isEnum (cons y ys p) with isEnum y
-  ... | ()
-  X-fin→∩-idˡ (x ∷ xs) isEnum (cons y ys p) = {!!}
+  X-fin→∩-idˡ xs isEnum (cons y ys p) = {!X-fin→∩-idˡ xs isEnum ys!} -- y#ys, y ∈ xs
 
   X-fin→∩-idʳ : (ε : List X) → is-enumeration ε → RightIdentity _≈L_ (insertion-sort ε) _∩_
   X-fin→∩-idʳ xs isEnum [] = ∩-annihilatesˡ (insertion-sort xs)
