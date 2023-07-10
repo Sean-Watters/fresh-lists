@@ -599,11 +599,15 @@ module _ where
 
 ∩-distrib-∪ʳ : _DistributesOverʳ_ _≈L_ _∩_ _∪_
 ∩-distrib-∪ʳ xs ys zs = extensionality _ _ λ x → f x , g x where
-  f : (x : X) → x ∈ ((ys ∪ zs) ∩ xs) → x ∈ ((ys ∩ xs) ∪ (zs ∩ xs))
-  f = {!!}
+  f : (a : X) → a ∈ ((ys ∪ zs) ∩ xs) → a ∈ ((ys ∩ xs) ∪ (zs ∩ xs))
+  f a p with ∪∈ {a} {ys} {zs} (∈∩ˡ {a} {ys ∪ zs} {xs} p)
+  ... | inj₁ q = ∈∪ˡ {a} {ys ∩ xs} (∩∈ {a} {ys} {xs} q (∈∩ʳ {a} {ys ∪ zs} {xs} p)) (zs ∩ xs)
+  ... | inj₂ q = ∈∪ʳ {a} {zs ∩ xs} (ys ∩ xs) (∩∈ {a} {zs} {xs} q (∈∩ʳ {a} {ys ∪ zs} {xs} p))
 
-  g : (x : X) → x ∈ ((ys ∩ xs) ∪ (zs ∩ xs)) → x ∈ ((ys ∪ zs) ∩ xs)
-  g = {!!}
+  g : (a : X) → a ∈ ((ys ∩ xs) ∪ (zs ∩ xs)) → a ∈ ((ys ∪ zs) ∩ xs)
+  g a p with ∪∈ {a} {ys ∩ xs} {zs ∩ xs} p
+  ... | inj₁ q = ∩∈ {a} {ys ∪ zs} {xs} (∈∪ˡ {a} {ys} (∈∩ˡ q) zs) (∈∩ʳ {a} {ys} {xs} q)
+  ... | inj₂ q = ∩∈ {a} {ys ∪ zs} {xs} (∈∪ʳ {a} {zs} ys (∈∩ˡ q)) (∈∩ʳ {a} {zs} {xs} q)
 
 isPreSemiring : IsSemiringWithoutOne _≈L_ _∪_ _∩_ []
 IsSemiringWithoutOne.+-isCommutativeMonoid isPreSemiring = isCommMonoid
