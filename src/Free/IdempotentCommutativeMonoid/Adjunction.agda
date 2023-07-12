@@ -240,9 +240,9 @@ SL-map-preserves-∈ : ∀ {X Y : PropStrictTotalOrder} →
                      (a : Carrier X) (xs : SortedList (proof X)) →
                      a ∈X xs → (f a) ∈Y (SL-map {X} {Y} f xs)
 SL-map-preserves-∈ {X} {Y} f a (cons .a xs x#xs) (here refl)
-  = FICM.∈∪ˡ (proof Y) (here refl) (SL-map {X} {Y} f xs)
+  = FICM.∈∪-introˡ (proof Y) (here refl) (SL-map {X} {Y} f xs)
 SL-map-preserves-∈ {X} {Y} f a (cons x xs x#xs) (there p)
-  = FICM.∈∪ʳ (proof Y) (cons (f x) [] []) (SL-map-preserves-∈ {X} {Y} f a xs p)
+  = FICM.∈∪-introʳ (proof Y) (cons (f x) [] []) (SL-map-preserves-∈ {X} {Y} f a xs p)
 
 SL-map-preserves-⊆ : ∀ {X Y : PropStrictTotalOrder} →
            let _⊆X_ = FICM._⊆_ (proof X)
@@ -252,7 +252,7 @@ SL-map-preserves-⊆ : ∀ {X Y : PropStrictTotalOrder} →
            → xs ⊆X ys
            → (SL-map {X} {Y} f xs) ⊆Y (SL-map {X} {Y} f ys)
 SL-map-preserves-⊆ {X} {Y} f (cons x xs x#xs) ys xs⊆ys {a} a∈mapfxxs
-  with FICM.∪∈ (proof Y) {xs = cons (f x) [] []} {SL-map {X} {Y} f xs} a∈mapfxxs
+  with FICM.∈∪-elim (proof Y) {xs = cons (f x) [] []} {SL-map {X} {Y} f xs} a∈mapfxxs
 ... | inj₁ (here refl) = SL-map-preserves-∈ f x ys (xs⊆ys {x} (here refl))
 ... | inj₂ a∈mapfxs = SL-map-preserves-⊆ f xs ys (λ b∈xs → xs⊆ys (there b∈xs)) a∈mapfxs
 
@@ -265,7 +265,7 @@ SL-map-preserves-∪ : {X Y : PropStrictTotalOrder} →
 SL-map-preserves-∪ {X} {Y} {f} xs ys = ≈L→≡ (proof Y) (FICM.extensionality (proof Y)
                                                                            (SL-map {X} {Y} f (xs ∪X  ys))
                                                                            ((SL-map {X} {Y} f xs) ∪Y (SL-map {X} {Y} f ys))
-                                                                           (λ a → (λ p → FICM.∈∪ (proof Y) (lem1 a xs ys _ p) ) , lem2 a xs ys))
+                                                                           (λ a → (λ p → FICM.∈∪-intro (proof Y) (lem1 a xs ys _ p) ) , lem2 a xs ys))
   where
     _∈X_ = FICM._∈_ (proof X)
     _∈Y_ = FICM._∈_ (proof Y)
@@ -279,27 +279,27 @@ SL-map-preserves-∪ {X} {Y} {f} xs ys = ≈L→≡ (proof Y) (FICM.extensionali
     lem1 a [] ys ac p = inj₂ p
     lem1 a (cons x xs x#xs) [] ac p = inj₁ p
     lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p with compareX x y
-    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri< a₁ ¬b ¬c with FICM.union∈ (proof Y) {xs = cons (f x) [] []} {mapf (unionX xs (cons y ys y#ys) _)} _ p
-    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri< a₁ ¬b ¬c | inj₁ (here a=fx) = inj₁ (FICM.∈unionˡ (proof Y) (here a=fx) (mapf xs) _ )
+    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri< a₁ ¬b ¬c with FICM.∈union-elim (proof Y) {xs = cons (f x) [] []} {mapf (unionX xs (cons y ys y#ys) _)} _ p
+    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri< a₁ ¬b ¬c | inj₁ (here a=fx) = inj₁ (FICM.∈union-introˡ (proof Y) (here a=fx) (mapf xs) _ )
     lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri< a₁ ¬b ¬c | inj₂ a∈mapfxsyys with lem1 a xs (cons y ys y#ys) _ a∈mapfxsyys
-    ... | inj₁ a∈mapfxs = inj₁ (FICM.∈unionʳ (proof Y) (cons (f x) [] []) a∈mapfxs _)
+    ... | inj₁ a∈mapfxs = inj₁ (FICM.∈union-introʳ (proof Y) (cons (f x) [] []) a∈mapfxs _)
     ... | inj₂ qq = inj₂ qq
-    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri≈ ¬a b ¬c with FICM.union∈ (proof Y) {xs = cons (f x) [] []} {mapf (unionX xs ys _)} _ p
-    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri≈ ¬a b ¬c | inj₁ (here a=fx) = inj₁ (FICM.∈unionˡ (proof Y) (here a=fx) (mapf xs) _ )
+    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri≈ ¬a b ¬c with FICM.∈union-elim (proof Y) {xs = cons (f x) [] []} {mapf (unionX xs ys _)} _ p
+    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri≈ ¬a b ¬c | inj₁ (here a=fx) = inj₁ (FICM.∈union-introˡ (proof Y) (here a=fx) (mapf xs) _ )
     lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri≈ ¬a b ¬c | inj₂ a∈mapfxsys with lem1 a xs ys _ a∈mapfxsys
-    ... | inj₁ a∈mapfxs = inj₁ (FICM.∈unionʳ (proof Y) (cons (f x) [] []) a∈mapfxs _)
-    ... | inj₂ a∈mapfys = inj₂ (FICM.∈unionʳ (proof Y) (cons (f y) [] []) a∈mapfys _)
-    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri> ¬a ¬b c  with FICM.union∈ (proof Y) {xs = cons (f y) [] []} {mapf (unionX (cons x xs x#xs) ys _)} _ p
-    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri> ¬a ¬b c | inj₁ (here a=fy) = inj₂ (FICM.∈unionˡ (proof Y) (here a=fy) (mapf ys) _ )
+    ... | inj₁ a∈mapfxs = inj₁ (FICM.∈union-introʳ (proof Y) (cons (f x) [] []) a∈mapfxs _)
+    ... | inj₂ a∈mapfys = inj₂ (FICM.∈union-introʳ (proof Y) (cons (f y) [] []) a∈mapfys _)
+    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri> ¬a ¬b c  with FICM.∈union-elim (proof Y) {xs = cons (f y) [] []} {mapf (unionX (cons x xs x#xs) ys _)} _ p
+    lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri> ¬a ¬b c | inj₁ (here a=fy) = inj₂ (FICM.∈union-introˡ (proof Y) (here a=fy) (mapf ys) _ )
     lem1 a (cons x xs x#xs) (cons y ys y#ys) (acc rs) p | tri> ¬a ¬b c | inj₂ a∈mapfxxsys with lem1 a (cons x xs x#xs) ys _ a∈mapfxxsys
     ... | inj₁ qq = inj₁ qq
-    ... | inj₂ a∈mapfys = inj₂ (FICM.∈unionʳ (proof Y) (cons (f y) [] []) a∈mapfys _)
+    ... | inj₂ a∈mapfys = inj₂ (FICM.∈union-introʳ (proof Y) (cons (f y) [] []) a∈mapfys _)
 
     lem2 : (a : Carrier Y) → (xs ys : SortedList (proof X)) →
            a ∈Y (mapf xs ∪Y mapf ys) → a ∈Y mapf (xs ∪X ys)
-    lem2 a xs ys a∈mapfxs∪mapfys with FICM.∪∈ (proof Y) {xs = mapf xs} {mapf ys} a∈mapfxs∪mapfys
-    ... | inj₁ a∈mapfxs = SL-map-preserves-⊆ f xs (xs ∪X ys) (λ b∈xs → FICM.∈∪ˡ (proof X) b∈xs ys) a∈mapfxs
-    ... | inj₂ a∈mapfys = SL-map-preserves-⊆ f ys (xs ∪X ys) (λ b∈ys → FICM.∈∪ʳ (proof X) xs b∈ys) a∈mapfys
+    lem2 a xs ys a∈mapfxs∪mapfys with FICM.∈∪-elim (proof Y) {xs = mapf xs} {mapf ys} a∈mapfxs∪mapfys
+    ... | inj₁ a∈mapfxs = SL-map-preserves-⊆ f xs (xs ∪X ys) (λ b∈xs → FICM.∈∪-introˡ (proof X) b∈xs ys) a∈mapfxs
+    ... | inj₂ a∈mapfys = SL-map-preserves-⊆ f ys (xs ∪X ys) (λ b∈ys → FICM.∈∪-introʳ (proof X) xs b∈ys) a∈mapfys
 
 
 SORTEDLIST : (ext : Extensionality _ _) → Functor STO (OICM ext)

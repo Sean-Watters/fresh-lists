@@ -286,69 +286,69 @@ strengthen-∉ x≉a x∉as (there x∈as) = x∉as x∈as
 -- Union Properties --
 ----------------------
 
-union∈ : ∀ {a} {xs ys : SortedList} -> (p : Acc _<ℕ_ (length xs + length ys)) → a ∈ (union xs ys p) -> a ∈ xs ⊎ a ∈ ys
-union∈ {a} {[]} {ys} p a∈ys = inj₂ a∈ys
-union∈ {a} {cons x xs x#xs} {[]} p a∈xs = inj₁ a∈xs
-union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) a∈xs∪ys with compare x y
-union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri< x<y ¬x≈y ¬y<x = inj₁ (here a≈x)
-union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪yys) | tri< x<y ¬x≈y ¬y<x with union∈ {a} {xs} {cons y ys y#ys} _ a∈xs∪yys
+∈union-elim : ∀ {a} {xs ys : SortedList} -> (p : Acc _<ℕ_ (length xs + length ys)) → a ∈ (union xs ys p) -> a ∈ xs ⊎ a ∈ ys
+∈union-elim {a} {[]} {ys} p a∈ys = inj₂ a∈ys
+∈union-elim {a} {cons x xs x#xs} {[]} p a∈xs = inj₁ a∈xs
+∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) a∈xs∪ys with compare x y
+∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri< x<y ¬x≈y ¬y<x = inj₁ (here a≈x)
+∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪yys) | tri< x<y ¬x≈y ¬y<x with ∈union-elim {a} {xs} {cons y ys y#ys} _ a∈xs∪yys
 ... | inj₁ a∈xs = inj₁ (there a∈xs)
 ... | inj₂ a∈yys = inj₂ a∈yys
-union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri≈ ¬x<y x≈y ¬y<x = inj₁ (here a≈x)
-union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪ys) | tri≈ ¬x<y x≈y ¬y<x with union∈ {a} {xs} {ys} _ a∈xs∪ys
+∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri≈ ¬x<y x≈y ¬y<x = inj₁ (here a≈x)
+∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪ys) | tri≈ ¬x<y x≈y ¬y<x with ∈union-elim {a} {xs} {ys} _ a∈xs∪ys
 ... | inj₁ a∈xs = inj₁ (there a∈xs)
 ... | inj₂ a∈ys = inj₂ (there a∈ys)
-union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈y) | tri> ¬x<y ¬x≈y y<x = inj₂ (here a≈y)
-union∈ {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xxs∪ys) | tri> ¬x<y ¬x≈y y<x with union∈ {a} {cons x xs x#xs} {ys} _ a∈xxs∪ys
+∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈y) | tri> ¬x<y ¬x≈y y<x = inj₂ (here a≈y)
+∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xxs∪ys) | tri> ¬x<y ¬x≈y y<x with ∈union-elim {a} {cons x xs x#xs} {ys} _ a∈xxs∪ys
 ... | inj₁ a∈xxs = inj₁ a∈xxs
 ... | inj₂ a∈ys = inj₂ (there a∈ys)
 
-∪∈ : ∀ {a} {xs ys : SortedList} -> a ∈ (xs ∪ ys) -> a ∈ xs ⊎ a ∈ ys
-∪∈ {a} {xs} {ys} = union∈ (<-wellFounded (length xs + length ys))
+∈∪-elim : ∀ {a} {xs ys : SortedList} -> a ∈ (xs ∪ ys) -> a ∈ xs ⊎ a ∈ ys
+∈∪-elim {a} {xs} {ys} = ∈union-elim (<-wellFounded (length xs + length ys))
 
-∉∪ : ∀ {a} {xs ys : SortedList} -> a ∉ xs -> a ∉ ys -> a ∉ (xs ∪ ys)
-∉∪ {a} {[]} {ys} a∉xs a∉ys = a∉ys
-∉∪ {a} {cons x xs fx} {ys} a∉xs a∉ys a∈∪ with ∪∈ a∈∪
+∉∪-intro : ∀ {a} {xs ys : SortedList} -> a ∉ xs -> a ∉ ys -> a ∉ (xs ∪ ys)
+∉∪-intro {a} {[]} {ys} a∉xs a∉ys = a∉ys
+∉∪-intro {a} {cons x xs fx} {ys} a∉xs a∉ys a∈∪ with ∈∪-elim a∈∪
 ... | inj₁ a∈xs = a∉xs a∈xs
 ... | inj₂ a∈ys = a∉ys a∈ys
 
 
-∈unionˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
-∈unionˡ {a} {cons x xs x#xs} (here a≈x) [] p = here a≈x
-∈unionˡ {a} {cons x xs x#xs} (here a≈x) (cons y ys y#ys) (acc rs) with compare x y
+∈union-introˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
+∈union-introˡ {a} {cons x xs x#xs} (here a≈x) [] p = here a≈x
+∈union-introˡ {a} {cons x xs x#xs} (here a≈x) (cons y ys y#ys) (acc rs) with compare x y
 ... | tri< _ _ _ = here a≈x
 ... | tri≈ _ _ _ = here a≈x
-... | tri> _ _ _ = there (∈unionˡ {a} {cons x xs x#xs} (here a≈x) ys _)
-∈unionˡ {a} {cons x xs x#xs} (there a∈xs) [] p = there a∈xs
-∈unionˡ {a} {cons x xs x#xs} (there a∈xs) (cons y ys y#ys) (acc rs) with compare x y
-... | tri< _ _ _ = there (∈unionˡ {a} {xs} a∈xs (cons y ys y#ys) _)
-... | tri≈ _ _ _ = there (∈unionˡ {a} {xs} a∈xs ys _)
-... | tri> _ _ _ = there (∈unionˡ {a} {cons x xs x#xs} (there a∈xs) ys _)
+... | tri> _ _ _ = there (∈union-introˡ {a} {cons x xs x#xs} (here a≈x) ys _)
+∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) [] p = there a∈xs
+∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) (cons y ys y#ys) (acc rs) with compare x y
+... | tri< _ _ _ = there (∈union-introˡ {a} {xs} a∈xs (cons y ys y#ys) _)
+... | tri≈ _ _ _ = there (∈union-introˡ {a} {xs} a∈xs ys _)
+... | tri> _ _ _ = there (∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) ys _)
 
-∈unionʳ : ∀ {a} {ys : SortedList} -> (xs : SortedList) → a ∈ ys -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
-∈unionʳ {a} {ys} [] a∈ys p = a∈ys
-∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) a∈yys (acc rs) with compare x y
-... | tri< _ _ _ = there (∈unionʳ {a} {cons y ys y#ys} xs a∈yys _)
-∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri≈ _ x≈y _ = here (≈-trans a≈y (≈-sym x≈y))
-∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri≈ _ _ _ = there (∈unionʳ {a} {ys} xs a∈ys _)
-∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri> _ _ _ = here a≈y
-∈unionʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri> _ _ _ = there (∈unionʳ {a} {ys} (cons x xs x#xs) a∈ys _)
+∈union-introʳ : ∀ {a} {ys : SortedList} -> (xs : SortedList) → a ∈ ys -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
+∈union-introʳ {a} {ys} [] a∈ys p = a∈ys
+∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) a∈yys (acc rs) with compare x y
+... | tri< _ _ _ = there (∈union-introʳ {a} {cons y ys y#ys} xs a∈yys _)
+∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri≈ _ x≈y _ = here (≈-trans a≈y (≈-sym x≈y))
+∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri≈ _ _ _ = there (∈union-introʳ {a} {ys} xs a∈ys _)
+∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri> _ _ _ = here a≈y
+∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri> _ _ _ = there (∈union-introʳ {a} {ys} (cons x xs x#xs) a∈ys _)
 
-∈∪ˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> a ∈ (xs ∪ ys)
-∈∪ˡ {a} {xs} a∈xs ys = ∈unionˡ a∈xs ys (<-wellFounded (length xs + length ys))
+∈∪-introˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> a ∈ (xs ∪ ys)
+∈∪-introˡ {a} {xs} a∈xs ys = ∈union-introˡ a∈xs ys (<-wellFounded (length xs + length ys))
 
-∈∪ʳ : ∀ {x} {ys : SortedList} -> (xs : SortedList) -> x ∈ ys -> x ∈ (xs ∪ ys)
-∈∪ʳ {a} {ys} xs a∈ys = ∈unionʳ {a} {ys} xs a∈ys (<-wellFounded (length xs + length ys))
+∈∪-introʳ : ∀ {x} {ys : SortedList} -> (xs : SortedList) -> x ∈ ys -> x ∈ (xs ∪ ys)
+∈∪-introʳ {a} {ys} xs a∈ys = ∈union-introʳ {a} {ys} xs a∈ys (<-wellFounded (length xs + length ys))
 
-∈∪ : ∀ {a} {xs ys : SortedList} -> (a ∈ xs) ⊎ (a ∈ ys) → a ∈ (xs ∪ ys)
-∈∪ {xs = xs} {ys} (inj₁ a∈xs) = ∈∪ˡ a∈xs ys
-∈∪ {xs = xs} {ys} (inj₂ a∈ys) = ∈∪ʳ xs a∈ys
+∈∪-intro : ∀ {a} {xs ys : SortedList} -> (a ∈ xs) ⊎ (a ∈ ys) → a ∈ (xs ∪ ys)
+∈∪-intro {xs = xs} {ys} (inj₁ a∈xs) = ∈∪-introˡ a∈xs ys
+∈∪-intro {xs = xs} {ys} (inj₂ a∈ys) = ∈∪-introʳ xs a∈ys
 
-∉∪ˡ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ xs
-∉∪ˡ {ys = ys} ¬p a∈xs = ¬p (∈∪ˡ a∈xs ys)
+∉∪-introˡ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ xs
+∉∪-introˡ {ys = ys} ¬p a∈xs = ¬p (∈∪-introˡ a∈xs ys)
 
-∉∪ʳ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ ys
-∉∪ʳ {xs = xs} ¬p a∈ys = ¬p (∈∪ʳ xs a∈ys)
+∉∪-introʳ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ ys
+∉∪-introʳ {xs = xs} ¬p a∈ys = ¬p (∈∪-introʳ xs a∈ys)
 
 ∪-idʳ : (xs : SortedList) -> (xs ∪ []) ≡ xs
 ∪-idʳ [] = refl
@@ -362,18 +362,18 @@ proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
 ∪-comm xs ys = extensionality (xs ∪ ys) (ys ∪ xs) (λ x → f xs ys x , f ys xs x)
   where
     f : (xs ys : SortedList) → (x : X) → x ∈ (xs ∪ ys) → x ∈ (ys ∪ xs)
-    f xs ys x x∈xs∪ys with ∪∈ x∈xs∪ys
-    ... | inj₁ x∈xs = ∈∪ʳ ys x∈xs
-    ... | inj₂ x∈ys = ∈∪ˡ x∈ys xs
+    f xs ys x x∈xs∪ys with ∈∪-elim x∈xs∪ys
+    ... | inj₁ x∈xs = ∈∪-introʳ ys x∈xs
+    ... | inj₂ x∈ys = ∈∪-introˡ x∈ys xs
 
 ∪-idempotent : Idempotent _≈L_ _∪_
-∪-idempotent xs = extensionality (xs ∪ xs) xs (λ x → (λ x∈xs∪xs → [ id , id ]′ (∪∈ x∈xs∪xs) ) , ∈∪ʳ xs)
+∪-idempotent xs = extensionality (xs ∪ xs) xs (λ x → (λ x∈xs∪xs → [ id , id ]′ (∈∪-elim x∈xs∪xs) ) , ∈∪-introʳ xs)
 
 ∪-preserves-≈L : {xs xs' ys ys' : SortedList} -> xs ≈L xs' -> ys ≈L ys' -> (xs ∪ ys) ≈L (xs' ∪ ys')
 ∪-preserves-≈L {xs} {xs'} {ys} {ys'} xs=xs' ys=ys' = extensionality _ _ λ x → f x xs=xs' ys=ys' , f x (≈L-sym xs=xs') (≈L-sym ys=ys')
   where
     f : (x : X) → {xs xs' ys ys' : SortedList} -> xs ≈L xs' -> ys ≈L ys' → x ∈ (xs ∪ ys) → x ∈ (xs' ∪ ys')
-    f x {xs} {xs'} {ys} {ys'} xs=xs' ys=ys' x∈xs∪xs = [ (λ x∈xs → ∈∪ˡ (≈L-preserves-∈ x∈xs xs=xs') ys') , (λ x∈ys → ∈∪ʳ xs' (≈L-preserves-∈ x∈ys ys=ys')) ]′ (∪∈ x∈xs∪xs)
+    f x {xs} {xs'} {ys} {ys'} xs=xs' ys=ys' x∈xs∪xs = [ (λ x∈xs → ∈∪-introˡ (≈L-preserves-∈ x∈xs xs=xs') ys') , (λ x∈ys → ∈∪-introʳ xs' (≈L-preserves-∈ x∈ys ys=ys')) ]′ (∈∪-elim x∈xs∪xs)
 
 ∪-cancelˡ : {xs ys : SortedList} -> xs ≈L ys -> (xs ∪ ys) ≈L xs
 ∪-cancelˡ {xs} {ys} xs=ys = begin
@@ -388,18 +388,18 @@ proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
 ∪-assoc xs ys zs = extensionality ((xs ∪ ys) ∪ zs) (xs ∪ (ys ∪ zs)) (λ x → f x , g x)
   where
     f : (x : X) → (x ∈ ((xs ∪ ys) ∪ zs) → x ∈ (xs ∪ (ys ∪ zs)))
-    f x x∈xs∪ys∪zs with ∪∈ {xs = xs ∪ ys} x∈xs∪ys∪zs
-    f x x∈xs∪ys∪zs | inj₁ x∈xs∪ys with ∪∈ {xs = xs} x∈xs∪ys
-    ... | inj₁ x∈xs = ∈∪ˡ x∈xs (ys ∪ zs)
-    ... | inj₂ x∈ys = ∈∪ʳ xs (∈∪ˡ x∈ys zs)
-    f x x∈xs∪ys∪zs | inj₂ x∈zs = ∈∪ʳ xs (∈∪ʳ ys x∈zs)
+    f x x∈xs∪ys∪zs with ∈∪-elim {xs = xs ∪ ys} x∈xs∪ys∪zs
+    f x x∈xs∪ys∪zs | inj₁ x∈xs∪ys with ∈∪-elim {xs = xs} x∈xs∪ys
+    ... | inj₁ x∈xs = ∈∪-introˡ x∈xs (ys ∪ zs)
+    ... | inj₂ x∈ys = ∈∪-introʳ xs (∈∪-introˡ x∈ys zs)
+    f x x∈xs∪ys∪zs | inj₂ x∈zs = ∈∪-introʳ xs (∈∪-introʳ ys x∈zs)
 
     g : (x : X) → (x ∈ (xs ∪ (ys ∪ zs)) → x ∈ ((xs ∪ ys) ∪ zs))
-    g x x∈xs∪ys∪zs with ∪∈ {xs = xs} x∈xs∪ys∪zs
-    g x x∈xs∪ys∪zs | inj₁ x∈xs = ∈∪ˡ (∈∪ˡ x∈xs ys) zs
-    g x x∈xs∪ys∪zs | inj₂ x∈ys∪zs with ∪∈ {xs = ys} x∈ys∪zs
-    ... | inj₁ x∈ys = ∈∪ˡ (∈∪ʳ xs x∈ys) zs
-    ... | inj₂ x∈zs = ∈∪ʳ (xs ∪ ys) x∈zs
+    g x x∈xs∪ys∪zs with ∈∪-elim {xs = xs} x∈xs∪ys∪zs
+    g x x∈xs∪ys∪zs | inj₁ x∈xs = ∈∪-introˡ (∈∪-introˡ x∈xs ys) zs
+    g x x∈xs∪ys∪zs | inj₂ x∈ys∪zs with ∈∪-elim {xs = ys} x∈ys∪zs
+    ... | inj₁ x∈ys = ∈∪-introˡ (∈∪-introʳ xs x∈ys) zs
+    ... | inj₂ x∈zs = ∈∪-introʳ (xs ∪ ys) x∈zs
 
 -----------------------
 -- Insert Properties --
@@ -412,17 +412,17 @@ insert-consview {x} {xs = cons y ys y#ys} x#xs with compare x y
 insert-consview {x} {cons y ys y#ys} (x<y ∷ x#xs) | tri≈ _ x≈y _ = ⊥-elim (<-irrefl x≈y x<y)
 insert-consview {x} {cons y ys y#ys} (x<y ∷ x#ys) | tri> _ _ y<x = ⊥-elim (<-irrefl (≈-refl {x}) (<-trans x<y y<x))
 
-∈insertˡ' : {a x : X} {xs : SortedList} → a ≈ x → a ∈ (insert x xs)
-∈insertˡ' {xs = xs} p = ∈∪ˡ (here p) xs
+∈insert-introˡ' : {a x : X} {xs : SortedList} → a ≈ x → a ∈ (insert x xs)
+∈insert-introˡ' {xs = xs} p = ∈∪-introˡ (here p) xs
 
-∈insertˡ : (x : X) (xs : SortedList) → x ∈ (insert x xs)
-∈insertˡ x xs = ∈∪ˡ (here ≈-refl) xs
+∈insert-introˡ : (x : X) (xs : SortedList) → x ∈ (insert x xs)
+∈insert-introˡ x xs = ∈∪-introˡ (here ≈-refl) xs
 
-∈insertʳ : {a x : X} {xs : SortedList} → a ∈ xs → a ∈ (insert x xs)
-∈insertʳ {x = x} = ∈∪ʳ (cons x [] [])
+∈insert-introʳ : {a x : X} {xs : SortedList} → a ∈ xs → a ∈ (insert x xs)
+∈insert-introʳ {x = x} = ∈∪-introʳ (cons x [] [])
 
-insert∈ : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ a ∈ xs
-insert∈ {a} {x} {xs} p with ∪∈ {a} {cons x [] []} {xs} p
+∈insert-elim : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ a ∈ xs
+∈insert-elim {a} {x} {xs} p with ∈∪-elim {a} {cons x [] []} {xs} p
 ... | inj₁ (here p) = inj₁ p
 ... | inj₂ p = inj₂ p
 
@@ -439,11 +439,21 @@ module _ where
     open import Data.List.Membership.Setoid as L using ()
     open import Data.List.Relation.Unary.Any as L using ()
     _∈'_ = L._∈_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
+    _∉'_ = L._∉_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
 
   insertion-sort-preserves-∈ : {a : X} {xs : List X} → a ∈' xs → a ∈ (insertion-sort xs)
-  insertion-sort-preserves-∈ {a} {x ∷ xs} (L.here p) = ∈insertˡ' {a} {x} {insertion-sort xs} p
-  insertion-sort-preserves-∈ {a} {x ∷ xs} (L.there p) = ∈insertʳ {a} {x} (insertion-sort-preserves-∈ p) 
+  insertion-sort-preserves-∈ {a} {x ∷ xs} (L.here p) = ∈insert-introˡ' {a} {x} {insertion-sort xs} p
+  insertion-sort-preserves-∈ {a} {x ∷ xs} (L.there p) = ∈insert-introʳ {a} {x} (insertion-sort-preserves-∈ p)
 
+  insertion-sort-preserves-∈-inverse : {a : X} {xs : List X} → a ∈ (insertion-sort xs) → a ∈' xs
+  insertion-sort-preserves-∈-inverse {a} {x ∷ xs} p with ∈insert-elim {a} {x} {insertion-sort xs} p
+  ... | inj₁ q = L.here q
+  ... | inj₂ q = L.there (insertion-sort-preserves-∈-inverse q)
+
+  insertion-sort-preserves-∉ : {a : X} {xs : List X} → a ∉' xs → a ∉ (insertion-sort xs)
+  insertion-sort-preserves-∉ {a} {x ∷ xs} ¬p q with ∈insert-elim {a} {x} {insertion-sort xs} q
+  ... | inj₁ r = ¬p (L.here r)
+  ... | inj₂ r = ¬p (L.there (insertion-sort-preserves-∈-inverse r))
 
 
 ----------------------------
@@ -525,58 +535,65 @@ IsOrderedIdempotentCommutativeMonoid.isSTO isOICM = <-lex-STO
 -----------------------
 
 -- Left elimination principle for membership in an intersection
-∈∩ˡ : {a : X} {xs ys : SortedList} → a ∈ (xs ∩ ys) → a ∈ xs
-∈∩ˡ {a} {cons x xs x#xs} {ys} p with any? (x ≈?_) ys
-... | no ¬q = there $ ∈∩ˡ {a} {xs} {ys} p
-... | yes q with insert∈ {a} {x} {xs ∩ ys} p
+∈∩-elimˡ : {a : X} {xs ys : SortedList} → a ∈ (xs ∩ ys) → a ∈ xs
+∈∩-elimˡ {a} {cons x xs x#xs} {ys} p with any? (x ≈?_) ys
+... | no ¬q = there $ ∈∩-elimˡ {a} {xs} {ys} p
+... | yes q with ∈insert-elim {a} {x} {xs ∩ ys} p
 ... | inj₁ r = here r
-... | inj₂ r = there $ ∈∩ˡ {a} {xs} {ys} r
+... | inj₂ r = there $ ∈∩-elimˡ {a} {xs} {ys} r
 
 -- Right elimination principle for membership in an intersection
-∈∩ʳ : {a : X} {xs ys : SortedList} → a ∈ (xs ∩ ys) → a ∈ ys
-∈∩ʳ {a} {cons x xs x#xs} {ys} p with any? (x ≈?_) ys
-... | no ¬q = ∈∩ʳ {a} {xs} {ys} p
-... | yes q with insert∈ {a} {x} {xs ∩ ys} p
+∈∩-elimʳ : {a : X} (xs : SortedList) {ys : SortedList} → a ∈ (xs ∩ ys) → a ∈ ys
+∈∩-elimʳ {a} (cons x xs x#xs) {ys} p with any? (x ≈?_) ys
+... | no ¬q = ∈∩-elimʳ {a} xs p
+... | yes q with ∈insert-elim {a} {x} {xs ∩ ys} p
 ... | inj₁ r = ≈-preserves-∈ q (≈-sym r)
-... | inj₂ r = ∈∩ʳ {a} {xs} {ys} r
+... | inj₂ r = ∈∩-elimʳ {a} xs r
+
+∈∩-elim : {a : X} (xs ys : SortedList) → a ∈ (xs ∩ ys) → a ∈ xs × a ∈ ys
+∈∩-elim {a} xs ys p = ∈∩-elimˡ p , ∈∩-elimʳ xs p
 
 -- Introduction principle for membership in an intersection
-∩∈ : {a : X} {xs ys : SortedList} → a ∈ xs → a ∈ ys → a ∈ (xs ∩ ys)
-∩∈ {a} {cons x xs x#xs} {ys} p q with any? (x ≈?_) ys
-∩∈ {a} {cons x xs x#xs} {ys} (here a≈x) q | yes u = ∈insertˡ' {xs = xs ∩ ys} a≈x
-∩∈ {a} {cons x xs x#xs} {ys} (there p) q | yes u = ∈insertʳ (∩∈ p q)
-∩∈ {a} {cons x xs x#xs} {ys} (here a≈x) q | no ¬u = ⊥-elim (¬u (≈-preserves-∈ q a≈x))
-∩∈ {a} {cons x xs x#xs} {ys} (there p) q | no ¬u = ∩∈ p q
+∈∩-intro : {a : X} {xs ys : SortedList} → a ∈ xs → a ∈ ys → a ∈ (xs ∩ ys)
+∈∩-intro {a} {cons x xs x#xs} {ys} p q with any? (x ≈?_) ys
+∈∩-intro {a} {cons x xs x#xs} {ys} (here a≈x) q | yes u = ∈insert-introˡ' {xs = xs ∩ ys} a≈x
+∈∩-intro {a} {cons x xs x#xs} {ys} (there p) q | yes u = ∈insert-introʳ (∈∩-intro p q)
+∈∩-intro {a} {cons x xs x#xs} {ys} (here a≈x) q | no ¬u = ⊥-elim (¬u (≈-preserves-∈ q a≈x))
+∈∩-intro {a} {cons x xs x#xs} {ys} (there p) q | no ¬u = ∈∩-intro p q
 
--- Negative right introduction principle for membership in an intersection
+-- Right introduction principle for non-membership in an intersection
 ∉∩-introʳ : {a : X} {xs ys : SortedList} → a ∉ ys → a ∉ (xs ∩ ys)
-∉∩-introʳ {a} {xs} {ys} ¬p q = ¬p $ ∈∩ʳ {a} {xs} {ys} q
+∉∩-introʳ {a} {xs} {ys} ¬p q = ¬p $ ∈∩-elimʳ xs q
 
--- Negative left introduction principle for membership in an intersection
+-- Left introduction principle for non-membership in an intersection
 ∉∩-introˡ : {a : X} {xs ys : SortedList} → a ∉ xs → a ∉ (xs ∩ ys)
-∉∩-introˡ {a} {xs} {ys} ¬p q = ¬p $ ∈∩ˡ {a} {xs} {ys} q
+∉∩-introˡ {a} {xs} {ys} ¬p q = ¬p $ ∈∩-elimˡ q
 
--- Negative elimination principle for membership in an intersection
+-- Elimination principle for non-membership in an intersection
 ∉∩-elim : {a : X} {xs ys : SortedList} → a ∉ (xs ∩ ys) → (a ∉ xs) ⊎ (a ∉ ys)
-∉∩-elim {a} {xs} {ys} ¬p = ? -- proof probably follows by some decidability argument
+∉∩-elim {a} {xs} {ys} ¬p with a ∈? xs
+... | no a∉xs = inj₁ a∉xs
+... | yes a∈xs with a ∈? ys
+... | no a∉ys = inj₂ a∉ys
+... | yes a∈ys = ⊥-elim $ ¬p (∈∩-intro a∈xs a∈ys)
 
 ∩-assoc : Associative _≈L_ _∩_
 ∩-assoc xs ys zs = extensionality _ _ λ x → f x , g x where
   f : (a : X) → a ∈ ((xs ∩ ys) ∩ zs) → a ∈ (xs ∩ (ys ∩ zs))
-  f a p = ∩∈ {a} {xs} {ys ∩ zs} (∈∩ˡ (∈∩ˡ p)) (∩∈ {a} {ys} {zs} (∈∩ʳ {a} {xs} {ys} (∈∩ˡ p)) (∈∩ʳ {xs = xs ∩ ys} p))
+  f a p = ∈∩-intro {a} {xs} {ys ∩ zs} (∈∩-elimˡ (∈∩-elimˡ p)) (∈∩-intro {a} {ys} {zs} (∈∩-elimʳ xs (∈∩-elimˡ p)) (∈∩-elimʳ (xs ∩ ys) p))
 
   g : (a : X) → a ∈ (xs ∩ (ys ∩ zs)) → a ∈ ((xs ∩ ys) ∩ zs)
-  g a p = ∩∈ {a} {xs ∩ ys} {zs} (∩∈ {a} {xs} {ys} (∈∩ˡ p) (∈∩ˡ (∈∩ʳ {a} {xs} {ys ∩ zs} p))) (∈∩ʳ {a} {ys} {zs} (∈∩ʳ {a} {xs} {ys ∩ zs} p))
+  g a p = ∈∩-intro {a} {xs ∩ ys} {zs} (∈∩-intro {a} {xs} {ys} (∈∩-elimˡ p) (∈∩-elimˡ (∈∩-elimʳ xs p))) (∈∩-elimʳ ys (∈∩-elimʳ xs p))
 
 ∩-comm : Commutative _≈L_ _∩_
 ∩-comm xs ys = extensionality _ _ λ a → f a xs ys , f a ys xs where
   f : (a : X) (xs ys : SortedList) → a ∈ (xs ∩ ys) → a ∈ (ys ∩ xs)
-  f a xs ys p = ∩∈ {a} {ys} {xs} (∈∩ʳ {a} {xs} p) (∈∩ˡ p)
+  f a xs ys p = ∈∩-intro {a} {ys} {xs} (∈∩-elimʳ xs p) (∈∩-elimˡ p)
 
 ∩-preserves-≈L : ∀ {x y u v} → x ≈L y → u ≈L v → (x ∩ u) ≈L (y ∩ v)
 ∩-preserves-≈L {xs} {ys} {us} {vs} p q = extensionality (xs ∩ us) (ys ∩ vs) λ x → f {x} p q , f {x} (≈L-sym p) (≈L-sym q) where
   f : ∀ {a xs us ys vs} → xs ≈L ys → us ≈L vs → a ∈ (xs ∩ us) → a ∈ (ys ∩ vs)
-  f {a} {xs} {us} {ys} {vs} p q r = ∩∈ {a} {ys} {vs} (≈L-preserves-∈ (∈∩ˡ r) p) (≈L-preserves-∈ (∈∩ʳ {xs = xs} r) q)
+  f {a} {xs} {us} {ys} {vs} p q r = ∈∩-intro {a} {ys} {vs} (≈L-preserves-∈ (∈∩-elimˡ r) p) (≈L-preserves-∈ (∈∩-elimʳ xs r) q)
 
 ∩-annihilatesˡ : LeftZero _≈L_ [] _∩_
 ∩-annihilatesˡ _ = []
@@ -590,35 +607,6 @@ IsMagma.isEquivalence (IsSemigroup.isMagma ∩-isSemigroup) = isEquivalence
 IsMagma.∙-cong (IsSemigroup.isMagma ∩-isSemigroup) = ∩-preserves-≈L
 IsSemigroup.assoc ∩-isSemigroup = ∩-assoc
 
--- if there exists an element which is not in xs, then xs cannot be the unit of ∩
-∩-id-lem : {x : X} {xs : SortedList} → x ∉ xs → ¬ (LeftIdentity _≈L_ xs _∩_)
-∩-id-lem {x} {xs} x∉xs id = x∉xs (∈∩ˡ (≈L-preserves-∈ (∈insertˡ x xs) (≈L-sym (id (insert x xs)))))
-
-
--- _∩_ has a unit iff the carrier set is finite (ie, enumerable)
-module _ where
-  private
-    open import Data.List as L
-    open import Data.List.Membership.Setoid as L using ()
-    open import Data.List.Relation.Unary.Any as L using ()
-    _∈'_ = L._∈_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
-
-  ∩-idˡ→X-fin : (ε : List X) → LeftIdentity _≈L_ (insertion-sort ε) _∩_ → is-enumeration ε
-  ∩-idˡ→X-fin ε id = {!!}
-
-  ∩-idʳ→X-fin : (ε : List X) → RightIdentity _≈L_(insertion-sort ε) _∩_ → is-enumeration ε
-  ∩-idʳ→X-fin ε id = {!!}
-
-  X-fin→∩-idˡ : (ε : List X) → is-enumeration ε → LeftIdentity _≈L_ (insertion-sort ε) _∩_
-  X-fin→∩-idˡ xs isEnum [] = ∩-annihilatesʳ (insertion-sort xs)
-  X-fin→∩-idˡ xs isEnum (cons y ys p) = {!X-fin→∩-idˡ xs isEnum ys!} -- y#ys, y ∈ xs
-
-  X-fin→∩-idʳ : (ε : List X) → is-enumeration ε → RightIdentity _≈L_ (insertion-sort ε) _∩_
-  X-fin→∩-idʳ xs isEnum [] = ∩-annihilatesˡ (insertion-sort xs)
-  X-fin→∩-idʳ xs isEnum (cons y ys p) with any? (y ≈?_) (insertion-sort xs)
-  ... | yes q = ≈L-trans (insert-preserves-≈L ≈-refl (X-fin→∩-idʳ xs isEnum ys)) (≡→≈L $ insert-consview p)
-  ... | no ¬q = ⊥-elim $ ¬q (insertion-sort-preserves-∈ {y} {xs} (isEnum y))
-
 
 ----------------------------------------
 -- Properties of _∩_ and _∪_ together --
@@ -627,26 +615,54 @@ module _ where
 ∩-distrib-∪ˡ : _DistributesOverˡ_ _≈L_ _∩_ _∪_
 ∩-distrib-∪ˡ xs ys zs = extensionality _ _ λ x → f x , g x where
   f : (a : X) → a ∈ (xs ∩ (ys ∪ zs)) → a ∈ ((xs ∩ ys) ∪ (xs ∩ zs))
-  f a p with ∪∈ {a} {ys} {zs} (∈∩ʳ {a} {xs} {ys ∪ zs} p)
-  ... | inj₁ a∈ys = ∈∪ˡ {a} {xs ∩ ys} (∩∈ {a} {xs} {ys} (∈∩ˡ p) a∈ys) (xs ∩ zs)
-  ... | inj₂ a∈zs = ∈∪ʳ {a} {xs ∩ zs} (xs ∩ ys) (∩∈ {a} {xs} {zs} (∈∩ˡ p) a∈zs)
+  f a p with ∈∪-elim {a} {ys} {zs} (∈∩-elimʳ xs p)
+  ... | inj₁ a∈ys = ∈∪-introˡ {a} {xs ∩ ys} (∈∩-intro {a} {xs} {ys} (∈∩-elimˡ p) a∈ys) (xs ∩ zs)
+  ... | inj₂ a∈zs = ∈∪-introʳ {a} {xs ∩ zs} (xs ∩ ys) (∈∩-intro {a} {xs} {zs} (∈∩-elimˡ p) a∈zs)
 
   g : (a : X) → a ∈ ((xs ∩ ys) ∪ (xs ∩ zs)) → a ∈ (xs ∩ (ys ∪ zs))
-  g a p with ∪∈ {a} {xs ∩ ys} {xs ∩ zs} p
-  ... | inj₁ q = ∩∈ {a} {xs} {ys ∪ zs} (∈∩ˡ q) (∈∪ˡ (∈∩ʳ {a} {xs} {ys} q) zs)
-  ... | inj₂ q = ∩∈ {a} {xs} {ys ∪ zs} (∈∩ˡ q) (∈∪ʳ ys (∈∩ʳ {a} {xs} {zs} q))
+  g a p with ∈∪-elim {a} {xs ∩ ys} {xs ∩ zs} p
+  ... | inj₁ q = ∈∩-intro {a} {xs} {ys ∪ zs} (∈∩-elimˡ q) (∈∪-introˡ (∈∩-elimʳ xs q) zs)
+  ... | inj₂ q = ∈∩-intro {a} {xs} {ys ∪ zs} (∈∩-elimˡ q) (∈∪-introʳ ys (∈∩-elimʳ xs q))
 
 ∩-distrib-∪ʳ : _DistributesOverʳ_ _≈L_ _∩_ _∪_
 ∩-distrib-∪ʳ xs ys zs = extensionality _ _ λ x → f x , g x where
   f : (a : X) → a ∈ ((ys ∪ zs) ∩ xs) → a ∈ ((ys ∩ xs) ∪ (zs ∩ xs))
-  f a p with ∪∈ {a} {ys} {zs} (∈∩ˡ {a} {ys ∪ zs} {xs} p)
-  ... | inj₁ q = ∈∪ˡ {a} {ys ∩ xs} (∩∈ {a} {ys} {xs} q (∈∩ʳ {a} {ys ∪ zs} {xs} p)) (zs ∩ xs)
-  ... | inj₂ q = ∈∪ʳ {a} {zs ∩ xs} (ys ∩ xs) (∩∈ {a} {zs} {xs} q (∈∩ʳ {a} {ys ∪ zs} {xs} p))
+  f a p with ∈∪-elim {a} {ys} {zs} (∈∩-elimˡ {a} {ys ∪ zs} {xs} p)
+  ... | inj₁ q = ∈∪-introˡ {a} {ys ∩ xs} (∈∩-intro {a} {ys} {xs} q (∈∩-elimʳ (ys ∪ zs) p)) (zs ∩ xs)
+  ... | inj₂ q = ∈∪-introʳ {a} {zs ∩ xs} (ys ∩ xs) (∈∩-intro {a} {zs} {xs} q (∈∩-elimʳ (ys ∪ zs) p))
 
   g : (a : X) → a ∈ ((ys ∩ xs) ∪ (zs ∩ xs)) → a ∈ ((ys ∪ zs) ∩ xs)
-  g a p with ∪∈ {a} {ys ∩ xs} {zs ∩ xs} p
-  ... | inj₁ q = ∩∈ {a} {ys ∪ zs} {xs} (∈∪ˡ {a} {ys} (∈∩ˡ q) zs) (∈∩ʳ {a} {ys} {xs} q)
-  ... | inj₂ q = ∩∈ {a} {ys ∪ zs} {xs} (∈∪ʳ {a} {zs} ys (∈∩ˡ q)) (∈∩ʳ {a} {zs} {xs} q)
+  g a p with ∈∪-elim {a} {ys ∩ xs} {zs ∩ xs} p
+  ... | inj₁ q = ∈∩-intro (∈∪-introˡ {a} {ys} (∈∩-elimˡ q) zs) (∈∩-elimʳ ys q)
+  ... | inj₂ q = ∈∩-intro (∈∪-introʳ ys (∈∩-elimˡ q)) (∈∩-elimʳ zs q)
+
+∪-distrib-∩ˡ : _DistributesOverˡ_ _≈L_ _∪_ _∩_
+∪-distrib-∩ˡ xs ys zs = extensionality _ _ λ x → f x , g x where
+  f : (a : X) → a ∈ (xs ∪ (ys ∩ zs)) → a ∈ ((xs ∪ ys) ∩ (xs ∪ zs))
+  f a p with ∈∪-elim {a} {xs} {ys ∩ zs} p
+  ... | inj₁ q = ∈∩-intro (∈∪-introˡ q ys) (∈∪-introˡ q zs)
+  ... | inj₂ q = ∈∩-intro (∈∪-introʳ xs (∈∩-elimˡ q)) (∈∪-introʳ xs (∈∩-elimʳ ys q))
+
+  g : (a : X) → a ∈ ((xs ∪ ys) ∩ (xs ∪ zs)) → a ∈ (xs ∪ (ys ∩ zs))
+  g a p with ∈∪-elim {a} {xs} {ys} (∈∩-elimˡ p)
+  ... | inj₁ a∈xs = ∈∪-introˡ a∈xs (ys ∩ zs)
+  ... | inj₂ a∈ys with ∈∪-elim {a} {xs} {zs} (∈∩-elimʳ (xs ∪ ys) p)
+  ... | inj₁ a∈xs = ∈∪-introˡ a∈xs (ys ∩ zs)
+  ... | inj₂ a∈zs = ∈∪-introʳ xs (∈∩-intro a∈ys a∈zs)
+
+∪-distrib-∩ʳ : _DistributesOverʳ_ _≈L_ _∪_ _∩_
+∪-distrib-∩ʳ xs ys zs = extensionality _ _ λ x → f x , g x where
+  f : (a : X) → a ∈ ((ys ∩ zs) ∪ xs) → a ∈ ((ys ∪ xs) ∩ (zs ∪ xs))
+  f a p with ∈∪-elim {a} {ys ∩ zs} {xs} p
+  ... | inj₁ q = ∈∩-intro (∈∪-introˡ {a} {ys} (∈∩-elimˡ q) xs) (∈∪-introˡ (∈∩-elimʳ ys q) xs)
+  ... | inj₂ q = ∈∩-intro (∈∪-introʳ ys q) (∈∪-introʳ zs q)
+
+  g : (a : X) → a ∈ ((ys ∪ xs) ∩ (zs ∪ xs)) → a ∈ ((ys ∩ zs) ∪ xs)
+  g a p with ∈∪-elim {a} {ys} {xs} (∈∩-elimˡ p)
+  ... | inj₂ a∈xs = ∈∪-introʳ (ys ∩ zs) a∈xs
+  ... | inj₁ a∈ys with ∈∪-elim {a} {zs} {xs} (∈∩-elimʳ (ys ∪ xs) p)
+  ... | inj₂ a∈xs = ∈∪-introʳ (ys ∩ zs) a∈xs
+  ... | inj₁ a∈zs = ∈∪-introˡ (∈∩-intro a∈ys a∈zs) xs 
 
 isPreSemiring : IsSemiringWithoutOne _≈L_ _∪_ _∩_ []
 IsSemiringWithoutOne.+-isCommutativeMonoid isPreSemiring = isCommMonoid
@@ -660,6 +676,71 @@ IsSemiringWithoutOne.zero isPreSemiring = ∩-annihilatesˡ , ∩-annihilatesʳ
 -------------------------------------------------
 -- Properties of _∩_ with a Finite Carrier Set --
 -------------------------------------------------
+
+-- If there exists an element which is not in xs, then xs cannot be the unit of ∩.
+∩-id-lemˡ : {x : X} {xs : SortedList} → x ∉ xs → ¬ (LeftIdentity _≈L_ xs _∩_)
+∩-id-lemˡ {x} {xs} x∉xs id = x∉xs (∈∩-elimˡ (≈L-preserves-∈ (∈insert-introˡ x xs) (≈L-sym (id (insert x xs)))))
+
+∩-id-lemʳ : {x : X} {xs : SortedList} → x ∉ xs → ¬ (RightIdentity _≈L_ xs _∩_)
+∩-id-lemʳ {x} {xs} x∉xs id = x∉xs (∈∩-elimʳ (insert x xs) $ ≈L-preserves-∈ (∈insert-introˡ x xs) (≈L-sym (id (insert x xs))))
+
+
+-- In this anonymous submodule we show that _∩_ has a unit iff the carrier set is finite (ie, enumerable).
+module _ where
+  private
+    open import Data.List as L
+    open import Data.List.Membership.Setoid as L using ()
+    open import Data.List.Relation.Unary.Any as L using ()
+    _∈'_ = L._∈_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
+    _∉'_ = L._∉_ (record { Carrier = X ; _≈_ = _≈_ ; isEquivalence = ≈-Eq })
+
+
+  ∩-id-lemˡ' : {x : X} {xs : List X} → x ∉' xs → ¬ (LeftIdentity _≈L_ (insertion-sort xs) _∩_)
+  ∩-id-lemˡ' {x} {xs} x∉xs id = ∩-id-lemˡ {x} {insertion-sort xs} (insertion-sort-preserves-∉ x∉xs) id
+
+  ∩-id-lemʳ' : {x : X} {xs : List X} → x ∉' xs → ¬ (RightIdentity _≈L_ (insertion-sort xs) _∩_)
+  ∩-id-lemʳ' {x} {xs} x∉xs id = ∩-id-lemʳ {x} {insertion-sort xs} (insertion-sort-preserves-∉ x∉xs) id
+
+  -- Left Id → Enum
+  ∩-idˡ→X-fin : (ε : List X) → LeftIdentity _≈L_ (insertion-sort ε) _∩_ → is-enumeration ε
+  ∩-idˡ→X-fin xs id x with L.any? (x ≈?_) xs
+  ... | yes p = p
+  ... | no ¬p = ⊥-elim (∩-id-lemˡ' ¬p id)
+
+  -- Right Id → Enum
+  ∩-idʳ→X-fin : (ε : List X) → RightIdentity _≈L_(insertion-sort ε) _∩_ → is-enumeration ε
+  ∩-idʳ→X-fin xs id x with L.any? (x ≈?_) xs
+  ... | yes p = p
+  ... | no ¬p = ⊥-elim (∩-id-lemʳ' ¬p id)
+
+  -- Enum → Left Id
+  X-fin→∩-idˡ : (ε : List X) → is-enumeration ε → LeftIdentity _≈L_ (insertion-sort ε) _∩_
+  X-fin→∩-idˡ xs isEnum [] = ∩-annihilatesʳ (insertion-sort xs)
+  X-fin→∩-idˡ xs isEnum (cons y ys p) =
+    begin
+      insertion-sort xs ∩ cons y ys p
+    ≈⟨ ∩-preserves-≈L (extensionality (insertion-sort xs)
+                                      (insert y (insertion-sort xs))
+                                      (λ x → (λ _ → ∈insert-introʳ (insertion-sort-preserves-∈ (isEnum x)))
+                                            , λ _ → insertion-sort-preserves-∈ (isEnum x))) (≡→≈L $ sym $ insert-consview p) ⟩
+      ((cons y [] [] ∪ insertion-sort xs) ∩ (cons y [] [] ∪ ys))
+    ≈⟨ (≈L-sym $ ∪-distrib-∩ˡ (cons y [] []) (insertion-sort xs) ys) ⟩
+      (cons y [] []) ∪ (insertion-sort xs ∩ ys)
+    ≈⟨⟩
+      insert y (insertion-sort xs ∩ ys)
+    ≈⟨ insert-preserves-≈L ≈-refl (X-fin→∩-idˡ xs isEnum ys) ⟩
+      insert y ys
+    ≈⟨ (≡→≈L $ insert-consview p) ⟩
+      cons y ys p
+    ∎ where open ≈L-Reasoning
+
+  -- Enum → Right Id
+  X-fin→∩-idʳ : (ε : List X) → is-enumeration ε → RightIdentity _≈L_ (insertion-sort ε) _∩_
+  X-fin→∩-idʳ xs isEnum [] = ∩-annihilatesˡ (insertion-sort xs)
+  X-fin→∩-idʳ xs isEnum (cons y ys p) with any? (y ≈?_) (insertion-sort xs)
+  ... | yes q = ≈L-trans (insert-preserves-≈L ≈-refl (X-fin→∩-idʳ xs isEnum ys)) (≡→≈L $ insert-consview p)
+  ... | no ¬q = ⊥-elim $ ¬q (insertion-sort-preserves-∈ {y} {xs} (isEnum y))
+
 
 module WithFinCarrier (isEnum : Enumerated) where
   ∩-Unit : SortedList
@@ -687,8 +768,11 @@ module WithFinCarrier (isEnum : Enumerated) where
 -- Properties of ⊆ --
 ---------------------
 
+{-
 ⊆-isDTO : {!!}
 ⊆-isDTO = {!!}
 
 ⊆-isLattice : {!!}
 ⊆-isLattice = {!!}
+
+-}
