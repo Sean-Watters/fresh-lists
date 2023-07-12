@@ -1,5 +1,5 @@
 {-# OPTIONS --safe --without-K #-}
-module Free.MysteryStructure.Base where
+module Free.ReflexivePartialMonoid.Base where
 
 open import Data.Nat
 open import Data.Sum
@@ -19,11 +19,11 @@ module FL-≡ (A : Set)(A-set : Irrelevant (_≡_ {A = A})) where
   private
     cons-cong = WithIrr.cons-cong _≡_ A-set
 
-  MA : Set
-  MA = List# {A = A} _≡_
+  FreeRPMon : Set
+  FreeRPMon = List# {A = A} _≡_
 
   mutual
-    repeat : A → ℕ → MA
+    repeat : A → ℕ → FreeRPMon
     repeat a zero = []
     repeat a (suc n) = cons a (repeat a n) (repeat-equal a n)
 
@@ -35,11 +35,11 @@ module FL-≡ (A : Set)(A-set : Irrelevant (_≡_ {A = A})) where
   length-repeat a zero = refl
   length-repeat a (suc n) = cong suc (length-repeat a n)
 
-  to : MA → ⊤ ⊎ (A × ℕ⁺)
+  to : FreeRPMon → ⊤ ⊎ (A × ℕ⁺)
   to [] = inj₁ tt
   to (cons x xs x#xs) = inj₂ (x , (suc (length xs) , _))
 
-  from : ⊤ ⊎ (A × ℕ⁺) → MA
+  from : ⊤ ⊎ (A × ℕ⁺) → FreeRPMon
   from (inj₁ _) = []
   from (inj₂ (a , (n , _))) = repeat a n
 
@@ -47,7 +47,7 @@ module FL-≡ (A : Set)(A-set : Irrelevant (_≡_ {A = A})) where
   to-from (inj₁ _) = refl
   to-from (inj₂ (a , suc n , record { nonZero = tt })) rewrite length-repeat a n = refl
 
-  from-to : (xs :  MA) → from (to xs) ≡ xs
+  from-to : (xs :  FreeRPMon) → from (to xs) ≡ xs
   from-to [] = refl
   from-to (cons x xs x#xs) = cons-cong refl (lemma xs x#xs)
     where

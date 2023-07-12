@@ -783,13 +783,6 @@ cons⊈[] {x} {xs} {fx} p with p (here ≈-refl)
 ⊆-antisym : Antisymmetric _≈L_ _⊆_
 ⊆-antisym p q = extensionality _ _ (λ x → p , q)
 
--- ⊆ is a partial order
-⊆-isPO : IsPartialOrder _≈L_ _⊆_
-IsPreorder.isEquivalence (IsPartialOrder.isPreorder ⊆-isPO) = isEquivalence
-IsPreorder.reflexive (IsPartialOrder.isPreorder ⊆-isPO) = ⊆-reflexive
-IsPreorder.trans (IsPartialOrder.isPreorder ⊆-isPO) = ⊆-trans
-IsPartialOrder.antisym ⊆-isPO = ⊆-antisym
-
 ∪-upperboundˡ : (xs ys : SortedList) → xs ⊆ (xs ∪ ys)
 ∪-upperboundˡ xs ys p = ∈∪-introˡ p ys
 
@@ -816,6 +809,13 @@ IsPartialOrder.antisym ⊆-isPO = ⊆-antisym
 -- ∩ is the infimum/meet/GLB of ⊆
 ∩-infimum : Infimum _⊆_ _∩_
 ∩-infimum xs ys = ∩-lowerboundˡ xs ys , ∩-lowerboundʳ xs ys , λ _ → ∩-lub
+
+-- ⊆ is a partial order
+⊆-isPO : IsPartialOrder _≈L_ _⊆_
+IsPreorder.isEquivalence (IsPartialOrder.isPreorder ⊆-isPO) = isEquivalence
+IsPreorder.reflexive (IsPartialOrder.isPreorder ⊆-isPO) = ⊆-reflexive
+IsPreorder.trans (IsPartialOrder.isPreorder ⊆-isPO) = ⊆-trans
+IsPartialOrder.antisym ⊆-isPO = ⊆-antisym
 
 -- ⊆ is a lattice, with ∪ as the join and ∩ as the meet.
 ⊆-isLattice : IsLattice _≈L_ _⊆_ _∪_ _∩_
