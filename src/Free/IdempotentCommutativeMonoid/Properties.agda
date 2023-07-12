@@ -22,6 +22,7 @@ open import Function
 open import Induction.WellFounded
 
 open import Relation.Binary hiding (NonEmpty; StrictTotalOrder)
+open import Relation.Binary.Lattice
 open import Relation.Binary.Isomorphism
 open import Relation.Binary.PropositionalEquality hiding (isEquivalence)
 open import Relation.Nullary hiding (Irrelevant)
@@ -72,18 +73,7 @@ xs ⊈ ys = ¬ (xs ⊆ ys)
 _∈?_ : Decidable _∈_
 x ∈? xs = any? (x ≈?_) xs
 
-⊆-refl : { xs : SortedList } -> xs ⊆ xs
-⊆-refl a∈xs = a∈xs
 
-⊆-[]-initial : ∀ {xs} -> [] ⊆ xs
-⊆-[]-initial ()
-
-⊆-weaken : ∀ {x xs ys} {fx : x # xs} → (cons x xs fx) ⊆ ys → xs ⊆ ys
-⊆-weaken sub a∈xs = sub (there a∈xs)
-
-cons⊈[] : ∀ {x xs} {fx : x # xs} -> cons x xs fx ⊈ []
-cons⊈[] {x} {xs} {fx} p with p (here ≈-refl)
-... | ()
 
 #→∉ : ∀ {x} {xs : SortedList} -> x # xs -> x ∉ xs
 #→∉ {x} {cons y ys fy} x#xs x∈xs with fresh→all {xs = cons y ys fy} x#xs
@@ -209,16 +199,16 @@ nil≉cons : {x : X} {xs : SortedList} {x#xs : x # xs} → ¬ ([] ≈L cons x xs
 nil≉cons ()
 
 
-------------------------
--- Preservation of ≈L --
-------------------------
+----------------------
+-- Properties of ≈L --
+----------------------
 
-≈L-preserves-∈ : ∀ {a} {xs ys : SortedList} -> a ∈ xs -> xs ≈L ys -> a ∈ ys
-≈L-preserves-∈ (here a≈x) (cons x≈y xs≈ys) = here (≈-trans a≈x x≈y)
-≈L-preserves-∈ (there a∈xs) (cons x≈y xs≈ys) = there (≈L-preserves-∈ a∈xs xs≈ys)
+∈-preserves-≈L : ∀ {a} {xs ys : SortedList} -> a ∈ xs -> xs ≈L ys -> a ∈ ys
+∈-preserves-≈L (here a≈x) (cons x≈y xs≈ys) = here (≈-trans a≈x x≈y)
+∈-preserves-≈L (there a∈xs) (cons x≈y xs≈ys) = there (∈-preserves-≈L a∈xs xs≈ys)
 
-≈L-preserves-∉ : ∀ {a} {xs ys : SortedList} -> a ∉ xs -> xs ≈L ys -> a ∉ ys
-≈L-preserves-∉ a∉xs xs≈ys a∈ys = a∉xs (≈L-preserves-∈ a∈ys (≈L-sym xs≈ys))
+∉-preserves-≈L : ∀ {a} {xs ys : SortedList} -> a ∉ xs -> xs ≈L ys -> a ∉ ys
+∉-preserves-≈L a∉xs xs≈ys a∈ys = a∉xs (∈-preserves-≈L a∈ys (≈L-sym xs≈ys))
 
 ≈L-preserves-length : {xs ys : SortedList} -> xs ≈L ys -> length xs ≡ length ys
 ≈L-preserves-length [] = refl
@@ -373,7 +363,7 @@ proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
 ∪-preserves-≈L {xs} {xs'} {ys} {ys'} xs=xs' ys=ys' = extensionality _ _ λ x → f x xs=xs' ys=ys' , f x (≈L-sym xs=xs') (≈L-sym ys=ys')
   where
     f : (x : X) → {xs xs' ys ys' : SortedList} -> xs ≈L xs' -> ys ≈L ys' → x ∈ (xs ∪ ys) → x ∈ (xs' ∪ ys')
-    f x {xs} {xs'} {ys} {ys'} xs=xs' ys=ys' x∈xs∪xs = [ (λ x∈xs → ∈∪-introˡ (≈L-preserves-∈ x∈xs xs=xs') ys') , (λ x∈ys → ∈∪-introʳ xs' (≈L-preserves-∈ x∈ys ys=ys')) ]′ (∈∪-elim x∈xs∪xs)
+    f x {xs} {xs'} {ys} {ys'} xs=xs' ys=ys' x∈xs∪xs = [ (λ x∈xs → ∈∪-introˡ (∈-preserves-≈L x∈xs xs=xs') ys') , (λ x∈ys → ∈∪-introʳ xs' (∈-preserves-≈L x∈ys ys=ys')) ]′ (∈∪-elim x∈xs∪xs)
 
 ∪-cancelˡ : {xs ys : SortedList} -> xs ≈L ys -> (xs ∪ ys) ≈L xs
 ∪-cancelˡ {xs} {ys} xs=ys = begin
@@ -593,7 +583,7 @@ IsOrderedIdempotentCommutativeMonoid.isSTO isOICM = <-lex-STO
 ∩-preserves-≈L : ∀ {x y u v} → x ≈L y → u ≈L v → (x ∩ u) ≈L (y ∩ v)
 ∩-preserves-≈L {xs} {ys} {us} {vs} p q = extensionality (xs ∩ us) (ys ∩ vs) λ x → f {x} p q , f {x} (≈L-sym p) (≈L-sym q) where
   f : ∀ {a xs us ys vs} → xs ≈L ys → us ≈L vs → a ∈ (xs ∩ us) → a ∈ (ys ∩ vs)
-  f {a} {xs} {us} {ys} {vs} p q r = ∈∩-intro {a} {ys} {vs} (≈L-preserves-∈ (∈∩-elimˡ r) p) (≈L-preserves-∈ (∈∩-elimʳ xs r) q)
+  f {a} {xs} {us} {ys} {vs} p q r = ∈∩-intro {a} {ys} {vs} (∈-preserves-≈L (∈∩-elimˡ r) p) (∈-preserves-≈L (∈∩-elimʳ xs r) q)
 
 ∩-annihilatesˡ : LeftZero _≈L_ [] _∩_
 ∩-annihilatesˡ _ = []
@@ -671,7 +661,7 @@ IsSemiringWithoutOne.*-assoc isPreSemiring = ∩-assoc
 IsSemiringWithoutOne.distrib isPreSemiring = ∩-distrib-∪ˡ , ∩-distrib-∪ʳ
 IsSemiringWithoutOne.zero isPreSemiring = ∩-annihilatesˡ , ∩-annihilatesʳ
 
--- TODO: isCommutativePreSemiring
+-- TODO: Is also a commutative pre-semiring, and also + distributes over *
 
 -------------------------------------------------
 -- Properties of _∩_ with a Finite Carrier Set --
@@ -679,10 +669,10 @@ IsSemiringWithoutOne.zero isPreSemiring = ∩-annihilatesˡ , ∩-annihilatesʳ
 
 -- If there exists an element which is not in xs, then xs cannot be the unit of ∩.
 ∩-id-lemˡ : {x : X} {xs : SortedList} → x ∉ xs → ¬ (LeftIdentity _≈L_ xs _∩_)
-∩-id-lemˡ {x} {xs} x∉xs id = x∉xs (∈∩-elimˡ (≈L-preserves-∈ (∈insert-introˡ x xs) (≈L-sym (id (insert x xs)))))
+∩-id-lemˡ {x} {xs} x∉xs id = x∉xs (∈∩-elimˡ (∈-preserves-≈L (∈insert-introˡ x xs) (≈L-sym (id (insert x xs)))))
 
 ∩-id-lemʳ : {x : X} {xs : SortedList} → x ∉ xs → ¬ (RightIdentity _≈L_ xs _∩_)
-∩-id-lemʳ {x} {xs} x∉xs id = x∉xs (∈∩-elimʳ (insert x xs) $ ≈L-preserves-∈ (∈insert-introˡ x xs) (≈L-sym (id (insert x xs))))
+∩-id-lemʳ {x} {xs} x∉xs id = x∉xs (∈∩-elimʳ (insert x xs) $ ∈-preserves-≈L (∈insert-introˡ x xs) (≈L-sym (id (insert x xs))))
 
 
 -- In this anonymous submodule we show that _∩_ has a unit iff the carrier set is finite (ie, enumerable).
@@ -768,11 +758,67 @@ module WithFinCarrier (isEnum : Enumerated) where
 -- Properties of ⊆ --
 ---------------------
 
-{-
-⊆-isDTO : {!!}
-⊆-isDTO = {!!}
+⊆-respects-≈L : {xs xs' ys ys' : SortedList} → xs ≈L xs' → ys ≈L ys' → xs ⊆ ys → xs' ⊆ ys'
+⊆-respects-≈L p q r s = ∈-preserves-≈L (r (∈-preserves-≈L s (≈L-sym p))) q
 
-⊆-isLattice : {!!}
-⊆-isLattice = {!!}
+⊆-[]-initial : ∀ {xs} -> [] ⊆ xs
+⊆-[]-initial ()
 
--}
+⊆-weaken : ∀ {x xs ys} {fx : x # xs} → (cons x xs fx) ⊆ ys → xs ⊆ ys
+⊆-weaken sub a∈xs = sub (there a∈xs)
+
+cons⊈[] : ∀ {x xs} {fx : x # xs} -> cons x xs fx ⊈ []
+cons⊈[] {x} {xs} {fx} p with p (here ≈-refl)
+... | ()
+
+⊆-reflexive : {xs ys : SortedList} → xs ≈L ys → xs ⊆ ys
+⊆-reflexive p q = ∈-preserves-≈L q p
+
+⊆-refl : {xs : SortedList} → xs ⊆ xs
+⊆-refl = ⊆-reflexive ≈L-refl
+
+⊆-trans : Transitive _⊆_
+⊆-trans p q = q ∘ p
+
+⊆-antisym : Antisymmetric _≈L_ _⊆_
+⊆-antisym p q = extensionality _ _ (λ x → p , q)
+
+-- ⊆ is a partial order
+⊆-isPO : IsPartialOrder _≈L_ _⊆_
+IsPreorder.isEquivalence (IsPartialOrder.isPreorder ⊆-isPO) = isEquivalence
+IsPreorder.reflexive (IsPartialOrder.isPreorder ⊆-isPO) = ⊆-reflexive
+IsPreorder.trans (IsPartialOrder.isPreorder ⊆-isPO) = ⊆-trans
+IsPartialOrder.antisym ⊆-isPO = ⊆-antisym
+
+∪-upperboundˡ : (xs ys : SortedList) → xs ⊆ (xs ∪ ys)
+∪-upperboundˡ xs ys p = ∈∪-introˡ p ys
+
+∪-upperboundʳ : (xs ys : SortedList) → ys ⊆ (xs ∪ ys)
+∪-upperboundʳ xs ys p = ∈∪-introʳ xs p
+
+∪-lub : {xs ys zs : SortedList} → xs ⊆ zs → ys ⊆ zs → (xs ∪ ys) ⊆ zs
+∪-lub {xs} {ys} p q r with ∈∪-elim {xs = xs} {ys} r
+... | inj₁ s = p s
+... | inj₂ s = q s
+
+∪-supremum : Supremum _⊆_ _∪_
+∪-supremum xs ys = ∪-upperboundˡ xs ys , ∪-upperboundʳ xs ys , λ _ → ∪-lub
+
+∩-lowerboundˡ : (xs ys : SortedList) → (xs ∩ ys) ⊆ xs
+∩-lowerboundˡ xs ys p = ∈∩-elimˡ p
+
+∩-lowerboundʳ : (xs ys : SortedList) → (xs ∩ ys) ⊆ ys
+∩-lowerboundʳ xs ys p = ∈∩-elimʳ xs p
+
+∩-lub : {xs ys zs : SortedList} → zs ⊆ xs → zs ⊆ ys → zs ⊆ (xs ∩ ys)
+∩-lub p q r = ∈∩-intro (p r) (q r)
+
+-- ∩ is the infimum/meet/GLB of ⊆
+∩-infimum : Infimum _⊆_ _∩_
+∩-infimum xs ys = ∩-lowerboundˡ xs ys , ∩-lowerboundʳ xs ys , λ _ → ∩-lub
+
+-- ⊆ is a lattice, with ∪ as the join and ∩ as the meet.
+⊆-isLattice : IsLattice _≈L_ _⊆_ _∪_ _∩_
+IsLattice.isPartialOrder ⊆-isLattice = ⊆-isPO
+IsLattice.supremum ⊆-isLattice = ∪-supremum
+IsLattice.infimum ⊆-isLattice = ∩-infimum
