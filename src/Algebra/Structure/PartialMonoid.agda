@@ -14,11 +14,11 @@ record IsPartialMonoid
   : Set (a ⊔ b ⊔ c) where
   field
     isEquivalence : IsEquivalence _≈_
-    ε-compatˡ : ∀ x → ε R x
-    ε-compatʳ : ∀ x → x R ε
-    identityˡ : ∀ x → ∙[ ε-compatˡ x ] ≈ x
-    identityʳ : ∀ x → ∙[ ε-compatʳ x ] ≈ x
-    assoc : ∀ x y z → (yz : y R z) → (p : x R (∙[ yz ])) → Σ[ xy ∈ x R y ] Σ[ q ∈ ∙[ xy ] R z ] (∙[ p ] ≈ ∙[ q ])
+    ε-compatˡ : ∀ {x} → ε R x
+    ε-compatʳ : ∀ {x} → x R ε
+    identityˡ : ∀ {x} → ∙[ ε-compatˡ {x} ] ≈ x
+    identityʳ : ∀ {x} → ∙[ ε-compatʳ {x} ] ≈ x
+    assoc : ∀ {x y z} → (yz : y R z) → (p : x R (∙[ yz ])) → Σ[ xy ∈ x R y ] Σ[ q ∈ ∙[ xy ] R z ] (∙[ p ] ≈ ∙[ q ])
 
 record IsReflexivePartialMonoid
   {a b c} {A : Set a}
@@ -28,4 +28,4 @@ record IsReflexivePartialMonoid
   : Set (a ⊔ b ⊔ c) where
   field
     isPMon : IsPartialMonoid _≈_ _R_ ∙[_] ε
-    refl : ∀ x → x R x
+    refl : ∀ {x} → x R x
