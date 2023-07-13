@@ -51,6 +51,3 @@ mutual
   double-fresh [] = []
   double-fresh (px ∷ pxs) = px ∷ (px ∷ double-fresh pxs)
 
--- Double, except with a type that looks more like refl pmon multiplication
-double' : {x y : FreeRPMon} → x ≡ y → FreeRPMon
-double' {x} refl = double x
