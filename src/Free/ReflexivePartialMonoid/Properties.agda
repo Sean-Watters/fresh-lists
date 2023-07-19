@@ -223,13 +223,24 @@ to-alt~ (cons refl p) = rep
 ∙-assoc'-eq rep onel = refl
 ∙-assoc'-eq {inj₂ (x , m)} {inj₂ (.x , n)} {inj₂ (.x , o)} rep rep = cong (λ z → inj₂ (x , z)) (ℕ⁺-eq (sym $ +-assoc (proj₁ m) (proj₁ n) (proj₁ o)))
 
-∙-assoc' : {x y z : FreeRPMon'} (yz : y ~' z) (p : x ~' ∙' yz)
-             → Σ[ xy ∈ (x ~' y) ] Σ[ q ∈ (∙' xy ~' z) ] (∙' p ≡ ∙' q)
-∙-assoc' p q = ∙-assoc'₁ p q , ∙-assoc'₂ p q , ∙-assoc'-eq p q
+to-alt~∙ : {x y z : FreeRPMon} (p : y ~ z) → x ~ ∙ p → to-alt x ~' ∙' (to-alt~ p)
+to-alt~∙ nill q = to-alt~ q
+to-alt~∙ nilr q = to-alt~ q
+to-alt~∙ (cons refl p) nill = onel
+to-alt~∙ (cons refl p) (cons refl q) = rep
+
+∙-assoc₁ : {x y z : FreeRPMon} (yz : y ~ z) (p : x ~ ∙ yz) → (x ~ y)
+∙-assoc₁ {x} {y} {z} p q = subst₂ _~_ (from-to-alt x) (from-to-alt y) (from-alt~ (∙-assoc'₁ (to-alt~ p) (to-alt~∙ p q)))
+
+∙-assoc₂ : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p) → ∙ (∙-assoc₁ p q) ~ z
+∙-assoc₂ {x} {y} {z} p q = subst₂ _~_ (lem p q) (from-to-alt z) (from-alt~ (∙-assoc'₂ (to-alt~ p) (to-alt~∙ p q))) where
+  lem : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p)
+      → from-alt (∙' (∙-assoc'₁ (to-alt~ p) (to-alt~∙ p q))) ≡ ∙ (∙-assoc₁ p q)
+  lem p q = {!!}
 
 ∙-assoc : {x y z : FreeRPMon} (yz : y ~ z) (p : x ~ ∙ yz)
              → Σ[ xy ∈ (x ~ y) ] Σ[ q ∈ (∙ xy ~ z) ] (∙ p ≡ ∙ q)
-∙-assoc p q = {!from-alt~!} , {!!} , {!!}
+∙-assoc p q = ∙-assoc₁ p q , ∙-assoc₂ p q , {!!}
 
 
 isPartialMonoid : IsPartialMonoid {A = FreeRPMon} _≡_ _~_ ∙ []
