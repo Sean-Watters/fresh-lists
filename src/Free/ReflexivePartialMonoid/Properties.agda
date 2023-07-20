@@ -36,13 +36,13 @@ to-from-alt : (x : FreeRPMon') → to-alt (from-alt x) ≡ x
 to-from-alt (inj₁ _) = refl
 to-from-alt (inj₂ (a , suc n , record { nonZero = tt })) rewrite length-repeat a n = refl
 
+rep-len : ∀ {x} xs → x # xs → repeat x (length xs) ≡ xs
+rep-len [] p = refl
+rep-len (cons x xs x#xs) (refl ∷ p) = cons-cong refl (rep-len xs p)
+
 from-to-alt : (xs :  FreeRPMon) → from-alt (to-alt xs) ≡ xs
 from-to-alt [] = refl
-from-to-alt (cons x xs x#xs) = cons-cong refl (lemma xs x#xs)
-  where
-    lemma : ∀ {x} xs → x # xs → repeat x (length xs) ≡ xs
-    lemma [] p = refl
-    lemma (cons x xs x#xs) (refl ∷ p) = cons-cong refl (lemma xs p)
+from-to-alt (cons x xs x#xs) = cons-cong refl (rep-len xs x#xs)
 
 iso : FreeRPMon ≃ FreeRPMon'
 to iso = to-alt
@@ -111,6 +111,11 @@ data _~_ : FreeRPMon → FreeRPMon → Set where
 ~-sym nilr = nill
 ~-sym (cons refl p) = cons refl (~-sym p)
 
+~-comm : ∀ {x y} → x ~ y → y ~ x
+~-comm nill = nilr
+~-comm nilr = nill
+~-comm (cons refl p) = cons refl (~-comm p)
+
 ~-weakenʳ : ∀ {y xs ys} {y#ys : y # ys} → xs ~ cons y ys y#ys → xs ~ ys
 ~-weakenʳ nill = nill
 ~-weakenʳ {y#ys = []} (cons refl p) = nilr
@@ -142,7 +147,6 @@ ne-toAll {xs = cons _ _ p} (refl ∷ _) = refl ∷ (ne-toAll _)
 ~-trans-ne nill q = nill
 ~-trans-ne (cons refl p) nilr = nilr
 ~-trans-ne (cons refl p) (cons refl q) = ~fromAll (ne-toAll _) (ne-toAll _)
-
 
 -----------------------------
 -- Alternate Compatibility --
@@ -223,6 +227,9 @@ to-alt~ (cons refl p) = rep
 ∙-assoc'-eq rep onel = refl
 ∙-assoc'-eq {inj₂ (x , m)} {inj₂ (.x , n)} {inj₂ (.x , o)} rep rep = cong (λ z → inj₂ (x , z)) (ℕ⁺-eq (sym $ +-assoc (proj₁ m) (proj₁ n) (proj₁ o)))
 
+-- The theorem is morally proved now, but we have to enter subst hell to actually finish it.
+-- Turns out subst'ing in 2D is hard...
+
 to-alt~∙ : {x y z : FreeRPMon} (p : y ~ z) → x ~ ∙ p → to-alt x ~' ∙' (to-alt~ p)
 to-alt~∙ nill q = to-alt~ q
 to-alt~∙ nilr q = to-alt~ q
@@ -232,16 +239,63 @@ to-alt~∙ (cons refl p) (cons refl q) = rep
 ∙-assoc₁ : {x y z : FreeRPMon} (yz : y ~ z) (p : x ~ ∙ yz) → (x ~ y)
 ∙-assoc₁ {x} {y} {z} p q = subst₂ _~_ (from-to-alt x) (from-to-alt y) (from-alt~ (∙-assoc'₁ (to-alt~ p) (to-alt~∙ p q)))
 
+subst-nilr : ∀ {x y} → (p : x ≡ y) → subst₂ _~_ p refl (nilr {x}) ≡ nilr {y}
+subst-nilr refl = refl
+
+subst-nill : ∀ {x y} → (p : x ≡ y) → subst₂ _~_ refl p (nill {x}) ≡ nill {y}
+subst-nill refl = refl
+
+subst-cons : {a : A} {xs ys xs' ys' : FreeRPMon}
+           → (a#xs : a # xs) (a#ys : a # ys) (a#xs' : a # xs') (a#ys' : a # ys')
+           → (p : xs ≡ xs') (q : ys ≡ ys')
+           → (r : xs ~ ys) (r' : xs' ~ ys')
+           → subst₂ _~_ (cons-cong {x#xs = a#xs} {y#ys = a#xs'} refl p) (cons-cong {x#xs = a#ys} {y#ys = a#ys'} refl q) (cons refl r) ≡ cons refl r'
+subst-cons [] [] [] [] refl refl nill nill = refl
+subst-cons [] [] [] [] refl refl nill nilr = {!!}
+subst-cons [] [] [] [] refl refl nilr nill = {!!}
+subst-cons [] [] [] [] refl refl nilr nilr = {!!}
+subst-cons [] (x ∷ a#ys) [] (x₁ ∷ a#ys') refl refl r r' = {!!}
+subst-cons (x ∷ a#xs) a#ys a#xs' a#ys' refl refl r r' = {!!}
+
+~-comm-eq : ∀ {xs ys} → (p : xs ~ ys) → ∙ (~-comm p) ≡ ∙ p
+~-comm-eq nill = refl
+~-comm-eq nilr = refl
+~-comm-eq (cons refl p) = cons-cong refl (cons-cong refl (~-comm-eq p))
+
+~-distrib-∙ˡ : ∀ {a x y} → (p : x ~ y) → a ~ (∙ p) → a ~ x
+~-distrib-∙ˡ = {!!}
+
+~-distrib-∙ʳ : ∀ {a x y} → (p : x ~ y) → a ~ (∙ p) → a ~ y
+~-distrib-∙ʳ = {!!}
+
+rep-len' : ∀ {x xs ys} (x#xs : x # xs) (x#ys : x # ys) (p : xs ~ ys) (q : x # ∙ p) → repeat x (length xs + length ys) ≡ ∙ p
+rep-len' [] x#ys nill q = rep-len _ x#ys
+rep-len' [] x#ys nilr q = refl
+rep-len' {x} {cons _ xs _} (refl ∷ x#xs) x#ys nilr q = cons-cong refl (trans (cong (repeat x) (+-comm (length xs) 0)) (rep-len _ x#xs))
+rep-len' {x} {cons _ xs _} {cons _ ys _} (refl ∷ x#xs) (_ ∷ x#ys) (cons refl p) (_ ∷ (_ ∷ q))
+  = cons-cong refl (trans (cong (repeat x) (+-comm (length xs) (suc $ length ys))) (cons-cong refl (trans (rep-len' x#ys x#xs (~-comm p) (subst (x #_) (sym $ ~-comm-eq p) q)) (~-comm-eq p))))
+
+rep-len₂ : ∀ {x xs ys} (x#xs : x # xs) (x#ys : x # ys) (p : xs ~ ys) (q : x # ∙ p) → repeat x (length xs + suc (length ys)) ≡ cons x (∙ p) q
+rep-len₂ {x} {xs} {ys} x#xs x#ys p q
+  = trans (cong (repeat x) (+-comm (length xs) (suc $ length ys))) (cons-cong refl (trans (rep-len' x#ys x#xs (~-comm p) (subst (x #_) (sym $ ~-comm-eq p) q)) (~-comm-eq p)))
+
 ∙-assoc₂ : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p) → ∙ (∙-assoc₁ p q) ~ z
 ∙-assoc₂ {x} {y} {z} p q = subst₂ _~_ (lem p q) (from-to-alt z) (from-alt~ (∙-assoc'₂ (to-alt~ p) (to-alt~∙ p q))) where
   lem : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p)
       → from-alt (∙' (∙-assoc'₁ (to-alt~ p) (to-alt~∙ p q))) ≡ ∙ (∙-assoc₁ p q)
-  lem p q = {!!}
+  lem nill nill = refl
+  lem {x} nill nilr = trans (from-to-alt x) (cong ∙ (sym $ subst-nilr (from-to-alt x)))
+  lem {cons x xs x#xs} nill (cons refl q) = trans (cons-cong refl (rep-len xs x#xs)) $ cong ∙ (sym $ subst-nilr (cons-cong refl (rep-len xs x#xs)))
+  lem {y = y} nilr nill = trans (from-to-alt y) (cong ∙ (sym $ subst-nill (from-to-alt y)))
+  lem {x} nilr nilr = trans (from-to-alt x) (cong ∙ (sym $ subst-nilr (from-to-alt x)))
+  lem {cons x xs x#xs} {cons .x ys x#ys} nilr (cons refl q) = trans (cons-cong {y#ys = refl ∷ ∙-fresh q x#xs x#ys} refl (rep-len₂ x#xs x#ys q (∙-fresh q x#xs x#ys))) {!!}
+  lem {[]} {cons y ys y#ys} {cons .y zs y#zs} (cons refl p) nill = trans (cons-cong refl (rep-len ys y#ys)) (cong ∙ (sym $ subst-nill (cons-cong refl (rep-len ys y#ys))))
+  lem {cons x xs x#xs} {cons .x ys x#ys} {cons .x zs x#zs} (cons refl p) (cons refl q)
+    = trans {!!} (cong ∙ $ sym $ subst-cons {!!} {!!} x#xs x#ys (rep-len xs x#xs) (rep-len ys x#ys) (~-repeat x (length xs) (length ys)) (~-distrib-∙ˡ p (~-weakenʳ q)))
 
 ∙-assoc : {x y z : FreeRPMon} (yz : y ~ z) (p : x ~ ∙ yz)
              → Σ[ xy ∈ (x ~ y) ] Σ[ q ∈ (∙ xy ~ z) ] (∙ p ≡ ∙ q)
 ∙-assoc p q = ∙-assoc₁ p q , ∙-assoc₂ p q , {!!}
-
 
 isPartialMonoid : IsPartialMonoid {A = FreeRPMon} _≡_ _~_ ∙ []
 IsPartialMonoid.isEquivalence isPartialMonoid = isEquivalence
