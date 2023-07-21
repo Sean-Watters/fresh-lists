@@ -97,44 +97,51 @@ is-set p q = {!!}
 -- Compatibility: two lists are compatible if they contain
 -- (potentially different numbers of copies of) the same element
 data _~_ : FreeRPMon → FreeRPMon → Set where
-  nill : ∀ {xs} → [] ~ xs
-  nilr : ∀ {xs} → xs ~ []
-  cons : ∀ {x y} {xs ys : FreeRPMon} {p : x # xs} {q : y # ys}
-       → x ≡ y → xs ~ ys → cons x xs p ~ cons y ys q
+  nilb : [] ~ []
+  nill : ∀ {x xs x#xs} → [] ~ cons x xs x#xs
+  nilr : ∀ {x xs x#xs} → cons x xs x#xs ~ []
+  cons : ∀ {x y xs ys} {p : x # xs} {q : y # ys} → x ≡ y → cons x xs p ~ cons y ys q
+
 
 ~-reflexive : Reflexive _~_
-~-reflexive {[]} = nill
-~-reflexive {cons x xs x#xs} = cons refl (~-reflexive {xs})
+~-reflexive {[]} = nilb
+~-reflexive {cons x xs x#xs} = cons refl
 
 ~-sym : Symmetric _~_
+~-sym nilb = nilb
 ~-sym nill = nilr
 ~-sym nilr = nill
-~-sym (cons refl p) = cons refl (~-sym p)
-
-~-comm : ∀ {x y} → x ~ y → y ~ x
-~-comm nill = nilr
-~-comm nilr = nill
-~-comm (cons refl p) = cons refl (~-comm p)
+~-sym (cons eq) = cons (sym eq)
 
 ~-weakenʳ : ∀ {y xs ys} {y#ys : y # ys} → xs ~ cons y ys y#ys → xs ~ ys
-~-weakenʳ nill = nill
-~-weakenʳ {y#ys = []} (cons refl p) = nilr
-~-weakenʳ {y#ys = q ∷ qs} (cons refl p) = cons q (~-weakenʳ p)
+~-weakenʳ {y#ys = []} nill = nilb
+~-weakenʳ {y#ys = []} (cons _) = nilr
+~-weakenʳ {y#ys = p ∷ ps} nill = nill
+~-weakenʳ {y#ys = p ∷ ps} (cons q) = cons (trans q p)
 
 ~-weakenˡ : ∀ {x xs ys} {x#xs : x # xs} → cons x xs x#xs ~ ys → xs ~ ys
-~-weakenˡ nilr = nilr
-~-weakenˡ {x#xs = []} (cons refl p) = nill
-~-weakenˡ {x#xs = q ∷ qs} (cons refl p) = cons (sym q) (~-weakenˡ p)
+~-weakenˡ {x#xs = []} nilr = nilb
+~-weakenˡ {x#xs = []} (cons _) = nill
+~-weakenˡ {x#xs = p ∷ ps} nilr = nilr
+~-weakenˡ {x#xs = p ∷ ps} (cons q) = cons (trans (sym p) q)
+
+~-weaken : ∀ {x y xs ys x#xs y#ys} → cons x xs x#xs ~ cons y ys y#ys → xs ~ ys
+~-weaken {x#xs = []} {[]} (cons _) = nilb
+~-weaken {x#xs = []} {_ ∷ _} (cons _) = nill
+~-weaken {x#xs = _ ∷ _} {[]} (cons _) = nilr
+~-weaken {x#xs = p ∷ _} {q ∷ _} (cons r) = cons (trans (sym p) (trans r q))
 
 ~-repeat : ∀ x n m → repeat x n ~ repeat x m
-~-repeat x zero m = nill
+~-repeat x zero zero = nilb
+~-repeat x zero (suc m) = nill
 ~-repeat x (suc n) zero = nilr
-~-repeat x (suc n) (suc m) = cons refl (~-repeat x n m)
+~-repeat x (suc n) (suc m) = cons refl
 
 ~fromAll : ∀ {a xs ys} → All (a ≡_) xs → All (a ≡_) ys → xs ~ ys
-~fromAll [] q = nill
-~fromAll (refl ∷ p) [] = nilr
-~fromAll (refl ∷ p) (refl ∷ q) = cons refl (~fromAll p q)
+~fromAll [] [] = nilb
+~fromAll [] (q ∷ qs) = nill
+~fromAll (p ∷ ps) [] = nilr
+~fromAll (p ∷ ps) (q ∷ qs) = cons (trans (sym p) q)
 
 ne-toAll : {x : A} {xs : FreeRPMon} (x#xs : x # xs) → All (x ≡_) (cons x xs x#xs)
 ne-toAll [] = refl ∷ []
@@ -144,9 +151,10 @@ ne-toAll {xs = cons _ _ p} (refl ∷ _) = refl ∷ (ne-toAll _)
 -- a~[]~b does not imply a~b.
 ~-trans-ne : ∀ {xs y ys} {y#ys : y # ys} {zs}
            → xs ~ cons y ys y#ys → cons y ys y#ys ~ zs → xs ~ zs
-~-trans-ne nill q = nill
-~-trans-ne (cons refl p) nilr = nilr
-~-trans-ne (cons refl p) (cons refl q) = ~fromAll (ne-toAll _) (ne-toAll _)
+~-trans-ne nill nilr = nilb
+~-trans-ne nill (cons _) = nill
+~-trans-ne (cons _) nilr = nilr
+~-trans-ne (cons p) (cons q) = cons (trans p q)
 
 -----------------------------
 -- Alternate Compatibility --
@@ -154,19 +162,22 @@ ne-toAll {xs = cons _ _ p} (refl ∷ _) = refl ∷ (ne-toAll _)
 
 -- We can also define compatibility for the alternate form.
 data _~'_ : FreeRPMon' → FreeRPMon' → Set where
-  onel : ∀ {xs} → inj₁ tt ~' xs
-  oner : ∀ {xs} → xs ~' inj₁ tt
+  oneb : inj₁ tt ~' inj₁ tt
+  onel : ∀ {p} → inj₁ tt ~' inj₂ p
+  oner : ∀ {p} → inj₂ p ~' inj₁ tt
   rep : ∀ {n m x} → inj₂ (x , n) ~' inj₂ (x , m) -- we insist on definitional equality here to hopefully make life easier
 
 from-alt~ : ∀ {xs ys} → xs ~' ys → (from-alt xs) ~ (from-alt ys)
-from-alt~ onel = nill
-from-alt~ oner = nilr
+from-alt~ oneb = nilb
+from-alt~ {ys = inj₂ (x , suc n , pn)} onel = nill
+from-alt~ {xs = inj₂ (x , suc n , pn)} oner = nilr
 from-alt~ rep = ~-repeat _ _ _
 
 to-alt~ : ∀ {xs ys} → xs ~ ys → (to-alt xs) ~' (to-alt ys)
+to-alt~ nilb = oneb
 to-alt~ nill = onel
 to-alt~ nilr = oner
-to-alt~ (cons refl p) = rep
+to-alt~ (cons refl) = rep
 
 -- -- These don't typecheck as is, because the indices don't match. And don't want to use het eq with K... subst hell the only option?
 -- to-from-alt~ : ∀ {xs ys} → (p : xs ~' ys) → to-alt~ (from-alt~ p) ≡ p
@@ -185,26 +196,32 @@ to-alt~ (cons refl p) = rep
 ∙ : {xs ys : FreeRPMon} → xs ~ ys → FreeRPMon
 ∙-fresh : {x : A} {xs ys : FreeRPMon} (p : xs ~ ys) → x # xs → x # ys → x # (∙ p)
 
-∙ (nill {x}) = x
-∙ (nilr {x}) = x
-∙ {cons x xs p} {cons y ys q} (cons refl z) = cons x (cons x (∙ z) (∙-fresh z p q)) (refl ∷ (∙-fresh z p q))
+∙ nilb = []
+∙ (nill {x} {xs} {x#xs}) = cons x xs x#xs
+∙ (nilr {x} {xs} {x#xs}) = cons x xs x#xs
+∙ u@(cons {x} {p = p} {q} refl) = cons x (cons x (∙ $ ~-weaken u) (∙-fresh (~-weaken u) p q)) (refl ∷ ∙-fresh (~-weaken u) p q)
 
-∙-fresh (nill) p q = q
-∙-fresh (nilr) p q = p
-∙-fresh (cons refl z) (refl ∷ ps) (q ∷ qs) = refl ∷ (refl ∷ ∙-fresh z ps qs)
+∙-fresh nilb p q = []
+∙-fresh nill p q = q
+∙-fresh nilr p q = p
+∙-fresh u@(cons refl) (p ∷ ps) (_ ∷ qs) = p ∷ (p ∷ ∙-fresh (~-weaken u) ps qs)
+
 
 +-nonzero : (n m : ℕ⁺) → NonZero (proj₁ n + proj₁ m)
 +-nonzero (suc n , _) m = record { nonZero = tt }
 
 -- Concatenation is easier too; no freshness wrangling.
 ∙' : {xs ys : FreeRPMon'} → xs ~' ys → FreeRPMon'
-∙' (onel {x}) = x
-∙' (oner {x}) = x
+∙' oneb = inj₁ tt
+∙' (onel {x}) = inj₂ x
+∙' (oner {x}) = inj₂ x
 ∙' (rep {n} {m} {x}) = inj₂ (x , (proj₁ n + proj₁ m) , +-nonzero n m)
 
 ----------------------------------------------------
 -- Properties of Compatibility and Multiplication --
 ----------------------------------------------------
+
+{-
 
 ∙-assoc'₁ : {x y z : FreeRPMon'} (yz : y ~' z) → x ~' ∙' yz  → x ~' y
 ∙-assoc'₁ onel p = oner
@@ -308,3 +325,5 @@ IsPartialMonoid.assoc isPartialMonoid = ∙-assoc
 isReflexivePartialMonoid : IsReflexivePartialMonoid {A = FreeRPMon} _≡_ _~_ ∙ []
 IsReflexivePartialMonoid.isPMon isReflexivePartialMonoid = isPartialMonoid
 IsReflexivePartialMonoid.refl isReflexivePartialMonoid = ~-reflexive
+
+-}
