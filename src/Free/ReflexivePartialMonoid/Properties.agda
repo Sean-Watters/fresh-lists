@@ -97,7 +97,7 @@ is-set p q = {!!}
 -- Compatibility: two lists are compatible if they contain
 -- (potentially different numbers of copies of) the same element
 data _~_ : FreeRPMon → FreeRPMon → Set where
-  nilb : [] ~ []
+  nilb : [] ~ [] -- note: the first 3 constructors are mutually exclusive so that we don't have multiple representations of []~[]
   nill : ∀ {x xs x#xs} → [] ~ cons x xs x#xs
   nilr : ∀ {x xs x#xs} → cons x xs x#xs ~ []
   cons : ∀ {x y xs ys} {p : x # xs} {q : y # ys} → x ≡ y → cons x xs p ~ cons y ys q
@@ -221,17 +221,22 @@ to-alt~ (cons refl) = rep
 -- Properties of Compatibility and Multiplication --
 ----------------------------------------------------
 
-{-
 
 ∙-assoc'₁ : {x y z : FreeRPMon'} (yz : y ~' z) → x ~' ∙' yz  → x ~' y
-∙-assoc'₁ onel p = oner
+∙-assoc'₁ oneb p = p
+∙-assoc'₁ {inj₁ tt} onel p = oneb
+∙-assoc'₁ {inj₂ _} onel p = oner
 ∙-assoc'₁ oner p = p
 ∙-assoc'₁ {inj₁ tt} rep p = onel
 ∙-assoc'₁ {inj₂ _} rep rep = rep
 
 ∙-assoc'₂ : {x y z : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' p) → ∙' (∙-assoc'₁ p q) ~' z
-∙-assoc'₂ onel q = q
-∙-assoc'₂ oner q = oner
+∙-assoc'₂ oneb oneb = oneb
+∙-assoc'₂ oneb oner = oner
+∙-assoc'₂ onel onel = onel
+∙-assoc'₂ onel rep = rep
+∙-assoc'₂ oner onel = oner
+∙-assoc'₂ oner rep = oner
 ∙-assoc'₂ rep onel = rep
 ∙-assoc'₂ rep rep = rep
 
@@ -239,8 +244,12 @@ to-alt~ (cons refl) = rep
 ℕ⁺-eq {suc m} {pm = record { nonZero = tt }} {record { nonZero = tt }} refl = refl
 
 ∙-assoc'-eq : {x y z  : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' p) → ∙' q ≡ ∙' (∙-assoc'₂ p q)
-∙-assoc'-eq onel q = refl
-∙-assoc'-eq oner q = refl
+∙-assoc'-eq oneb oneb = refl
+∙-assoc'-eq oneb oner = refl
+∙-assoc'-eq onel onel = refl
+∙-assoc'-eq onel rep = refl
+∙-assoc'-eq oner onel = refl
+∙-assoc'-eq oner rep = refl
 ∙-assoc'-eq rep onel = refl
 ∙-assoc'-eq {inj₂ (x , m)} {inj₂ (.x , n)} {inj₂ (.x , o)} rep rep = cong (λ z → inj₂ (x , z)) (ℕ⁺-eq (sym $ +-assoc (proj₁ m) (proj₁ n) (proj₁ o)))
 
@@ -248,43 +257,67 @@ to-alt~ (cons refl) = rep
 -- Turns out subst'ing in 2D is hard...
 
 to-alt~∙ : {x y z : FreeRPMon} (p : y ~ z) → x ~ ∙ p → to-alt x ~' ∙' (to-alt~ p)
-to-alt~∙ nill q = to-alt~ q
-to-alt~∙ nilr q = to-alt~ q
-to-alt~∙ (cons refl p) nill = onel
-to-alt~∙ (cons refl p) (cons refl q) = rep
+to-alt~∙ nilb nilb = oneb
+to-alt~∙ nilb nilr = oner
+to-alt~∙ nill nill = onel
+to-alt~∙ nill (cons refl) = rep
+to-alt~∙ nilr nill = onel
+to-alt~∙ nilr (cons refl) = rep
+to-alt~∙ (cons refl) nill = onel
+to-alt~∙ (cons refl) (cons refl) = rep
 
 ∙-assoc₁ : {x y z : FreeRPMon} (yz : y ~ z) (p : x ~ ∙ yz) → (x ~ y)
 ∙-assoc₁ {x} {y} {z} p q = subst₂ _~_ (from-to-alt x) (from-to-alt y) (from-alt~ (∙-assoc'₁ (to-alt~ p) (to-alt~∙ p q)))
 
-subst-nilr : ∀ {x y} → (p : x ≡ y) → subst₂ _~_ p refl (nilr {x}) ≡ nilr {y}
+subst-nilr : ∀ {x y xs ys x#xs y#ys} → (p : cons x xs x#xs ≡ cons y ys y#ys)  → subst₂ _~_ p refl (nilr {x} {xs} {x#xs}) ≡ nilr {y} {ys} {y#ys}
 subst-nilr refl = refl
 
-subst-nill : ∀ {x y} → (p : x ≡ y) → subst₂ _~_ refl p (nill {x}) ≡ nill {y}
+subst-nill : ∀ {x y xs ys x#xs y#ys} → (p : cons x xs x#xs ≡ cons y ys y#ys) → subst₂ _~_ refl p (nill {x} {xs} {x#xs}) ≡ nill {y} {ys} {y#ys}
 subst-nill refl = refl
 
-subst-cons : {a : A} {xs ys xs' ys' : FreeRPMon}
-           → (a#xs : a # xs) (a#ys : a # ys) (a#xs' : a # xs') (a#ys' : a # ys')
-           → (p : xs ≡ xs') (q : ys ≡ ys')
-           → (r : xs ~ ys) (r' : xs' ~ ys')
-           → subst₂ _~_ (cons-cong {x#xs = a#xs} {y#ys = a#xs'} refl p) (cons-cong {x#xs = a#ys} {y#ys = a#ys'} refl q) (cons refl r) ≡ cons refl r'
-subst-cons [] [] [] [] refl refl nill nill = refl
-subst-cons [] [] [] [] refl refl nill nilr = {!!}
-subst-cons [] [] [] [] refl refl nilr nill = {!!}
-subst-cons [] [] [] [] refl refl nilr nilr = {!!}
-subst-cons [] (x ∷ a#ys) [] (x₁ ∷ a#ys') refl refl r r' = {!!}
-subst-cons (x ∷ a#xs) a#ys a#xs' a#ys' refl refl r r' = {!!}
+-- subst-cons : {a : A} {xs ys xs' ys' : FreeRPMon}
+--            → (a#xs : a # xs) (a#ys : a # ys) (a#xs' : a # xs') (a#ys' : a # ys')
+--            → (p : xs ≡ xs') (q : ys ≡ ys')
+--            → (r : xs ~ ys) (r' : xs' ~ ys')
+--            → subst₂ _~_ (cons-cong {x#xs = a#xs} {y#ys = a#xs'} refl p) (cons-cong {x#xs = a#ys} {y#ys = a#ys'} refl q) (cons refl r) ≡ cons refl r'
+-- subst-cons [] [] [] [] refl refl nill nill = refl
+-- subst-cons [] [] [] [] refl refl nill nilr = {!!}
+-- subst-cons [] [] [] [] refl refl nilr nill = {!!}
+-- subst-cons [] [] [] [] refl refl nilr nilr = {!!}
+-- subst-cons [] (x ∷ a#ys) [] (x₁ ∷ a#ys') refl refl r r' = {!!}
+-- subst-cons (x ∷ a#xs) a#ys a#xs' a#ys' refl refl r r' = {!!}
 
-~-comm-eq : ∀ {xs ys} → (p : xs ~ ys) → ∙ (~-comm p) ≡ ∙ p
-~-comm-eq nill = refl
-~-comm-eq nilr = refl
-~-comm-eq (cons refl p) = cons-cong refl (cons-cong refl (~-comm-eq p))
+
+∙-comm : ∀ {xs ys} → (p : xs ~ ys) → ∙ (~-sym p) ≡ ∙ p
+∙-comm nilb = refl
+∙-comm nill = refl
+∙-comm nilr = refl
+∙-comm u@(cons {x} {.x} {xs} {ys} {p} {q} refl) = cons-cong refl $ cons-cong refl (trans (cong ∙ (lem p q)) (∙-comm $ (~-weaken u))) where
+  lem : ∀ {x xs ys} p q
+      → (~-weaken {x} {x} {ys} {xs} {q} {p} (cons {x} {x} {ys} {xs} {q} {p} refl))
+      ≡ (~-sym {xs} {ys} (~-weaken {x} {x} {xs} {ys} {p} {q} (cons {x} {x} {xs} {ys} {p} {q} refl)))
+  lem [] [] = refl
+  lem [] (_ ∷ _) = refl
+  lem (_ ∷ _) [] = refl
+  lem (refl ∷ _) (refl ∷ _) = refl
 
 ~-distrib-∙ˡ : ∀ {a x y} → (p : x ~ y) → a ~ (∙ p) → a ~ x
-~-distrib-∙ˡ = {!!}
+~-distrib-∙ˡ nilb q = q
+~-distrib-∙ˡ {[]} nill q = nilb
+~-distrib-∙ˡ {cons x a x#xs} nill q = nilr
+~-distrib-∙ˡ nilr q = q
+~-distrib-∙ˡ (cons refl) nill = nill
+~-distrib-∙ˡ (cons refl) (cons p) = cons p
 
 ~-distrib-∙ʳ : ∀ {a x y} → (p : x ~ y) → a ~ (∙ p) → a ~ y
-~-distrib-∙ʳ = {!!}
+~-distrib-∙ʳ nilb q = q
+~-distrib-∙ʳ nill q = q
+~-distrib-∙ʳ {[]} nilr q = nilb
+~-distrib-∙ʳ {cons x a x#xs} nilr q = nilr
+~-distrib-∙ʳ (cons refl) nill = nill
+~-distrib-∙ʳ (cons refl) (cons q) = cons q
 
+{-
 rep-len' : ∀ {x xs ys} (x#xs : x # xs) (x#ys : x # ys) (p : xs ~ ys) (q : x # ∙ p) → repeat x (length xs + length ys) ≡ ∙ p
 rep-len' [] x#ys nill q = rep-len _ x#ys
 rep-len' [] x#ys nilr q = refl
