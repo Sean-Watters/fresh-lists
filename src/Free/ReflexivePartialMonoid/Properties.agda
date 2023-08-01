@@ -90,6 +90,89 @@ is-set p q = {!!}
 -- Compatibility --
 ---------------------------
 
+-- We can also define compatibility for the alternate form.
+data _~'_ : FreeRPMon' → FreeRPMon' → Set where
+  oneb : inj₁ tt ~' inj₁ tt
+  onel : ∀ {p} → inj₁ tt ~' inj₂ p
+  oner : ∀ {p} → inj₂ p ~' inj₁ tt
+  rep : ∀ {n m x y} → x ≡ y → inj₂ (x , n) ~' inj₂ (y , m)
+
++-nonzero : (n m : ℕ⁺) → NonZero (proj₁ n + proj₁ m)
++-nonzero (suc n , _) m = record { nonZero = tt }
+
+-- Concatenation is easier for the alternate presentation; no freshness wrangling.
+∙' : {xs ys : FreeRPMon'} → xs ~' ys → FreeRPMon'
+∙' oneb = inj₁ tt
+∙' (onel {x}) = inj₂ x
+∙' (oner {x}) = inj₂ x
+∙' (rep {n} {m} {x} refl) = inj₂ (x , (proj₁ n + proj₁ m) , +-nonzero n m)
+
+~'-compatˡ-[] : ∀ {xs} → (inj₁ tt) ~' xs
+~'-compatˡ-[] {a} = ?
+
+~'-compatʳ-[] : ∀ {xs} → xs ~' (inj₁ tt)
+~'-compatʳ-[] {a} = ?
+
+~'-reflexive : Reflexive _~'_
+~'-reflexive {a} = ?
+
+~'-sym : Symmetric _~'_
+~'-sym = ?
+
+∙'-assoc₁ : {x y z : FreeRPMon'} (yz : y ~' z) → x ~' ∙' yz  → x ~' y
+∙'-assoc₁ oneb p = p
+∙'-assoc₁ {inj₁ tt} onel p = oneb
+∙'-assoc₁ {inj₂ _} onel p = oner
+∙'-assoc₁ oner p = p
+∙'-assoc₁ {inj₁ tt} rep p = onel
+∙'-assoc₁ {inj₂ _} rep rep = rep
+
+∙'-assoc₂ : {x y z : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' p) → ∙' (∙'-assoc₁ p q) ~' z
+∙'-assoc₂ oneb oneb = oneb
+∙'-assoc₂ oneb oner = oner
+∙'-assoc₂ onel onel = onel
+∙'-assoc₂ onel rep = rep
+∙'-assoc₂ oner onel = oner
+∙'-assoc₂ oner rep = oner
+∙'-assoc₂ rep onel = rep
+∙'-assoc₂ rep rep = rep
+
+ℕ⁺-eq : {m n : ℕ} {pm : NonZero m} {pn : NonZero n} → m ≡ n → (m , pm) ≡ (n , pn)
+ℕ⁺-eq {suc m} {pm = record { nonZero = tt }} {record { nonZero = tt }} refl = refl
+
+∙'-assoc-eq : {x y z  : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' p) → ∙' q ≡ ∙' (∙'-assoc₂ p q)
+∙'-assoc-eq oneb oneb = refl
+∙'-assoc-eq oneb oner = refl
+∙'-assoc-eq onel onel = refl
+∙'-assoc-eq onel rep = refl
+∙'-assoc-eq oner onel = refl
+∙'-assoc-eq oner rep = refl
+∙'-assoc-eq rep onel = refl
+∙'-assoc-eq {inj₂ (x , m)} {inj₂ (.x , n)} {inj₂ (.x , o)} rep rep = cong (λ z → inj₂ (x , z)) (ℕ⁺-eq (sym $ +-assoc (proj₁ m) (proj₁ n) (proj₁ o)))
+
+∙'-identityˡ : ∀ {x} → ∙' {[]} {x} ~'-compatˡ-[] ≡ x
+∙'-identityˡ {a} = ?
+
+∙'-identityʳ : ∀ {x} → ∙' {x} {[]} ~'-compatʳ-[] ≡ x
+∙'-identityʳ {a} = ?
+
+∙'-assoc : ?
+∙'-assoc = ?
+
+isPartialMonoid' : IsPartialMonoid {A = FreeRPMon'} _≡_ _~'_ ∙' []
+IsPartialMonoid.isEquivalence isPartialMonoid' = isEquivalence
+IsPartialMonoid.ε-compatˡ isPartialMonoid' = ~'-compatˡ-[]
+IsPartialMonoid.ε-compatʳ isPartialMonoid' = ~'-compatʳ-[]
+IsPartialMonoid.identityˡ isPartialMonoid' = ∙'-identityˡ
+IsPartialMonoid.identityʳ isPartialMonoid' = ∙'-identityʳ
+IsPartialMonoid.assoc isPartialMonoid' = ∙'-assoc
+
+isReflexivePartialMonoid' : IsReflexivePartialMonoid {A = FreeRPMon'} _≡_ _~'_ ∙' []
+IsReflexivePartialMonoid.isPMon isReflexivePartialMonoid' = isPartialMonoid'
+IsReflexivePartialMonoid.refl isReflexivePartialMonoid' = ~'-reflexive
+
+{-
+
 -- Because we may only concatenate lists which contain copies of the same element,
 -- we define the domain of concatenation to be a compatibility relation which encodes
 -- this invarient.
@@ -102,23 +185,6 @@ data _~_ : FreeRPMon → FreeRPMon → Set where
   nilr : ∀ {x xs x#xs} → cons x xs x#xs ~ []
   cons : ∀ {x y xs ys} {p : x # xs} {q : y # ys} → x ≡ y → cons x xs p ~ cons y ys q
 
-~-compatˡ-[] : ∀ {xs} → [] ~ xs
-~-compatˡ-[] {[]} = nilb
-~-compatˡ-[] {cons x xs x#xs} = nill
-
-~-compatʳ-[] : ∀ {xs} → xs ~ []
-~-compatʳ-[] {[]} = nilb
-~-compatʳ-[] {cons x xs x#xs} = nilr
-
-~-reflexive : Reflexive _~_
-~-reflexive {[]} = nilb
-~-reflexive {cons x xs x#xs} = cons refl
-
-~-sym : Symmetric _~_
-~-sym nilb = nilb
-~-sym nill = nilr
-~-sym nilr = nill
-~-sym (cons eq) = cons (sym eq)
 
 ~-weakenʳ : ∀ {y xs ys} {y#ys : y # ys} → xs ~ cons y ys y#ys → xs ~ ys
 ~-weakenʳ {y#ys = []} nill = nilb
@@ -214,50 +280,11 @@ to-alt~ (cons refl) = rep
 ∙-fresh u@(cons refl) (p ∷ ps) (_ ∷ qs) = p ∷ (p ∷ ∙-fresh (~-weaken u) ps qs)
 
 
-+-nonzero : (n m : ℕ⁺) → NonZero (proj₁ n + proj₁ m)
-+-nonzero (suc n , _) m = record { nonZero = tt }
-
--- Concatenation is easier too; no freshness wrangling.
-∙' : {xs ys : FreeRPMon'} → xs ~' ys → FreeRPMon'
-∙' oneb = inj₁ tt
-∙' (onel {x}) = inj₂ x
-∙' (oner {x}) = inj₂ x
-∙' (rep {n} {m} {x}) = inj₂ (x , (proj₁ n + proj₁ m) , +-nonzero n m)
 
 ----------------------------------------------------
 -- Properties of Compatibility and Multiplication --
 ----------------------------------------------------
 
-∙-assoc'₁ : {x y z : FreeRPMon'} (yz : y ~' z) → x ~' ∙' yz  → x ~' y
-∙-assoc'₁ oneb p = p
-∙-assoc'₁ {inj₁ tt} onel p = oneb
-∙-assoc'₁ {inj₂ _} onel p = oner
-∙-assoc'₁ oner p = p
-∙-assoc'₁ {inj₁ tt} rep p = onel
-∙-assoc'₁ {inj₂ _} rep rep = rep
-
-∙-assoc'₂ : {x y z : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' p) → ∙' (∙-assoc'₁ p q) ~' z
-∙-assoc'₂ oneb oneb = oneb
-∙-assoc'₂ oneb oner = oner
-∙-assoc'₂ onel onel = onel
-∙-assoc'₂ onel rep = rep
-∙-assoc'₂ oner onel = oner
-∙-assoc'₂ oner rep = oner
-∙-assoc'₂ rep onel = rep
-∙-assoc'₂ rep rep = rep
-
-ℕ⁺-eq : {m n : ℕ} {pm : NonZero m} {pn : NonZero n} → m ≡ n → (m , pm) ≡ (n , pn)
-ℕ⁺-eq {suc m} {pm = record { nonZero = tt }} {record { nonZero = tt }} refl = refl
-
-∙-assoc'-eq : {x y z  : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' p) → ∙' q ≡ ∙' (∙-assoc'₂ p q)
-∙-assoc'-eq oneb oneb = refl
-∙-assoc'-eq oneb oner = refl
-∙-assoc'-eq onel onel = refl
-∙-assoc'-eq onel rep = refl
-∙-assoc'-eq oner onel = refl
-∙-assoc'-eq oner rep = refl
-∙-assoc'-eq rep onel = refl
-∙-assoc'-eq {inj₂ (x , m)} {inj₂ (.x , n)} {inj₂ (.x , o)} rep rep = cong (λ z → inj₂ (x , z)) (ℕ⁺-eq (sym $ +-assoc (proj₁ m) (proj₁ n) (proj₁ o)))
 
 -- The theorem is morally proved now, but we have to enter subst hell to actually finish it.
 -- Turns out subst'ing in 2D is hard...
@@ -272,27 +299,31 @@ to-alt~∙ nilr (cons refl) = rep
 to-alt~∙ (cons refl) nill = onel
 to-alt~∙ (cons refl) (cons refl) = rep
 
-∙-assoc₁ : {x y z : FreeRPMon} (yz : y ~ z) (p : x ~ ∙ yz) → (x ~ y)
-∙-assoc₁ {x} {y} {z} p q = subst₂ _~_ (from-to-alt x) (from-to-alt y) (from-alt~ (∙-assoc'₁ (to-alt~ p) (to-alt~∙ p q)))
+silver-bullet : {P : FreeRPMon → FreeRPMon → Set} {x y : FreeRPMon}
+              → (P x y → (to-alt x) ~' (to-alt y))
+              → (P x y → x ~ y)
+silver-bullet {P} {x} {y} f p = subst₂ _~_ (from-to-alt x) (from-to-alt y) (from-alt~ $ f p)
 
+∙-assoc₁ : {x y z : FreeRPMon} (yz : y ~ z) (p : x ~ ∙ yz) → (x ~ y)
+∙-assoc₁ {x} {y} {z} p q = {!!}
+
+{-
 subst-nilr : ∀ {x y xs ys x#xs y#ys} → (p : cons x xs x#xs ≡ cons y ys y#ys)  → subst₂ _~_ p refl (nilr {x} {xs} {x#xs}) ≡ nilr {y} {ys} {y#ys}
 subst-nilr refl = refl
 
 subst-nill : ∀ {x y xs ys x#xs y#ys} → (p : cons x xs x#xs ≡ cons y ys y#ys) → subst₂ _~_ refl p (nill {x} {xs} {x#xs}) ≡ nill {y} {ys} {y#ys}
 subst-nill refl = refl
 
--- subst-cons : {a : A} {xs ys xs' ys' : FreeRPMon}
---            → (a#xs : a # xs) (a#ys : a # ys) (a#xs' : a # xs') (a#ys' : a # ys')
---            → (p : xs ≡ xs') (q : ys ≡ ys')
---            → (r : xs ~ ys) (r' : xs' ~ ys')
---            → subst₂ _~_ (cons-cong {x#xs = a#xs} {y#ys = a#xs'} refl p) (cons-cong {x#xs = a#ys} {y#ys = a#ys'} refl q) (cons refl r) ≡ cons refl r'
--- subst-cons [] [] [] [] refl refl nill nill = refl
--- subst-cons [] [] [] [] refl refl nill nilr = {!!}
--- subst-cons [] [] [] [] refl refl nilr nill = {!!}
--- subst-cons [] [] [] [] refl refl nilr nilr = {!!}
--- subst-cons [] (x ∷ a#ys) [] (x₁ ∷ a#ys') refl refl r r' = {!!}
--- subst-cons (x ∷ a#xs) a#ys a#xs' a#ys' refl refl r r' = {!!}
-
+subst-cons : {a : A} {xs ys xs' ys' : FreeRPMon}
+           → (a#xs : a # xs) (a#ys : a # ys) (a#xs' : a # xs') (a#ys' : a # ys')
+           → (p : xs ≡ xs') (q : ys ≡ ys')
+           → (r : xs ~ ys) (r' : xs' ~ ys')
+           → subst₂ _~_ (cons-cong {x#xs = a#xs} {y#ys = a#xs'} refl p) (cons-cong {x#xs = a#ys} {y#ys = a#ys'} refl q) (cons refl) ≡ cons refl
+subst-cons [] [] [] [] refl refl nilb nilb = refl
+subst-cons [] (refl ∷ ps) [] (q ∷ qs) refl refl nill nill = {!!}
+subst-cons (p ∷ ps) [] (q ∷ qs) [] refl refl nilr nilr = {!!}
+subst-cons (p ∷ ps) (q ∷ qs) (r ∷ rs) (s ∷ ss) refl refl (cons u) (cons v) = {!!}
+-}
 
 ∙-comm : ∀ {xs ys} → (p : xs ~ ys) → ∙ (~-sym p) ≡ ∙ p
 ∙-comm nilb = refl
@@ -334,20 +365,29 @@ rep-len₂ : ∀ {x xs ys} (x#xs : x # xs) (x#ys : x # ys) (p : xs ~ ys) (q : x 
 rep-len₂ {x} {xs} {ys} x#xs x#ys p q
   = trans (cong (repeat x) (+-comm (length xs) (suc $ length ys))) (cons-cong refl (trans (rep-len' x#ys x#xs (~-sym p) (subst (x #_) (sym $ ∙-comm p) q)) (∙-comm p)))
 
+
+-- todo: this might be easier to do directly now than with subst?
 ∙-assoc₂ : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p) → ∙ (∙-assoc₁ p q) ~ z
-∙-assoc₂ {x} {y} {z} p q = subst₂ _~_ (lem p q) (from-to-alt z) (from-alt~ (∙-assoc'₂ (to-alt~ p) (to-alt~∙ p q))) where
-  lem : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p)
-      → from-alt (∙' (∙-assoc'₁ (to-alt~ p) (to-alt~∙ p q))) ≡ ∙ (∙-assoc₁ p q)
-  lem nilb nilb = refl
-  lem {x} nilb nilr = trans (from-to-alt x) (cong ∙ (sym $ subst-nilr (from-to-alt x)))
-  lem nill nill = refl
-  lem {cons x xs x#xs} nill (cons refl) = trans (cons-cong refl (rep-len xs x#xs)) $ cong ∙ (sym $ subst-nilr (cons-cong refl (rep-len xs x#xs)))
-  lem {y = y} nilr nill = trans (from-to-alt y) (cong ∙ (sym $ subst-nill (from-to-alt y)))
-  lem {cons x xs x#xs} {cons .x ys x#ys} nilr u@(cons refl)
-    = trans (cons-cong {y#ys = refl ∷ ∙-fresh (~-weaken u) x#xs x#ys} refl (rep-len₂ x#xs x#ys (~-weaken u) (∙-fresh (~-weaken u) x#xs x#ys)))
-            {!subst-nilr!}
-  lem {[]} {cons y ys y#ys} {cons .y zs y#zs} (cons refl) nill = trans (cons-cong refl (rep-len ys y#ys)) (cong ∙ (sym $ subst-nill (cons-cong refl (rep-len ys y#ys))))
-  lem {cons x xs x#xs} {cons .x ys x#ys} {cons .x zs x#zs} (cons refl) (cons refl) = {!!}
+∙-assoc₂ {x} {y} {z} p q = {!!}
+
+-- subst₂ _~_ (lem p q) (from-to-alt z) (from-alt~ (∙-assoc'₂ (to-alt~ p) (to-alt~∙ p q))) where
+--   lem : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p)
+--       → from-alt (∙' (∙-assoc'₁ (to-alt~ p) (to-alt~∙ p q))) ≡ ∙ (∙-assoc₁ p q)
+--   lem nilb nilb = refl
+--   lem {x} nilb nilr = trans (from-to-alt x) (cong ∙ (sym $ subst-nilr (from-to-alt x)))
+--   lem nill nill = refl
+--   lem {cons x xs x#xs} nill (cons refl) = trans (cons-cong refl (rep-len xs x#xs)) $ cong ∙ (sym $ subst-nilr (cons-cong refl (rep-len xs x#xs)))
+--   lem {y = y} nilr nill = trans (from-to-alt y) (cong ∙ (sym $ subst-nill (from-to-alt y)))
+--   lem {cons x xs x#xs} {cons .x ys x#ys} nilr u@(cons refl) =
+--     begin
+--       cons x (repeat x (length xs + suc (length ys))) (repeat-equal x (length xs + suc (length ys)))
+--     ≡⟨ (cons-cong {y#ys = refl ∷ ∙-fresh (~-weaken u) x#xs x#ys} refl (rep-len₂ x#xs x#ys (~-weaken u) (∙-fresh (~-weaken u) x#xs x#ys))) ⟩
+--       cons x (cons x (∙ (~-weaken (cons refl))) (∙-fresh (~-weaken (cons refl)) x#xs x#ys)) (refl ∷ ∙-fresh (~-weaken (cons refl)) x#xs x#ys)
+--     ≡⟨ {!cong ∙ !} ⟩
+--       ∙ (subst₂ _~_ (WithIrr.cons-cong _≡_ A-set refl (rep-len xs x#xs)) (WithIrr.cons-cong _≡_ A-set refl (rep-len ys x#ys)) (cons refl))
+--     ∎ where open ≡-Reasoning
+--   lem {[]} {cons y ys y#ys} {cons .y zs y#zs} (cons refl) nill = trans (cons-cong refl (rep-len ys y#ys)) (cong ∙ (sym $ subst-nill (cons-cong refl (rep-len ys y#ys))))
+--   lem {cons x xs x#xs} {cons .x ys x#ys} {cons .x zs x#zs} (cons refl) (cons refl) = {!!}
 
   -- lem nill nill = refl
   -- lem {x} nill nilr = trans (from-to-alt x) (cong ∙ (sym $ subst-nilr (from-to-alt x)))
@@ -363,13 +403,6 @@ rep-len₂ {x} {xs} {ys} x#xs x#ys p q
              → Σ[ xy ∈ (x ~ y) ] Σ[ q ∈ (∙ xy ~ z) ] (∙ p ≡ ∙ q)
 ∙-assoc p q = ∙-assoc₁ p q , ∙-assoc₂ p q , {!!}
 
-∙-identityˡ : ∀ {x} → ∙ {[]} {x} ~-compatˡ-[] ≡ x
-∙-identityˡ {[]} = refl
-∙-identityˡ {cons _ _ _} = cons-cong refl refl
-
-∙-identityʳ : ∀ {x} → ∙ {x} {[]} ~-compatʳ-[] ≡ x
-∙-identityʳ {[]} = refl
-∙-identityʳ {cons _ _ _} = cons-cong refl refl
 
 isPartialMonoid : IsPartialMonoid {A = FreeRPMon} _≡_ _~_ ∙ []
 IsPartialMonoid.isEquivalence isPartialMonoid = isEquivalence
@@ -383,3 +416,4 @@ isReflexivePartialMonoid : IsReflexivePartialMonoid {A = FreeRPMon} _≡_ _~_ �
 IsReflexivePartialMonoid.isPMon isReflexivePartialMonoid = isPartialMonoid
 IsReflexivePartialMonoid.refl isReflexivePartialMonoid = ~-reflexive
 
+-}
