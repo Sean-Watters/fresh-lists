@@ -7,6 +7,7 @@ open import Data.Nat.Properties renaming (<-trans to <ℕ-trans)
 open import Data.Nat.Induction
 open import Data.Sum
 open import Function
+open import Relation.Nullary
 open import Relation.Nullary.Decidable
 open import Relation.Binary.PropositionalEquality
 open import Induction.WellFounded

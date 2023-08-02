@@ -1,6 +1,11 @@
 {-# OPTIONS --safe --without-K #-}
 module Everything where
 
+-- Freshlists defined inductive-inductively and as a sigma type, and a
+-- proof that this gives isomorphic definitions
+open import Data.FreshList.InductiveInductive
+open import Data.FreshList.Sigma
+
 -- Definitions of various variations on ordered monoids
 open import Algebra.Structure.OICM
 

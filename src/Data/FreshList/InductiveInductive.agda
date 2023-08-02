@@ -1,8 +1,8 @@
 {-# OPTIONS --without-K --safe #-}
-open import Level hiding (zero; suc)
+module Data.FreshList.InductiveInductive where
 
+open import Level hiding (zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Unit.Polymorphic
 open import Data.Product
 open import Data.Empty
 open import Function
@@ -11,8 +11,6 @@ open import Relation.Unary using (Decidable)
 open import Relation.Binary hiding (Decidable; Irrelevant)
 open import Relation.Binary.PropositionalEquality renaming (sym to ≡-sym)
 open import Relation.Binary.Isomorphism
-
-module Data.FreshList.InductiveInductive where
 
 data List# {n m} {A : Set n} (R : A → A → Set m) : Set (n ⊔ m)
 data _#_   {n m} {A : Set n} {R : A → A → Set m} : (x : A) → (xs : List# R) → Set (n ⊔ m)
@@ -153,75 +151,9 @@ module _
     toList [] = []
     toList (cons x xs _) = x ∷ (toList xs)
 
-    -- We can externalise freshness in the following way:
-    -- We define All-fresh recursively on lists, as the predicate witnessing that
-    -- an ordinary list is a fresh list for R:
-    All-fresh : List X → Set (n ⊔ m)
-    All-fresh [] = ⊤ -- level-polymorphic unit
-    All-fresh (x ∷ xs) = L.All (R x) xs × All-fresh xs
-
-    -- Then List#-ext is the type of fresh lists with the proof data externalised.
-    -- That is, pairs of ordinary lists and freshness proofs.
-    List#-ext : Set (n ⊔ m)
-    List#-ext = Σ[ xs ∈ List X ] All-fresh xs
-
-    -- This is isomorphic to our inductive-inductive definition.
-
-    externalise : ∀ {x xs} → (p : x # xs) → All-fresh (toList $ cons x xs p)
-    externalise [] = L.[] , tt
-    proj₁ (externalise (px ∷ pxs)) = px L.∷ (proj₁ (externalise pxs))
-    proj₂ (externalise {xs = cons _ _ q} (px ∷ pxs)) = externalise q
-
-    to-ext : List# R → List#-ext
-    to-ext [] = [] , tt
-    to-ext (cons x xs x#xs) = toList (cons x xs x#xs) , externalise x#xs
-
-    from-ext : (xs : List X) → All-fresh xs → List# R
-    internalise : {x : X} {xs : List X} → L.All (R x) xs → (pxs : All-fresh xs) → x # from-ext xs pxs
-
-    from-ext []  pxs = []
-    from-ext (x ∷ xs) (rxxs , pxs) = cons x (from-ext xs  pxs) (internalise rxxs pxs)
-
-    internalise L.[] pxs = []
-    internalise (rx L.∷ rxs) (_ , q) = rx ∷ (internalise rxs q)
-
-    from-ext-externalise : ∀ {x xs} → (x#xs : x # xs) → xs ≡ (from-ext (toList xs) (proj₂ (externalise x#xs)))
-    internalise-externalise : ∀ {x xs} (p : x # xs) → subst (x #_) (from-ext-externalise p) p ≡ (uncurry internalise (externalise p))
-
-    from-ext-externalise [] = refl
-    from-ext-externalise {a} {cons x xs p} (pa ∷ pas) = dcong₂ (cons x) (from-ext-externalise p) (internalise-externalise p)
-
-    lem : ∀ {a b c} {A : Set a} {B : A → Set b} (P : A → Set c)
-         (f : (x : A) → (y : B x) → A) {x₁ x₂ y₁ y₂}
-        → (p : x₁ ≡ x₂) → (q : subst B p y₁ ≡ y₂)
-        → (c : P (f x₁ y₁))
-        → subst P (dcong₂ f p q) c ≡ dsubst₂ (λ x y → P (f x y)) p q c
-    lem P f refl refl c = refl
-
-    internalise-externalise [] = refl
-    internalise-externalise {a} {cons x xs p} (pa ∷ pas)
-      = trans
-          (lem (a #_) (cons x) (from-ext-externalise p)
-           (internalise-externalise p) (pa ∷ pas))
-          {!ddcong₂ {C = λ xs p → a # cons x xs p }!}
-
-
--- subst-dcong₂ _#_ (cons x) (from-ext-externalise p)
---           (internalise-externalise p) λ x₁ y → pa ∷ {!!}
-
-
-    from-to-ext : ∀ xs → xs ≡ uncurry from-ext (to-ext xs)
-    from-to-ext [] = refl
-    from-to-ext (cons x xs x#xs) = dcong₂ (cons x) (from-ext-externalise x#xs) (internalise-externalise x#xs)
-
-    to-from-ext : ∀ xs → xs ≡ to-ext (uncurry from-ext xs)
-    to-from-ext = {!!}
-
-    List#-ext-iso : List# R ≃ List#-ext
-    _≃_.to List#-ext-iso = to-ext
-    _≃_.from List#-ext-iso = uncurry from-ext
-    _≃_.from-to List#-ext-iso = from-to-ext
-    _≃_.to-from List#-ext-iso = to-from-ext
+    toListAll : ∀ {k} → {P : X → Set k} → {xs : List# R} → All P xs → L.All P (toList xs)
+    toListAll [] = L.[]
+    toListAll (p ∷ ps) = p L.∷ toListAll ps
 
 -- Fix a proof-irrelevant R
 module WithIrr
