@@ -24,6 +24,8 @@ open import Relation.Binary.Isomorphism
 open import Data.FreshList.InductiveInductive
 open import Free.ReflexivePartialMonoid.Base A A-set
 
+open import Axiom.UniquenessOfIdentityProofs
+
 private
   cons-cong = WithIrr.cons-cong _≡_ A-set
   open _≃_
@@ -49,6 +51,17 @@ to iso = to-alt
 from iso = from-alt
 from-to iso = sym ∘ from-to-alt
 to-from iso = sym ∘ to-from-alt
+
+------------
+-- Is Set --
+------------
+
+FreeRPMon'-set : {x y : FreeRPMon'} (a b : x ≡ y) → a ≡ b
+FreeRPMon'-set a b = {!!}
+
+FreeRPMon-set : {x y : FreeRPMon} (a b : x ≡ y) → a ≡ b
+FreeRPMon-set = {!!}
+
 
 -----------------------------------------------------------
 -- Reflexive Partial Monoid (for Alternate Presentation) --
@@ -83,6 +96,12 @@ data _~'_ : FreeRPMon' → FreeRPMon' → Set where
 ~'-compatʳ-tt : ∀ {xs} → xs ~' (inj₁ tt)
 ~'-compatʳ-tt {inj₁ tt} = oneb
 ~'-compatʳ-tt {inj₂ y} = oner
+
+~'-prop : Irrelevant _~'_
+~'-prop oneb oneb = refl
+~'-prop onel onel = refl
+~'-prop oner oner = refl
+~'-prop (rep p) (rep q) = cong rep $ A-set p q
 
 ~'-reflexive : Reflexive _~'_
 ~'-reflexive {inj₁ tt} = oneb
@@ -137,8 +156,11 @@ data _~'_ : FreeRPMon' → FreeRPMon' → Set where
          → Σ[ xy ∈ (x ~' y) ] Σ[ q ∈ (∙' xy ~' z) ] (∙' p ≡ ∙' q)
 ∙'-assoc yz p = (∙'-assoc₁ yz p) , (∙'-assoc₂ yz p) , (∙'-assoc-eq yz p)
 
+
 isPartialMonoid' : IsPartialMonoid {A = FreeRPMon'} _≡_ _~'_ ∙' (inj₁ tt)
 IsPartialMonoid.isEquivalence isPartialMonoid' = isEquivalence
+IsPartialMonoid.A-set isPartialMonoid' = FreeRPMon'-set
+IsPartialMonoid.R-prop isPartialMonoid' = ~'-prop
 IsPartialMonoid.ε-compatˡ isPartialMonoid' = ~'-compatˡ-tt
 IsPartialMonoid.ε-compatʳ isPartialMonoid' = ~'-compatʳ-tt
 IsPartialMonoid.identityˡ isPartialMonoid' = ∙'-identityˡ
@@ -147,7 +169,7 @@ IsPartialMonoid.assoc isPartialMonoid' = ∙'-assoc
 
 isReflexivePartialMonoid' : IsReflexivePartialMonoid {A = FreeRPMon'} _≡_ _~'_ ∙' (inj₁ tt)
 IsReflexivePartialMonoid.isPMon isReflexivePartialMonoid' = isPartialMonoid'
-IsReflexivePartialMonoid.refl isReflexivePartialMonoid' = ~'-reflexive
+IsReflexivePartialMonoid.reflexive isReflexivePartialMonoid' = ~'-reflexive
 
 -------------------------------------------------------
 -- Reflexive Partial Monoid (for FList Presentation) --
@@ -196,6 +218,8 @@ x ~ y = (to-alt x) ~' (to-alt y)
 -- So we get the reflexive partial monoid proof for cheap:
 isPartialMonoid : IsPartialMonoid {A = FreeRPMon} _≡_ _~_ ∙ []
 IsPartialMonoid.isEquivalence isPartialMonoid = isEquivalence
+IsPartialMonoid.A-set isPartialMonoid = FreeRPMon-set
+IsPartialMonoid.R-prop isPartialMonoid = ~'-prop
 IsPartialMonoid.ε-compatˡ isPartialMonoid = ~'-compatˡ-tt
 IsPartialMonoid.ε-compatʳ isPartialMonoid = ~'-compatʳ-tt
 IsPartialMonoid.identityˡ isPartialMonoid = ∙-identityˡ
@@ -204,4 +228,4 @@ IsPartialMonoid.assoc isPartialMonoid = ∙-assoc
 
 isReflexivePartialMonoid : IsReflexivePartialMonoid {A = FreeRPMon} _≡_ _~_ ∙ []
 IsReflexivePartialMonoid.isPMon isReflexivePartialMonoid = isPartialMonoid
-IsReflexivePartialMonoid.refl isReflexivePartialMonoid = ~'-reflexive
+IsReflexivePartialMonoid.reflexive isReflexivePartialMonoid = ~'-reflexive

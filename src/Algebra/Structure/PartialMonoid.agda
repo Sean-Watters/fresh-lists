@@ -5,6 +5,7 @@ open import Level
 open import Algebra.Core
 open import Data.Product
 open import Relation.Binary
+open import Relation.Binary.PropositionalEquality using (_≡_)
 
 record IsPartialMonoid
   {a b c} {A : Set a}
@@ -14,6 +15,8 @@ record IsPartialMonoid
   : Set (a ⊔ b ⊔ c) where
   field
     isEquivalence : IsEquivalence _≈_
+    A-set : Irrelevant (_≡_ {A = A})
+    R-prop : Irrelevant _R_
     ε-compatˡ : ∀ {x} → ε R x
     ε-compatʳ : ∀ {x} → x R ε
     identityˡ : ∀ {x} → ∙[ ε-compatˡ {x} ] ≈ x
@@ -28,4 +31,5 @@ record IsReflexivePartialMonoid
   : Set (a ⊔ b ⊔ c) where
   field
     isPMon : IsPartialMonoid _≈_ _R_ ∙[_] ε
-    refl : ∀ {x} → x R x
+    reflexive : ∀ {x} → x R x
+  open IsPartialMonoid public
