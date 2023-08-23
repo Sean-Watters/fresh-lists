@@ -13,6 +13,7 @@ open import Algebra.Structure.PartialMonoid
 open import Data.Nat
 open import Data.Nat.Properties
 open import Data.Sum
+open import Data.Sum.Properties
 open import Data.Product
 open import Data.Product.Properties
 open import Data.Unit
@@ -56,11 +57,78 @@ to-from iso = sym ∘ to-from-alt
 -- Is Set --
 ------------
 
-FreeRPMon'-set : {x y : FreeRPMon'} (a b : x ≡ y) → a ≡ b
-FreeRPMon'-set a b = {!!}
+-- Lemma: UIP is closed under coproducts
 
+inj₁-lem : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} {x y : X} (p : _≡_ {A = X ⊎ Y} (inj₁ x) (inj₁ y)) → p ≡ cong inj₁ (inj₁-injective p)
+inj₁-lem refl = refl
+
+inj₁-injective-injective : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} {x y : X} (p q : _≡_ {A = X ⊎ Y} (inj₁ x) (inj₁ y)) → inj₁-injective p ≡ inj₁-injective q → p ≡ q
+inj₁-injective-injective p q u = trans (inj₁-lem p) (trans (cong (cong inj₁) u) (sym $ inj₁-lem q))
+
+inj₂-lem : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} {x y : Y} (p : _≡_ {A = X ⊎ Y} (inj₂ x) (inj₂ y)) → p ≡ cong inj₂ (inj₂-injective p)
+inj₂-lem refl = refl
+
+inj₂-injective-injective : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} {x y : Y} (p q : _≡_ {A = X ⊎ Y} (inj₂ x) (inj₂ y)) → inj₂-injective p ≡ inj₂-injective q → p ≡ q
+inj₂-injective-injective p q u = trans (inj₂-lem p) (trans (cong (cong inj₂) u) (sym $ inj₂-lem q))
+
+UIP-⊎ : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} → UIP X → UIP Y → UIP (X ⊎ Y)
+UIP-⊎ uipX uipY {inj₁ x} {inj₁ y} p q = inj₁-injective-injective p q $ uipX (inj₁-injective p) (inj₁-injective q) 
+UIP-⊎ uipX uipY {inj₂ x} {inj₂ y} p q = inj₂-injective-injective p q $ uipY (inj₂-injective p) (inj₂-injective q)
+
+-- Lemma: UIP is closed under non-dependent pairs (idk about the dependent case, it might be true but it's probably harder and not needed)
+
+-- dependent double map, or something like that? whatever it is, it's the thing we need
+plumb : ∀ {ℓa ℓb ℓc ℓd} {A : Set ℓa} {B : Set ℓb} {C : A → A → Set ℓc} {D : B → B → Set ℓd}
+      → (f : (x y : A) → C x y) (g : (x y : B) → D x y)
+      → (p q : A × B) → C (proj₁ p) (proj₁ q) × D (proj₂ p) (proj₂ q)
+plumb f g (a1 , b1) (a2 , b2) = f a1 a2 , g b1 b2
+
+,-lem : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} {x1 x2 : X} {y1 y2 : Y} (p : (x1 , y1) ≡ (x2 , y2))
+          → p ≡ cong₂ _,_ (proj₁ $ ,-injective p) (proj₂ $ ,-injective p)
+,-lem refl = refl
+
+repackage : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} {x1 x2 : X} {y1 y2 : Y}
+          → (p q : (x1 , y1) ≡ (x2 , y2))
+          → proj₁ (,-injective p) ≡ proj₁ (,-injective q) × proj₂ (,-injective p) ≡ proj₂ (,-injective q)
+          → p ≡ q
+repackage p q (u , v) = trans (,-lem p) (trans (cong₂ (cong₂ _,_) u v) (sym $ ,-lem q))
+
+UIP-× : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} → UIP X → UIP Y → UIP (X × Y)
+UIP-× uipX uipY {x1 , y1} {x2 , y2} p q = repackage p q $ plumb uipX uipY (,-injective p) (,-injective q)
+
+-- Lemma: UIP is preserved by isomorphism.
+
+UIP-≃ : ∀ {ℓ} {X : Set ℓ} {Y : Set ℓ} → UIP X → X ≃ Y → UIP Y
+UIP-≃ uipX iso p q =
+  begin
+    p
+  ≡⟨ (sym $ cong-id p) ⟩
+    cong id p
+  ≡⟨ subst (λ f → cong f p ≡ cong f q) {!sym ∘ to-from iso!} lem  ⟩ -- requires extensionality! :(
+    cong id q
+  ≡⟨ cong-id q ⟩
+    q
+  ∎ where
+  open ≡-Reasoning
+  lem : cong (λ x → to iso (from iso x)) p ≡ cong (λ x → to iso (from iso x)) q
+  lem =
+    begin
+      cong (to iso ∘ from iso) p
+    ≡⟨ cong-∘ p ⟩
+      cong (to iso) (cong (from iso) p)
+    ≡⟨ cong (cong (to iso)) $ uipX (cong (from iso) p) (cong (from iso) q) ⟩
+      cong (to iso) (cong (from iso) q)
+    ≡⟨ sym $ cong-∘ q ⟩
+      cong (to iso ∘ from iso) q
+    ∎
+
+
+FreeRPMon'-set : {x y : FreeRPMon'} (a b : x ≡ y) → a ≡ b
+FreeRPMon'-set = {!!}
+
+-- Likewise for the fresh list presentation.
 FreeRPMon-set : {x y : FreeRPMon} (a b : x ≡ y) → a ≡ b
-FreeRPMon-set = {!!}
+FreeRPMon-set = {!Constant⇒UIP.≡-irrelevant!}
 
 
 -----------------------------------------------------------
