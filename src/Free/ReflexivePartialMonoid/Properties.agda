@@ -1,11 +1,10 @@
 {-# OPTIONS --safe --without-K #-}
 
-open import Relation.Binary
-open import Relation.Binary.PropositionalEquality
+open import Axiom.UniquenessOfIdentityProofs
 
 module Free.ReflexivePartialMonoid.Properties
   (A : Set)
-  (A-set : Irrelevant (_≡_ {A = A}))
+  (A-set : UIP A)
   where
 
 open import Algebra.Structure.PartialMonoid
@@ -20,12 +19,14 @@ open import Data.Unit
 
 open import Function
 
+open import Relation.Binary renaming (Irrelevant to Irrelevant₂)
+open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.Isomorphism
+open import Relation.Nullary
 
 open import Data.FreshList.InductiveInductive
 open import Free.ReflexivePartialMonoid.Base A A-set
 
-open import Axiom.UniquenessOfIdentityProofs
 
 private
   cons-cong = WithIrr.cons-cong _≡_ A-set
@@ -75,9 +76,8 @@ UIP-⊎ : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} → UIP X → UIP Y → 
 UIP-⊎ uipX uipY {inj₁ x} {inj₁ y} p q = inj₁-injective-injective p q $ uipX (inj₁-injective p) (inj₁-injective q) 
 UIP-⊎ uipX uipY {inj₂ x} {inj₂ y} p q = inj₂-injective-injective p q $ uipY (inj₂-injective p) (inj₂-injective q)
 
--- Lemma: UIP is closed under non-dependent pairs (idk about the dependent case, it might be true but it's probably harder and not needed)
+-- Lemma: UIP is closed under non-dependent pairs
 
--- dependent double map, or something like that? whatever it is, it's the thing we need
 plumb : ∀ {ℓa ℓb ℓc ℓd} {A : Set ℓa} {B : Set ℓb} {C : A → A → Set ℓc} {D : B → B → Set ℓd}
       → (f : (x y : A) → C x y) (g : (x y : B) → D x y)
       → (p q : A × B) → C (proj₁ p) (proj₁ q) × D (proj₂ p) (proj₂ q)
@@ -96,15 +96,66 @@ repackage p q (u , v) = trans (,-lem p) (trans (cong₂ (cong₂ _,_) u v) (sym 
 UIP-× : ∀ {ℓx ℓy} {X : Set ℓx} {Y : Set ℓy} → UIP X → UIP Y → UIP (X × Y)
 UIP-× uipX uipY {x1 , y1} {x2 , y2} p q = repackage p q $ plumb uipX uipY (,-injective p) (,-injective q)
 
--- Lemma: UIP is preserved by isomorphism.
+-- The full, general case:
+-- If both args of a sigma type are always sets, then the sigma type is a set.
+-- ie, UIP is closed under dependent pairs.
 
+cong-, : ∀ {ℓx ℓy} {X : Set ℓx} {Y : X → Set ℓy} {x1 x2 : X} {y1 : Y x1} {y2 : Y x2}
+       → (p : x1 ≡ x2)
+       → subst Y p y1 ≡ y2
+       → (x1 , y1) ≡ (x2 , y2)
+cong-, refl refl = refl
+
+
+cong₂-cong-, : ∀ {ℓx ℓy} {X : Set ℓx} {Y : X → Set ℓy} {x1 x2 : X} {y1 : Y x1} {y2 : Y x2}
+             → {p q : x1 ≡ x2} {p' : subst Y p y1 ≡ y2} {q' : subst Y q y1 ≡ y2}
+             → (eqL : p ≡ q)
+             → subst (λ z → subst Y z y1 ≡ y2) eqL p' ≡ q'
+             → cong-, p p' ≡ cong-, q q'
+cong₂-cong-, refl refl = refl
+
+-- Propositions have UIP
+UIP-prop : ∀ {ℓ} {X : Set ℓ} → Irrelevant X → UIP X
+UIP-prop propX {x} {y} a b = {!J!}
+
+-- In particular, if some type X has UIP, then so does its identity type
+-- (and so on, all the way up)
+UIP-≡ : ∀ {ℓ} {X : Set ℓ} → UIP X → ((x y : X) → UIP (x ≡ y))
+UIP-≡ uipX x y = UIP-prop uipX
+
+,-lem' : ∀ {ℓx ℓy} {X : Set ℓx} {Y : X → Set ℓy} {x1 x2 : X} {y1 : Y x1} {y2 : Y x2}
+       → (uipX : UIP X) (uipY : ∀ x → UIP (Y x))
+       → (p : (x1 , y1) ≡ (x2 , y2))
+       → p ≡ cong-, (,-injectiveˡ p) (,-injectiveʳ-≡ uipX p (,-injectiveˡ p))
+,-lem' {Y = Y} {x1 = x1} {y1 = y1} uipX uipY p = {!UIP-≡ (uipY x1) _ _ refl (cong (λ x → subst Y x y1) (uipX refl refl)) !}
+
+repackage' : ∀ {ℓx ℓy} {X : Set ℓx} {Y : X → Set ℓy} {x1 x2 : X} {y1 : Y x1} {y2 : Y x2}
+           → (uipX : UIP X) (uipY : ∀ x → UIP (Y x))
+           → (p q : (x1 , y1) ≡ (x2 , y2))
+           → (u : ,-injectiveˡ p ≡ ,-injectiveˡ q)
+           → subst (λ z → subst Y z y1 ≡ y2) u (,-injectiveʳ-≡ uipX p (,-injectiveˡ p)) ≡ ,-injectiveʳ-≡ uipX q (,-injectiveˡ q)
+           → p ≡ q
+repackage' uipX uipY p q u v = trans (,-lem' uipX uipY p) (trans (cong₂-cong-, u v) (sym $ ,-lem' uipX uipY q))
+
+UIP-Σ :  ∀ {ℓx ℓy} {X : Set ℓx} {Y : X → Set ℓy} → UIP X
+       → (∀ x → UIP (Y x)) → UIP (Σ[ x ∈ X ] Y x)
+UIP-Σ {Y = Y} uipX uipY {x1 , y1} {x2 , y2} p q
+  = repackage' uipX uipY p q
+               (uipX (,-injectiveˡ p) (,-injectiveˡ q))
+               (uipY x2 (subst (λ z → subst (λ v → Y v) z y1 ≡ y2)
+                        (uipX (,-injectiveˡ p) (,-injectiveˡ q)) (,-injectiveʳ-≡ uipX p (,-injectiveˡ p))) (,-injectiveʳ-≡ uipX q (,-injectiveˡ q)))
+
+
+
+{-
+-- Lemma: UIP is preserved by isomorphism.
 UIP-≃ : ∀ {ℓ} {X : Set ℓ} {Y : Set ℓ} → UIP X → X ≃ Y → UIP Y
 UIP-≃ uipX iso p q =
   begin
     p
   ≡⟨ (sym $ cong-id p) ⟩
     cong id p
-  ≡⟨ subst (λ f → cong f p ≡ cong f q) {!sym ∘ to-from iso!} lem  ⟩ -- requires extensionality! :(
+  ≡⟨ subst (λ f → cong f p ≡ cong f q) {!sym ∘ to-from iso!} lem  ⟩ -- requires extensionality! :( any way around this?
     cong id q
   ≡⟨ cong-id q ⟩
     q
@@ -121,10 +172,27 @@ UIP-≃ uipX iso p q =
     ≡⟨ sym $ cong-∘ q ⟩
       cong (to iso ∘ from iso) q
     ∎
+-}
 
+UIP-⊤ : UIP ⊤
+UIP-⊤ {tt} {tt} refl refl = refl
 
-FreeRPMon'-set : {x y : FreeRPMon'} (a b : x ≡ y) → a ≡ b
-FreeRPMon'-set = {!!}
+suc-lem : ∀ {n m} (p : suc n ≡ suc m) → p ≡ cong suc (suc-injective p)
+suc-lem refl = refl
+
+UIP-ℕ : UIP ℕ
+UIP-ℕ {zero} {zero} refl refl = refl
+UIP-ℕ {suc n} {suc m} p q = trans (trans (suc-lem p) (cong (cong suc) (UIP-ℕ {n} {m} (suc-injective p) (suc-injective q)))) (sym $ suc-lem q)
+
+UIP-NonZero : ∀ n → UIP (NonZero n)
+UIP-NonZero (suc n) {record { nonZero = tt }} {record { nonZero = tt }} refl refl = refl
+
+UIP-ℕ⁺ : UIP ℕ⁺
+UIP-ℕ⁺ {zero , ()} {zero , ()} _ _
+UIP-ℕ⁺ {suc n , record {nonZero = tt}} {suc m , record {nonZero = tt}} a b = {!UIP-ℕ⁺!}
+
+FreeRPMon'-set : UIP FreeRPMon'
+FreeRPMon'-set = UIP-⊎ UIP-⊤ (UIP-× A-set {!!})
 
 -- Likewise for the fresh list presentation.
 FreeRPMon-set : {x y : FreeRPMon} (a b : x ≡ y) → a ≡ b
@@ -165,7 +233,7 @@ data _~'_ : FreeRPMon' → FreeRPMon' → Set where
 ~'-compatʳ-tt {inj₁ tt} = oneb
 ~'-compatʳ-tt {inj₂ y} = oner
 
-~'-prop : Irrelevant _~'_
+~'-prop : Irrelevant₂ _~'_
 ~'-prop oneb oneb = refl
 ~'-prop onel onel = refl
 ~'-prop oner oner = refl
