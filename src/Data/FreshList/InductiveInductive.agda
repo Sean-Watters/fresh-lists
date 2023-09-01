@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 module Data.FreshList.InductiveInductive where
 
 open import Axiom.UniquenessOfIdentityProofs
