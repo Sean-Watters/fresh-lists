@@ -9,6 +9,7 @@ open import Data.Sum.Properties
 open import Data.Unit
 open import Function
 open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.Isomorphism
 open import Relation.Nullary
 
 UIP-⊤ : UIP ⊤
@@ -35,14 +36,17 @@ UIP-Retract f g α setA {x = x} {y} p q =
 -- Propositions have contractible identities
 prop-contr-≡ : ∀ {ℓ} {X : Set ℓ} → Irrelevant X
              → {x y : X} → Σ[ c ∈ x ≡ y ] ((p : x ≡ y) → c ≡ p)
-prop-contr-≡ {ℓ} {X} propX {x} {y} = (propX x y) , λ { refl → trans (canon (sym (propX y y))) (trans-symˡ (propX x x)) }
+prop-contr-≡ {ℓ} {X} propX {x} {y} =
+  (propX x y) ,
+  λ { refl → trans (canon (sym (propX y y))) (trans-symˡ (propX x x)) }
   where
     canon : {x y : X} → (p : x ≡ y) → propX x y ≡ trans p (propX y y)
     canon refl = refl
 
 -- Propositions have UIP
 UIP-prop : ∀ {ℓ} {X : Set ℓ} → Irrelevant X → UIP X
-UIP-prop propX {x} {y} p q = trans (sym (proj₂ (prop-contr-≡ propX) p)) (proj₂ (prop-contr-≡ propX) q)
+UIP-prop propX {x} {y} p q = trans (sym (proj₂ (prop-contr-≡ propX) p))
+                                   (proj₂ (prop-contr-≡ propX) q)
 
 -- In particular, if some type X has UIP, then so does its identity type
 -- (and so on, all the way up)
@@ -131,30 +135,7 @@ UIP-Σ {Y = Y} uipX uipY {x1 , y1} {x2 , y2} p q
                (uipY x2 (subst (λ z → subst (λ v → Y v) z y1 ≡ y2)
                         (uipX (,-injectiveˡ p) (,-injectiveˡ q)) (,-injectiveʳ-≡ uipX p (,-injectiveˡ p))) (,-injectiveʳ-≡ uipX q (,-injectiveˡ q)))
 
-
-{-
 -- Lemma: UIP is preserved by isomorphism.
 UIP-≃ : ∀ {ℓ} {X : Set ℓ} {Y : Set ℓ} → UIP X → X ≃ Y → UIP Y
-UIP-≃ uipX iso p q =
-  begin
-    p
-  ≡⟨ (sym $ cong-id p) ⟩
-    cong id p
-  ≡⟨ subst (λ f → cong f p ≡ cong f q) {!sym ∘ to-from iso!} lem  ⟩ -- requires extensionality! :( any way around this?
-    cong id q
-  ≡⟨ cong-id q ⟩
-    q
-  ∎ where
-  open ≡-Reasoning
-  lem : cong (λ x → to iso (from iso x)) p ≡ cong (λ x → to iso (from iso x)) q
-  lem =
-    begin
-      cong (to iso ∘ from iso) p
-    ≡⟨ cong-∘ p ⟩
-      cong (to iso) (cong (from iso) p)
-    ≡⟨ cong (cong (to iso)) $ uipX (cong (from iso) p) (cong (from iso) q) ⟩
-      cong (to iso) (cong (from iso) q)
-    ≡⟨ sym $ cong-∘ q ⟩
-      cong (to iso ∘ from iso) q
-    ∎
--}
+UIP-≃ uipX iso = UIP-Retract (to iso) (from iso) (λ y → sym (to-from iso y)) uipX
+  where open _≃_
