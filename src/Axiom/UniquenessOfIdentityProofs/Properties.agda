@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 module Axiom.UniquenessOfIdentityProofs.Properties where
 
 open import Axiom.UniquenessOfIdentityProofs
@@ -14,12 +14,12 @@ open import Relation.Nullary
 UIP-⊤ : UIP ⊤
 UIP-⊤ {tt} {tt} refl refl = refl
 
-whisker : {A B : Set} (f : A -> B)  (g : B -> A)
+whisker : ∀ {ℓ} {A B : Set ℓ} (f : A -> B)  (g : B -> A)
         → (α : ∀ x → f (g x) ≡ x) {x y : B} (p : x ≡ y)
         → p ≡  trans (sym (α x)) (trans (cong f (cong g p)) (α y))
 whisker f g α {x = x} refl = sym (trans-symˡ (α x))
 
-UIP-Retract : {A B : Set} (f : A -> B)  (g : B -> A)
+UIP-Retract : ∀ {ℓ} {A B : Set ℓ} (f : A -> B)  (g : B -> A)
             → (∀ x → f (g x) ≡  x) -> UIP A -> UIP B
 UIP-Retract f g α setA {x = x} {y} p q =
   begin
@@ -34,16 +34,19 @@ UIP-Retract f g α setA {x = x} {y} p q =
 
 -- Propositions have contractible identities
 prop-contr-≡ : ∀ {ℓ} {X : Set ℓ} → Irrelevant X
-             → (x y : X) → Σ[ c ∈ x ≡ y ] ((p : x ≡ y) → c ≡ p)
-prop-contr-≡ propX x y = (propX x y) , (λ { refl → {!propX x x!}})
+             → {x y : X} → Σ[ c ∈ x ≡ y ] ((p : x ≡ y) → c ≡ p)
+prop-contr-≡ {ℓ} {X} propX {x} {y} = (propX x y) , λ { refl → trans (canon (sym (propX y y))) (trans-symˡ (propX x x)) }
+  where
+    canon : {x y : X} → (p : x ≡ y) → propX x y ≡ trans p (propX y y)
+    canon refl = refl
 
 -- Propositions have UIP
 UIP-prop : ∀ {ℓ} {X : Set ℓ} → Irrelevant X → UIP X
-UIP-prop propX {x} {y} p q = {!J !}
+UIP-prop propX {x} {y} p q = trans (sym (proj₂ (prop-contr-≡ propX) p)) (proj₂ (prop-contr-≡ propX) q)
 
 -- In particular, if some type X has UIP, then so does its identity type
 -- (and so on, all the way up)
-UIP-≡ : ∀ {ℓ} {X : Set ℓ} → UIP X → ((x y : X) → UIP (x ≡ y))
+UIP-≡ : ∀ {ℓ} {X : Set ℓ} → UIP X → (x y : X) → UIP (x ≡ y)
 UIP-≡ uipX x y = UIP-prop uipX
 
 
