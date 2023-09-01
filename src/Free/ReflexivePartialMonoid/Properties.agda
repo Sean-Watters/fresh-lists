@@ -1,6 +1,8 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --without-K #-}
 
 open import Axiom.UniquenessOfIdentityProofs
+open import Axiom.UniquenessOfIdentityProofs.Properties
+
 
 module Free.ReflexivePartialMonoid.Properties
   (A : Set)
@@ -28,10 +30,8 @@ open import Data.FreshList.InductiveInductive
 open import Free.ReflexivePartialMonoid.Base A A-set
 
 
-private
-  cons-cong = WithIrr.cons-cong _≡_ A-set
-  open _≃_
-
+open _≃_
+open WithIrr _≡_ A-set
 ----------------------------
 -- Isomorphism to 1+(A×ℕ⁺) --
 ----------------------------
@@ -79,7 +79,7 @@ FreeRPMon'-set = UIP-⊎ UIP-⊤ (UIP-× A-set UIP-ℕ⁺)
 
 -- Likewise for the fresh list presentation.
 FreeRPMon-set : UIP FreeRPMon
-FreeRPMon-set = UIP-List#
+FreeRPMon-set = UIP-List# A-set
 
 
 -----------------------------------------------------------
