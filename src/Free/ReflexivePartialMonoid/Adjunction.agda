@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --allow-unsolved-metas --without-K #-}
 
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality

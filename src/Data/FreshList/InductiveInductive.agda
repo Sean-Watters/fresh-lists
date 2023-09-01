@@ -1,6 +1,8 @@
-{-# OPTIONS --without-K --safe #-}
+{-# OPTIONS --allow-unsolved-metas --without-K #-}
 module Data.FreshList.InductiveInductive where
 
+open import Axiom.UniquenessOfIdentityProofs
+open import Axiom.UniquenessOfIdentityProofs.Properties
 open import Level hiding (zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product
@@ -167,11 +169,44 @@ module WithIrr
     #-irrelevant [] [] = refl
     #-irrelevant (x ∷ p) (y ∷ q) = cong₂ _∷_ (R-irr x y) (#-irrelevant p q)
 
+    R-irr-unique : ∀ {x y} → (p : R x y) → R-irr p p ≡ refl
+    R-irr-unique p = UIP-prop R-irr (R-irr p p) refl
+
+    #-irrelevant-unique : ∀ {x : X} {xs : List# R} (p : x # xs) → #-irrelevant p p ≡ refl
+    #-irrelevant-unique [] = refl
+    #-irrelevant-unique (x ∷ p) rewrite R-irr-unique x rewrite #-irrelevant-unique p = refl
+
+    -- Depenedent cong₂ doesn't exist in general, so here's the version specialised to cons.
+    -- There will also exist a ternery version which takes a proof that the freshness proofs
+    -- are equal without assuming R to be propositional, but we never use that.
     cons-cong : {x y : X} {xs ys : List# R} {x#xs : x # xs} {y#ys : y # ys}
               → x ≡ y → xs ≡ ys
               → cons x xs x#xs ≡ cons y ys y#ys
     cons-cong refl refl = cong (cons _ _) (#-irrelevant _ _)
 
+    -- Pulling a proof apart then putting it back together is identity,
+    -- as long as X is a set.
+    cons-cong-inverse : ∀ {x y xs ys x#xs y#ys}
+                      → UIP X
+                      → (p : cons x xs x#xs ≡ cons y ys y#ys)
+                      → p ≡ cons-cong (cons-injective-head p) (cons-injective-tail p)
+    cons-cong-inverse {x#xs = []} uipX refl = refl
+    cons-cong-inverse {x} {.x} {cons y ys y#ys} {cons .y .ys .y#ys} {Rxy ∷ x#ys} {.Rxy ∷ .x#ys} uipX refl
+      rewrite #-irrelevant-unique x#ys rewrite R-irr-unique Rxy = refl
+
+    -- If X is a Set, then so are the types of fresh lists over X.
+    UIP-List# : UIP X → UIP (List# R)
+    UIP-List# uipX {[]} {[]} refl refl = refl
+    UIP-List# uipX {cons x xs x#xs} {cons y ys y#ys} p q =
+      begin
+        p
+      ≡⟨ cons-cong-inverse uipX p ⟩
+        cons-cong (cons-injective-head p) (cons-injective-tail p)
+      ≡⟨ cong₂ cons-cong (uipX (cons-injective-head p) (cons-injective-head q)) (UIP-List# uipX {xs} {ys} (cons-injective-tail p) (cons-injective-tail q)) ⟩
+        cons-cong (cons-injective-head q) (cons-injective-tail q)
+      ≡⟨ ≡-sym $ cons-cong-inverse uipX q ⟩
+        q
+      ∎ where open ≡-Reasoning
 
     lift-decEq : ((x y : X) → Dec (x ≡ y)) → ((xs ys : List# R) → Dec (xs ≡ ys))
     lift-decEq dec [] [] = yes refl

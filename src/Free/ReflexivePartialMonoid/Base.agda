@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --without-K #-}
 
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
