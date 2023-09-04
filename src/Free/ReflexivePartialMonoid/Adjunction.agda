@@ -12,10 +12,14 @@ open import Free.ReflexivePartialMonoid.Base
 open import Free.ReflexivePartialMonoid.Properties
 open import Category.Base
 
+open import Axiom.UniquenessOfIdentityProofs
 open import Axiom.Extensionality.Propositional
 open import Function
 open import Relation.Nullary using () renaming (Irrelevant to Irrelevant₀)
 open import Data.Product
+open import Data.Sum
+open import Data.Unit
+open import Data.Nat
 
 -----------------------------------------------
 -- The Category of Reflexive Partial Monoids --
@@ -109,7 +113,102 @@ Category.assoc (RPMON ext) = eqRPMonMorphism ext (ext (λ x → refl))
 Category.identityˡ (RPMON ext) = eqRPMonMorphism ext (ext (λ x → refl))
 Category.identityʳ (RPMON ext) = eqRPMonMorphism ext (ext (λ x → refl))
 
+--------------------------
+-- The Category of Sets --
+--------------------------
+
+-- The category of sets. Note due to UIP this really is Set, not just
+-- the category of Agda "Sets"
+
+SetObj : Set₁
+SetObj = Σ[ X ∈ Set ] UIP X
+
+SetFun : SetObj → SetObj → Set
+SetFun X Y = proj₁ X → proj₁ Y
+
+SET : Extensionality _ _ → Category
+Category.Obj (SET ext) = SetObj
+Category.Hom (SET ext) = SetFun
+Category.id (SET ext) = id
+Category.comp (SET ext) f g = g ∘ f
+Category.assoc (SET ext) = ext (λ x → refl)
+Category.identityˡ (SET ext) = ext (λ x → refl)
+Category.identityʳ (SET ext) = ext (λ x → refl)
+
 ---------------------------
 -- The Forgetful Functor --
 ---------------------------
 
+FORGET : (ext : Extensionality _ _) → Functor (RPMON ext) (SET ext)
+Functor.act (FORGET ext) (MkRPMon X _ _ _ _ proof) = X , (A-set $ isPMon proof)
+Functor.fmap (FORGET ext) (MkRPMonMorphism f _ _ _) x = f x
+Functor.identity (FORGET ext) = ext (λ _ → refl)
+Functor.homomorphism (FORGET ext) = ext (λ _ → refl)
+
+
+----------------------
+-- The Free Functor --
+----------------------
+
+
+FreeRPMon'-map : (X Y : SetObj) → SetFun X Y → (FreeRPMon' (proj₁ X) (proj₂ X)) → (FreeRPMon' (proj₁ Y) (proj₂ Y))
+FreeRPMon'-map X Y f (inj₁ tt) = inj₁ tt
+FreeRPMon'-map X Y f (inj₂ (x , n)) = inj₂ (f x , n)
+
+FreeRPMon-map : (X Y : SetObj) → SetFun X Y → (FreeRPMon (proj₁ X) (proj₂ X)) → (FreeRPMon (proj₁ Y) (proj₂ Y))
+FreeRPMon-map X Y f xs = from-alt (proj₁ Y) (proj₂ Y) (FreeRPMon'-map X Y f (to-alt (proj₁ X) (proj₂ X) xs))
+
+map-preserves-R : (X Y : SetObj) (f : SetFun X Y)
+                → {x y : FreeRPMon (proj₁ X) (proj₂ X)}
+                → (proj₁ X ~ proj₂ X) x y
+                → (proj₁ Y ~ proj₂ Y) (FreeRPMon-map X Y f x) (FreeRPMon-map X Y f y)
+map-preserves-R X Y f {[]} {[]} oneb = oneb
+map-preserves-R X Y f {[]} {cons _ _ _} onel = onel
+map-preserves-R X Y f {cons _ _ _} {[]} oner = oner
+map-preserves-R X Y f {cons x xs x#xs} {cons y ys y#ys} (rep refl) = rep refl
+
+map-preserves-∙ : (X Y : SetObj) (f : SetFun X Y)
+                → {x y : FreeRPMon (proj₁ X) (proj₂ X)}
+                → (p : (proj₁ X ~ proj₂ X) x y)
+                → FreeRPMon-map X Y f (∙ (proj₁ X) (proj₂ X) p)
+                ≡ ∙ (proj₁ Y) (proj₂ Y) (map-preserves-R X Y f p)
+map-preserves-∙ X Y f {[]} {[]} oneb = refl
+map-preserves-∙ (X , X-set) (Y , Y-set) f {[]} {cons y ys y#ys} onel
+  = WithIrr.cons-cong _≡_ Y-set refl (cong (repeat Y Y-set (f y))
+                                               (trans (length-repeat X X-set y (length ys))
+                                                      (sym $ length-repeat Y Y-set (f y) (length ys))))
+map-preserves-∙ (X , X-set) (Y , Y-set) f {cons x xs x#xs} {[]} oner
+  = WithIrr.cons-cong _≡_ Y-set refl (cong (repeat Y Y-set (f x))
+                                               (trans (length-repeat X X-set x (length xs))
+                                                      (sym $ length-repeat Y Y-set (f x) (length xs))))
+map-preserves-∙ (X , X-set) (Y , Y-set) f {cons x xs x#xs} {cons .x ys x#ys} (rep refl)
+  = WithIrr.cons-cong _≡_ Y-set refl (cong (repeat Y Y-set (f x)) lem) where
+  open ≡-Reasoning
+  lem : length (repeat X X-set x (length xs + suc (length ys)))
+      ≡ length (repeat Y Y-set (f x) (length xs)) + suc (length (repeat Y Y-set (f x) (length ys)))
+  lem =
+    begin
+      length (repeat X X-set x (length xs + suc (length ys)))
+    ≡⟨ length-repeat X X-set x (length xs + suc (length ys))  ⟩
+      length xs + suc (length ys)
+    ≡⟨ (sym $ cong₂ (λ x y → x + suc y) (length-repeat Y Y-set (f x) (length xs)) (length-repeat Y Y-set (f x) (length ys))) ⟩
+      length (repeat Y Y-set (f x) (length xs)) + suc (length (repeat Y Y-set (f x) (length ys)))
+    ∎
+
+map-id : {X : SetObj} (xs : FreeRPMon (proj₁ X) (proj₂ X))
+            → FreeRPMon-map X X id xs ≡ xs
+map-id [] = refl
+map-id {X , X-set} (cons x xs x#xs) = WithIrr.cons-cong _≡_ X-set refl (rep-len X X-set xs x#xs)
+
+map-comp : {X Y Z : SetObj} {f : SetFun X Y} {g : SetFun Y Z} (xs : FreeRPMon (proj₁ X) (proj₂ X))
+         → FreeRPMon-map X Z (g ∘ f) xs
+         ≡ FreeRPMon-map Y Z g (FreeRPMon-map X Y f xs)
+map-comp {X , X-set} {Y , Y-set} {Z , Z-set} {f} {g} [] = refl
+map-comp {X , X-set} {Y , Y-set} {Z , Z-set} {f} {g} (cons x xs x#xs) = WithIrr.cons-cong _≡_ Z-set refl (cong (repeat Z Z-set (g (f x))) (sym $ length-repeat Y Y-set (f x) (length xs)))
+
+
+FREE : (ext : Extensionality _ _) → Functor (SET ext) (RPMON ext)
+Functor.act (FREE ext) (X , X-set) = MkRPMon (FreeRPMon X X-set) _≡_ (_~_ X X-set) (∙ X X-set) [] (isReflexivePartialMonoid X X-set)
+Functor.fmap (FREE ext) {X} {Y} f = MkRPMonMorphism (FreeRPMon-map X Y f) refl (map-preserves-R X Y f) (map-preserves-∙ X Y f)
+Functor.identity (FREE ext) = eqRPMonMorphism ext (ext map-id)
+Functor.homomorphism (FREE ext) = eqRPMonMorphism ext (ext map-comp)
