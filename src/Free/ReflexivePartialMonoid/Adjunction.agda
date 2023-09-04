@@ -212,3 +212,30 @@ Functor.act (FREE ext) (X , X-set) = MkRPMon (FreeRPMon X X-set) _≡_ (_~_ X X-
 Functor.fmap (FREE ext) {X} {Y} f = MkRPMonMorphism (FreeRPMon-map X Y f) refl (map-preserves-R X Y f) (map-preserves-∙ X Y f)
 Functor.identity (FREE ext) = eqRPMonMorphism ext (ext map-id)
 Functor.homomorphism (FREE ext) = eqRPMonMorphism ext (ext map-comp)
+
+-----------------------------------
+-- The Free-Forgetful Adjunction --
+-----------------------------------
+
+open Adjunction
+
+foldr-∙ : (X : SetObj) (Y : ReflexivePartialMonoid)
+        → (f : proj₁ X → Carrier Y)
+        → FreeRPMon (proj₁ X) (proj₂ X) → Carrier Y
+foldr-∙ (X , X-set) Y f [] = ε Y
+foldr-∙ (X , X-set) Y f (cons x xs x#xs) = ∙[ Y ] {f x} {foldr-∙ (X , X-set) Y f xs} (lem (X , X-set) Y f x xs x#xs) where
+  lem : (X : SetObj) (Y : ReflexivePartialMonoid) (f : proj₁ X → Carrier Y)
+      → (x : proj₁ X) (xs : FreeRPMon (proj₁ X) (proj₂ X)) (x#xs : x # xs)
+      → _R_ Y (f x) (foldr-∙ X Y f xs)
+  lem X Y f x [] [] = ε-compatʳ (isPMon $ proof Y)
+  lem X Y f x (cons y ys y#ys) (xy ∷ x#ys) = {!!}
+
+
+--foldr (λ a b → ∙[ Y ] {f a} {b} {!!}) (ε Y)
+
+RPMon-Adjunction : (ext : Extensionality _ _) → (FREE ext) ⊣ (FORGET ext)
+to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (cons x [] [])
+from (RPMon-Adjunction ext) {X , X-set} {Y} f = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) {!!} {!!} {!!}
+left-inverse-of (RPMon-Adjunction ext) = {!!}
+right-inverse-of (RPMon-Adjunction ext) = {!!}
+to-natural (RPMon-Adjunction ext) = {!!}
