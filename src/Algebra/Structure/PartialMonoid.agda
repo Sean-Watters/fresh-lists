@@ -28,6 +28,13 @@ record IsPartialMonoid
     assocˡ : ∀ {x y z} → (yz : y R z) → (p : x R (∙[ yz ])) → Σ[ xy ∈ x R y ] Σ[ q ∈ ∙[ xy ] R z ] (∙[ p ] ≈ ∙[ q ])
     assocʳ : ∀ {x y z} → (xy : x R y) → (p : ∙[ xy ] R z) → Σ[ yz ∈ y R z ] Σ[ q ∈ x R ∙[ yz ] ] (∙[ p ] ≈ ∙[ q ])
 
+  assocL1 : ∀ {x y z} → (yz : y R z) → (p : x R (∙[ yz ])) → Σ[ xy ∈ x R y ] (∙[ xy ] R z)
+  assocL1 yz p = let (a , b , _) = assocˡ yz p in a , b
+
+
+  assocR1 : ∀ {x y z} → (xy : x R y) → (p : ∙[ xy ] R z) → Σ[ yz ∈ y R z ] (x R ∙[ yz ])
+  assocR1 yz p = let (a , b , _) = assocʳ yz p in a , b
+
 
 record IsReflexivePartialMonoid
   {a b c} {A : Set a}
@@ -38,4 +45,4 @@ record IsReflexivePartialMonoid
   field
     isPMon : IsPartialMonoid _≈_ _R_ ∙ ε
     reflexive : ∀ {x} → x R x
-  open IsPartialMonoid public
+  open IsPartialMonoid isPMon public
