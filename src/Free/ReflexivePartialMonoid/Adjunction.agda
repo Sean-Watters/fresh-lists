@@ -20,6 +20,7 @@ open import Data.Product
 open import Data.Sum
 open import Data.Unit
 open import Data.Nat
+open import Data.PosNat
 
 -----------------------------------------------
 -- The Category of Reflexive Partial Monoids --
@@ -31,11 +32,10 @@ record ReflexivePartialMonoid : Set₁ where
   constructor MkRPMon
   field
     Carrier : Set
-    _≈_ : Carrier → Carrier → Set
     _R_ : Carrier → Carrier → Set
-    ∙[_] : {x y : Carrier} → x R y → Carrier
+    op : (x y : Carrier) → x R y → Carrier
     ε : Carrier
-    proof : IsReflexivePartialMonoid _≈_ _R_ ∙[_] ε
+    proof : IsReflexivePartialMonoid (_≡_ {A = Carrier}) _R_ op ε
   open IsReflexivePartialMonoid public
 open ReflexivePartialMonoid
 
@@ -48,7 +48,7 @@ record RPMonMorphism (A B : ReflexivePartialMonoid) : Set where
     fun : Carrier A → Carrier B
     preserves-ε : fun (A.ε) ≡ B.ε
     preserves-R : ∀ {x y} → x A.R y → (fun x) B.R (fun y)
-    preserves-∙ : ∀ {x y} (p : x A.R y) → fun A.∙[ p ] ≡ B.∙[ preserves-R p ]
+    preserves-∙ : ∀ {x y} (p : x A.R y) → fun (A.op x y p) ≡ B.op (fun x) (fun y) (preserves-R p)
 open RPMonMorphism
 
 rpmon-id : ∀ {A} → RPMonMorphism A A
@@ -75,10 +75,10 @@ module _ (A B  : ReflexivePartialMonoid) where
 
   cong-RPMonMorphism : (f : Carrier A → Carrier B) (p : f (A.ε) ≡ B.ε)
                     → {q q' : ∀ x y → x A.R y → (f x) B.R (f y)}
-                    → {r  : ∀ {x y} (p : x A.R y) → f A.∙[ p ] ≡ B.∙[ q x y p ]}
-                    → {r' : ∀ {x y} (p : x A.R y) → f A.∙[ p ] ≡ B.∙[ q' x y p ]}
+                    → {r  : ∀ {x y} (p : x A.R y) → f (A.op x y p) ≡ B.op (f x) (f y) (q x y p)}
+                    → {r' : ∀ {x y} (p : x A.R y) → f (A.op x y p) ≡ B.op (f x) (f y) (q' x y p)}
                     → (qq : q ≡ q')
-                    → (λ {x} {y} → r {x} {y}) ≡ subst (λ (z : ∀ x y → x A.R y → (f x) B.R (f y )) → {x y : A.Carrier} (p₁ : x A.R y) → f A.∙[ p₁ ] ≡ B.∙[ z x y p₁ ]) (sym qq) r'
+                    → (λ {x} {y} → r {x} {y}) ≡ subst (λ (z : ∀ x y → x A.R y → (f x) B.R (f y )) → {x y : A.Carrier} (p₁ : x A.R y) → f (A.op x y p₁) ≡ B.op (f x) (f y) (z x y p₁)) (sym qq) r'
                     → (RPMonMorphism A B ∋ MkRPMonMorphism f p (q _ _) r) ≡ MkRPMonMorphism f p (q' _ _) r'
   cong-RPMonMorphism f p {q} {.q} refl refl = refl
 
@@ -98,7 +98,7 @@ eqRPMonMorphism ext {A} {B} {MkRPMonMorphism f p q r} {MkRPMonMorphism .f p' q' 
             → ∀ {X : Set} {Y : X → X → Set} {Z : X → X → Set} → Irrelevant Z → (f g : (x y : X) → Y x y → Z x y) → f ≡ g
     funprop ext propZ f g = ext λ x → ext (λ y → ext (λ Yxy → propZ (f x y Yxy) (g x y Yxy)))
 
-    lem : (λ {x} {y} → r {x} {y}) ≡ subst (λ z → {x y : Carrier A} (p₁ : (A R x) y) → f (∙[ A ] p₁) ≡ ∙[ B ] (z x y p₁))
+    lem : (λ {x} {y} → r {x} {y}) ≡ subst (λ z → {x y : Carrier A} (p₁ : (A R x) y) → f (op A x y p₁) ≡ op B (f x) (f y) (z x y p₁))
                     (sym (funprop ext (R-prop (isPMon (proof B))) (λ x y z → q z) (λ x y z → q' z)))
                     r'
     lem = implicit-extensionality ext (implicit-extensionality ext (ext (λ x₁ → A-set (isPMon (proof B)) (r x₁) _)))
@@ -140,7 +140,7 @@ Category.identityʳ (SET ext) = ext (λ x → refl)
 ---------------------------
 
 FORGET : (ext : Extensionality _ _) → Functor (RPMON ext) (SET ext)
-Functor.act (FORGET ext) (MkRPMon X _ _ _ _ proof) = X , (A-set $ isPMon proof)
+Functor.act (FORGET ext) (MkRPMon X _ _ _ proof) = X , (A-set $ isPMon proof)
 Functor.fmap (FORGET ext) (MkRPMonMorphism f _ _ _) x = f x
 Functor.identity (FORGET ext) = ext (λ _ → refl)
 Functor.homomorphism (FORGET ext) = ext (λ _ → refl)
@@ -170,8 +170,10 @@ map-preserves-R X Y f {cons x xs x#xs} {cons y ys y#ys} (rep refl) = rep refl
 map-preserves-∙ : (X Y : SetObj) (f : SetFun X Y)
                 → {x y : FreeRPMon (proj₁ X) (proj₂ X)}
                 → (p : (proj₁ X ~ proj₂ X) x y)
-                → FreeRPMon-map X Y f (∙ (proj₁ X) (proj₂ X) p)
-                ≡ ∙ (proj₁ Y) (proj₂ Y) (map-preserves-R X Y f p)
+                → FreeRPMon-map X Y f (∙ (proj₁ X) (proj₂ X) x y p)
+                ≡ ∙ (proj₁ Y) (proj₂ Y) (from-alt (proj₁ Y) (proj₂ Y)
+                                          (FreeRPMon'-map X Y f (to-alt (proj₁ X) (proj₂ X) x))) (from-alt (proj₁ Y) (proj₂ Y)
+                                               (FreeRPMon'-map X Y f (to-alt (proj₁ X) (proj₂ X) y))) (map-preserves-R X Y f p)
 map-preserves-∙ X Y f {[]} {[]} oneb = refl
 map-preserves-∙ (X , X-set) (Y , Y-set) f {[]} {cons y ys y#ys} onel
   = WithIrr.cons-cong _≡_ Y-set refl (cong (repeat Y Y-set (f y))
@@ -208,7 +210,7 @@ map-comp {X , X-set} {Y , Y-set} {Z , Z-set} {f} {g} (cons x xs x#xs) = WithIrr.
 
 
 FREE : (ext : Extensionality _ _) → Functor (SET ext) (RPMON ext)
-Functor.act (FREE ext) (X , X-set) = MkRPMon (FreeRPMon X X-set) _≡_ (_~_ X X-set) (∙ X X-set) [] (isReflexivePartialMonoid X X-set)
+Functor.act (FREE ext) (X , X-set) = MkRPMon (FreeRPMon X X-set) (_~_ X X-set) (∙ X X-set) [] (isReflexivePartialMonoid X X-set)
 Functor.fmap (FREE ext) {X} {Y} f = MkRPMonMorphism (FreeRPMon-map X Y f) refl (map-preserves-R X Y f) (map-preserves-∙ X Y f)
 Functor.identity (FREE ext) = eqRPMonMorphism ext (ext map-id)
 Functor.homomorphism (FREE ext) = eqRPMonMorphism ext (ext map-comp)
@@ -219,23 +221,48 @@ Functor.homomorphism (FREE ext) = eqRPMonMorphism ext (ext map-comp)
 
 open Adjunction
 
+triple : (X : ReflexivePartialMonoid) → Carrier X → Carrier X
+triple X x = op X xx x {!assoc (isPMon $ proof X) {x} {xx} {ε X} (ε-compatʳ (isPMon $ proof X))!} where
+  xx : Carrier X
+  xx = op X x x $ reflexive (proof X)
+
+power : (X : ReflexivePartialMonoid) → Carrier X → ℕ⁺ → Carrier X
+power X x (suc zero , p) = x
+power X x (suc (suc n) , p) = op X x (power X x (suc n , record {nonZero = tt})) (lem (suc n , record {nonZero = tt})) where
+  lem : ∀ n → _R_ X x (power X x n)
+  lem (suc zero , p) = reflexive (proof X)
+  lem (suc (suc zero) , p) = {!!}
+  lem (suc (suc (suc n)) , p) = {!assoc (isPMon $ proof X) ? (lem (suc (suc n) , record {nonZero = tt}))!}
+
+foldr-∙' : (X : SetObj) (Y : ReflexivePartialMonoid)
+         → (f : proj₁ X → Carrier Y)
+         → FreeRPMon' (proj₁ X) (proj₂ X) → Carrier Y
+foldr-∙' X Y f (inj₁ tt) = ε Y
+foldr-∙' X Y f (inj₂ (x , n)) = {!!}
+
 foldr-∙ : (X : SetObj) (Y : ReflexivePartialMonoid)
         → (f : proj₁ X → Carrier Y)
         → FreeRPMon (proj₁ X) (proj₂ X) → Carrier Y
 foldr-∙ (X , X-set) Y f [] = ε Y
-foldr-∙ (X , X-set) Y f (cons x xs x#xs) = ∙[ Y ] {f x} {foldr-∙ (X , X-set) Y f xs} (lem (X , X-set) Y f x xs x#xs) where
+foldr-∙ (X , X-set) Y f (cons x xs x#xs) = op Y {!!} {!!} {!!} where
+--∙[ Y ] {f x} {foldr-∙ (X , X-set) Y f xs} (lem (X , X-set) Y f x xs x#xs) where
+  R-refl : ∀ (Z : ReflexivePartialMonoid) {u v} → u ≡ v → _R_ Z u v
+  R-refl Z refl = reflexive (proof Z)
+
   lem : (X : SetObj) (Y : ReflexivePartialMonoid) (f : proj₁ X → Carrier Y)
       → (x : proj₁ X) (xs : FreeRPMon (proj₁ X) (proj₂ X)) (x#xs : x # xs)
       → _R_ Y (f x) (foldr-∙ X Y f xs)
   lem X Y f x [] [] = ε-compatʳ (isPMon $ proof Y)
-  lem X Y f x (cons y ys y#ys) (xy ∷ x#ys) = {!!}
+  lem X Y f x (cons .x ys y#ys) (refl ∷ x#ys) = R-refl Y {!lem X Y f x ys x#ys!}
+
 
 
 --foldr (λ a b → ∙[ Y ] {f a} {b} {!!}) (ε Y)
 
 RPMon-Adjunction : (ext : Extensionality _ _) → (FREE ext) ⊣ (FORGET ext)
 to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (cons x [] [])
-from (RPMon-Adjunction ext) {X , X-set} {Y} f = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) {!!} {!!} {!!}
+from (RPMon-Adjunction ext) {X , X-set} {Y} f
+  = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) {!!} {!!} {!!}
 left-inverse-of (RPMon-Adjunction ext) = {!!}
 right-inverse-of (RPMon-Adjunction ext) = {!!}
 to-natural (RPMon-Adjunction ext) = {!!}

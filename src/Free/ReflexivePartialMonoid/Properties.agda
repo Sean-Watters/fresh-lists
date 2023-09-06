@@ -13,6 +13,7 @@ open import Algebra.Structure.PartialMonoid
 
 open import Data.Nat
 open import Data.Nat.Properties
+open import Data.PosNat
 open import Data.Sum
 open import Data.Sum.Properties
 open import Data.Product
@@ -102,11 +103,11 @@ data _~'_ : FreeRPMon' → FreeRPMon' → Set where
 +-nonzero (suc n , _) m = record { nonZero = tt }
 
 -- We can concatenate two compatible FreeRPMons
-∙' : {xs ys : FreeRPMon'} → xs ~' ys → FreeRPMon'
-∙' oneb = inj₁ tt
-∙' (onel {x}) = inj₂ x
-∙' (oner {x}) = inj₂ x
-∙' (rep {n} {m} {x} refl) = inj₂ (x , (proj₁ n + proj₁ m) , +-nonzero n m)
+∙' : (xs ys : FreeRPMon') → xs ~' ys → FreeRPMon'
+∙' _ _ oneb = inj₁ tt
+∙' _ _ (onel {x}) = inj₂ x
+∙' _ _ (oner {x}) = inj₂ x
+∙' _ _ (rep {n} {m} {x} refl) = inj₂ (x , (proj₁ n + proj₁ m) , +-nonzero n m)
 
 ~'-compatˡ-tt : ∀ {xs} → (inj₁ tt) ~' xs
 ~'-compatˡ-tt {inj₁ tt} = oneb
@@ -132,49 +133,82 @@ data _~'_ : FreeRPMon' → FreeRPMon' → Set where
 ~'-sym oner = onel
 ~'-sym (rep x) = rep (sym x)
 
-∙'-assoc₁ : {x y z : FreeRPMon'} (yz : y ~' z) → x ~' ∙' yz  → x ~' y
-∙'-assoc₁ oneb p = p
-∙'-assoc₁ {inj₁ tt} onel p = oneb
-∙'-assoc₁ {inj₂ _} onel p = oner
-∙'-assoc₁ oner p = p
-∙'-assoc₁ {inj₁ tt} (rep refl) p = onel
-∙'-assoc₁ {inj₂ _} (rep refl) (rep refl) = (rep refl)
+∙'-assocL1 : {x y z : FreeRPMon'} (yz : y ~' z) → x ~' ∙' y z yz  → x ~' y
+∙'-assocL1 oneb p = p
+∙'-assocL1 {inj₁ tt} onel p = oneb
+∙'-assocL1 {inj₂ _} onel p = oner
+∙'-assocL1 oner p = p
+∙'-assocL1 {inj₁ tt} (rep refl) p = onel
+∙'-assocL1 {inj₂ _} (rep refl) (rep refl) = (rep refl)
 
-∙'-assoc₂ : {x y z : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' p) → ∙' (∙'-assoc₁ p q) ~' z
-∙'-assoc₂ oneb oneb = oneb
-∙'-assoc₂ oneb oner = oner
-∙'-assoc₂ onel onel = onel
-∙'-assoc₂ onel (rep refl) = (rep refl)
-∙'-assoc₂ oner onel = oner
-∙'-assoc₂ oner (rep refl) = oner
-∙'-assoc₂ (rep refl) onel = (rep refl)
-∙'-assoc₂ (rep refl) (rep refl) = (rep refl)
+∙'-assocL2 : {x y z : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' y z p) → ∙' x y (∙'-assocL1 p q) ~' z
+∙'-assocL2 oneb oneb = oneb
+∙'-assocL2 oneb oner = oner
+∙'-assocL2 onel onel = onel
+∙'-assocL2 onel (rep refl) = (rep refl)
+∙'-assocL2 oner onel = oner
+∙'-assocL2 oner (rep refl) = oner
+∙'-assocL2 (rep refl) onel = (rep refl)
+∙'-assocL2 (rep refl) (rep refl) = (rep refl)
+
+∙'-assocR1 : {x y z : FreeRPMon'} (xy : x ~' y) → ∙' x y xy ~' z  → y ~' z
+∙'-assocR1 oneb oneb = oneb
+∙'-assocR1 oneb onel = onel
+∙'-assocR1 onel oner = oner
+∙'-assocR1 onel (rep refl) = rep refl
+∙'-assocR1 oner oner = oneb
+∙'-assocR1 oner (rep refl) = onel
+∙'-assocR1 (rep refl) oner = oner
+∙'-assocR1 (rep refl) (rep refl) = rep refl
+
+∙'-assocR2 : {x y z : FreeRPMon'} (p : x ~' y) (q : ∙' x y p ~' z) → x ~' ∙' y z (∙'-assocR1 p q)
+∙'-assocR2 oneb oneb = oneb
+∙'-assocR2 oneb onel = onel
+∙'-assocR2 onel oner = onel
+∙'-assocR2 onel (rep refl) = onel
+∙'-assocR2 oner oner = oner
+∙'-assocR2 oner (rep refl) = rep refl
+∙'-assocR2 (rep refl) oner = rep refl
+∙'-assocR2 (rep refl) (rep refl) = rep refl
 
 ℕ⁺-eq : {m n : ℕ} {pm : NonZero m} {pn : NonZero n} → m ≡ n → (m , pm) ≡ (n , pn)
 ℕ⁺-eq {suc m} {pm = record { nonZero = tt }} {record { nonZero = tt }} refl = refl
 
-∙'-assoc-eq : {x y z  : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' p) → ∙' q ≡ ∙' (∙'-assoc₂ p q)
-∙'-assoc-eq oneb oneb = refl
-∙'-assoc-eq oneb oner = refl
-∙'-assoc-eq onel onel = refl
-∙'-assoc-eq onel (rep refl) = refl
-∙'-assoc-eq oner onel = refl
-∙'-assoc-eq oner (rep refl) = refl
-∙'-assoc-eq (rep refl) onel = refl
-∙'-assoc-eq {inj₂ (x , m)} {inj₂ (.x , n)} {inj₂ (.x , o)} (rep refl) (rep refl) = cong (λ z → inj₂ (x , z)) (ℕ⁺-eq (sym $ +-assoc (proj₁ m) (proj₁ n) (proj₁ o)))
+∙'-assoc-Leq : {x y z  : FreeRPMon'} (p : y ~' z) (q : x ~' ∙' y z p) → ∙' _ _ q ≡ ∙' _ _ (∙'-assocL2 p q)
+∙'-assoc-Leq oneb oneb = refl
+∙'-assoc-Leq oneb oner = refl
+∙'-assoc-Leq onel onel = refl
+∙'-assoc-Leq onel (rep refl) = refl
+∙'-assoc-Leq oner onel = refl
+∙'-assoc-Leq oner (rep refl) = refl
+∙'-assoc-Leq (rep refl) onel = refl
+∙'-assoc-Leq {inj₂ (x , m)} {inj₂ (.x , n)} {inj₂ (.x , o)} (rep refl) (rep refl) = cong (λ z → inj₂ (x , z)) (ℕ⁺-eq (sym $ +-assoc (proj₁ m) (proj₁ n) (proj₁ o)))
 
-∙'-identityˡ : ∀ {x} → ∙' {inj₁ tt} {x} ~'-compatˡ-tt ≡ x
+∙'-assoc-Req : {x y z  : FreeRPMon'} (p : x ~' y) (q : ∙' x y p ~' z) → ∙' _ _ q ≡ ∙' _ _ (∙'-assocR2 p q)
+∙'-assoc-Req oneb oneb = refl
+∙'-assoc-Req oneb onel = refl
+∙'-assoc-Req onel oner = refl
+∙'-assoc-Req onel (rep refl) = refl
+∙'-assoc-Req oner oner = refl
+∙'-assoc-Req oner (rep refl) = refl
+∙'-assoc-Req (rep refl) oner = refl
+∙'-assoc-Req {inj₂ (x , m)} {inj₂ (x , n)} {inj₂ (x , o)} (rep refl) (rep refl) =  cong (λ z → inj₂ (x , z)) (ℕ⁺-eq (+-assoc (proj₁ m) (proj₁ n) (proj₁ o)))
+
+∙'-identityˡ : ∀ {x} → ∙' (inj₁ tt) x ~'-compatˡ-tt ≡ x
 ∙'-identityˡ {inj₁ tt} = refl
 ∙'-identityˡ {inj₂ y} = refl
 
-∙'-identityʳ : ∀ {x} → ∙' {x} {inj₁ tt} ~'-compatʳ-tt ≡ x
+∙'-identityʳ : ∀ {x} → ∙' x (inj₁ tt) ~'-compatʳ-tt ≡ x
 ∙'-identityʳ {inj₁ tt} = refl
 ∙'-identityʳ {inj₂ y} = refl
 
-∙'-assoc : ∀ {x y z} (yz : y ~' z) (p : x ~' ∙' yz)
-         → Σ[ xy ∈ (x ~' y) ] Σ[ q ∈ (∙' xy ~' z) ] (∙' p ≡ ∙' q)
-∙'-assoc yz p = (∙'-assoc₁ yz p) , (∙'-assoc₂ yz p) , (∙'-assoc-eq yz p)
+∙'-assocˡ : ∀ {x y z} (yz : y ~' z) (p : x ~' ∙' _ _ yz)
+         → Σ[ xy ∈ (x ~' y) ] Σ[ q ∈ (∙' _ _ xy ~' z) ] (∙' _ _ p ≡ ∙' _ _ q)
+∙'-assocˡ yz p = (∙'-assocL1 yz p) , (∙'-assocL2 yz p) , (∙'-assoc-Leq yz p)
 
+∙'-assocʳ : ∀ {x y z} (xy : x ~' y) (p : ∙' x y xy ~' z)
+         → Σ[ yz ∈ (y ~' z) ] Σ[ q ∈ (x ~' ∙' y z yz) ] (∙' _ _ p ≡ ∙' _ _ q)
+∙'-assocʳ xy p = ∙'-assocR1 xy p , ∙'-assocR2 xy p , ∙'-assoc-Req xy p
 
 isPartialMonoid' : IsPartialMonoid {A = FreeRPMon'} _≡_ _~'_ ∙' (inj₁ tt)
 IsPartialMonoid.isEquivalence isPartialMonoid' = isEquivalence
@@ -184,7 +218,8 @@ IsPartialMonoid.ε-compatˡ isPartialMonoid' = ~'-compatˡ-tt
 IsPartialMonoid.ε-compatʳ isPartialMonoid' = ~'-compatʳ-tt
 IsPartialMonoid.identityˡ isPartialMonoid' = ∙'-identityˡ
 IsPartialMonoid.identityʳ isPartialMonoid' = ∙'-identityʳ
-IsPartialMonoid.assoc isPartialMonoid' = ∙'-assoc
+IsPartialMonoid.assocˡ isPartialMonoid' = ∙'-assocˡ
+IsPartialMonoid.assocʳ isPartialMonoid' = ∙'-assocʳ
 
 isReflexivePartialMonoid' : IsReflexivePartialMonoid {A = FreeRPMon'} _≡_ _~'_ ∙' (inj₁ tt)
 IsReflexivePartialMonoid.isPMon isReflexivePartialMonoid' = isPartialMonoid'
@@ -200,37 +235,58 @@ _~_ : FreeRPMon → FreeRPMon → Set
 x ~ y = (to-alt x) ~' (to-alt y)
 
 -- And likewise for multiplication:
-∙ : {x y : FreeRPMon} → x ~ y → FreeRPMon
-∙ p = from-alt $ ∙' p
+∙ : (x y : FreeRPMon) → x ~ y → FreeRPMon
+∙ _ _ p = from-alt $ ∙' _ _ p
 
 -- We can now use this to prove associativity for cheap. This would have been
 -- rather hard to do directly for the fresh lists presentation.
-∙-assoc₁ : {x y z : FreeRPMon} (yz : y ~ z) → x ~ ∙ yz  → x ~ y
-∙-assoc₁ {x} p q
-  rewrite to-from-alt (∙' p)
-  = ∙'-assoc₁ p q
+∙-assocL1 : {x y z : FreeRPMon} (yz : y ~ z) → x ~ ∙ y z yz  → x ~ y
+∙-assocL1 {x} p q
+  rewrite to-from-alt (∙' _ _ p)
+  = ∙'-assocL1 p q
 
-∙-assoc₂ : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p) → ∙ (∙-assoc₁ p q) ~ z
-∙-assoc₂ p q
-  rewrite to-from-alt (∙' p)
-  rewrite to-from-alt (∙' (∙'-assoc₁ p q))
-  = ∙'-assoc₂ p q
+∙-assocL2 : {x y z : FreeRPMon} (p : y ~ z) (q : x ~ ∙ y z p) → ∙ _ _ (∙-assocL1 p q) ~ z
+∙-assocL2 p q
+  rewrite to-from-alt (∙' _ _ p)
+  rewrite to-from-alt (∙' _ _ (∙'-assocL1 p q))
+  = ∙'-assocL2 p q
 
-∙-assoc-eq : {x y z  : FreeRPMon} (p : y ~ z) (q : x ~ ∙ p) → ∙ q ≡ ∙ (∙-assoc₂ p q)
-∙-assoc-eq p q
-  rewrite to-from-alt (∙' p)
-  rewrite to-from-alt (∙' (∙'-assoc₁ p q))
-  = cong from-alt (∙'-assoc-eq p q)
+∙-assoc-Leq : {x y z  : FreeRPMon} (p : y ~ z) (q : x ~ ∙ y z p) → ∙ x _ q ≡ ∙ _ _ (∙-assocL2 p q)
+∙-assoc-Leq p q
+  rewrite to-from-alt (∙' _ _ p)
+  rewrite to-from-alt (∙' _ _ (∙'-assocL1 p q))
+  = cong from-alt (∙'-assoc-Leq p q)
 
-∙-assoc : ∀ {x y z} (yz : y ~ z) (p : x ~ ∙ yz)
-         → Σ[ xy ∈ (x ~ y) ] Σ[ q ∈ (∙ xy ~ z) ] (∙ p ≡ ∙ q)
-∙-assoc yz p = (∙-assoc₁ yz p) , (∙-assoc₂ yz p) , (∙-assoc-eq yz p)
+∙-assocˡ : ∀ {x y z} (yz : y ~ z) (p : x ~ ∙ _ _ yz)
+         → Σ[ xy ∈ (x ~ y) ] Σ[ q ∈ (∙ _ _ xy ~ z) ] (∙ _ _ p ≡ ∙ _ _ q)
+∙-assocˡ yz p = (∙-assocL1 yz p) , (∙-assocL2 yz p) , (∙-assoc-Leq yz p)
+
+∙-assocR1 : {x y z : FreeRPMon} (xy : x ~ y) → ∙ x y xy ~ z  → y ~ z
+∙-assocR1 {x} p q
+  rewrite to-from-alt (∙' _ _ p)
+  = ∙'-assocR1 p q
+
+∙-assocR2 : {x y z : FreeRPMon} (p : x ~ y) (q : ∙ x y p ~ z) → x ~ ∙ _ _ (∙-assocR1 p q)
+∙-assocR2 p q
+  rewrite to-from-alt (∙' _ _ p)
+  rewrite to-from-alt (∙' _ _ (∙'-assocR1 p q))
+  = ∙'-assocR2 p q
+
+∙-assoc-Req : {x y z  : FreeRPMon} (p : x ~ y) (q : ∙ x y p ~ z) → ∙ _ _ q ≡ ∙ _ _ (∙-assocR2 p q)
+∙-assoc-Req p q
+  rewrite to-from-alt (∙' _ _ p)
+  rewrite to-from-alt (∙' _ _ (∙'-assocR1 p q))
+  = cong from-alt (∙'-assoc-Req p q)
+
+∙-assocʳ : ∀ {x y z} (xy : x ~ y) (p : ∙ x y xy ~ z)
+         → Σ[ yz ∈ (y ~ z) ] Σ[ q ∈ (x ~ ∙ y z yz) ] (∙ _ _ p ≡ ∙ _ _ q)
+∙-assocʳ xy p = ∙-assocR1 xy p , ∙-assocR2 xy p , ∙-assoc-Req xy p
 
 -- Identity was always going to be easy, at least.
-∙-identityˡ : ∀ {x} → ∙ {[]} {x} ~'-compatˡ-tt ≡ x
+∙-identityˡ : ∀ {x} → ∙ [] x ~'-compatˡ-tt ≡ x
 ∙-identityˡ {x} = trans (cong from-alt (∙'-identityˡ {to-alt x})) (from-to-alt x)
 
-∙-identityʳ : ∀ {x} → ∙ {x} {[]} ~'-compatʳ-tt ≡ x
+∙-identityʳ : ∀ {x} → ∙ x [] ~'-compatʳ-tt ≡ x
 ∙-identityʳ {x} = trans (cong from-alt (∙'-identityʳ {to-alt x})) (from-to-alt x)
 
 
@@ -243,7 +299,8 @@ IsPartialMonoid.ε-compatˡ isPartialMonoid = ~'-compatˡ-tt
 IsPartialMonoid.ε-compatʳ isPartialMonoid = ~'-compatʳ-tt
 IsPartialMonoid.identityˡ isPartialMonoid = ∙-identityˡ
 IsPartialMonoid.identityʳ isPartialMonoid = ∙-identityʳ
-IsPartialMonoid.assoc isPartialMonoid = ∙-assoc
+IsPartialMonoid.assocˡ isPartialMonoid = ∙-assocˡ
+IsPartialMonoid.assocʳ isPartialMonoid = ∙-assocʳ
 
 isReflexivePartialMonoid : IsReflexivePartialMonoid {A = FreeRPMon} _≡_ _~_ ∙ []
 IsReflexivePartialMonoid.isPMon isReflexivePartialMonoid = isPartialMonoid

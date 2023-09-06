@@ -3,20 +3,20 @@
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 
+
 module Free.ReflexivePartialMonoid.Base
   (A : Set)
   (A-set : Irrelevant (_≡_ {A = A}))
   where
 
 open import Data.Nat
+open import Data.PosNat
 open import Data.Sum
 open import Data.Product
 open import Data.Unit
 
 open import Data.FreshList.InductiveInductive
 
-ℕ⁺ : Set
-ℕ⁺ = Σ[ n ∈ ℕ ] NonZero n
 
 FreeRPMon : Set
 FreeRPMon = List# {A = A} _≡_
