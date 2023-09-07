@@ -104,11 +104,15 @@ cute-cons x xs (cute f) xRxs = cute g where
                                 (xRyys , xyysRzs) = assocL1 {x} {⟦ cyys ⟧} {⟦ czs ⟧} yysRzs (subst (x R_) (cute-unique cyys czs (cute f) yysRzs) xRxs)
                             in cute-cons x (y ∷ ys) cyys xRyys , czs , subst (_R ⟦ czs ⟧ ) (cute-cons-lem x (y ∷ ys) cyys xRyys) xyysRzs
 
--- The most primitive thing we can do to cute things is double them.
--- If we know that some monomial x is defined, then x² is always defined by reflexivity of R.
--- It'll take some work to prove this though; we need that append preserves cuteness.
-double : List⁺ X → List⁺ X
-double xs = xs ⁺++⁺ xs
+
+cute-++ : ∀ {xs ys} → (cxs : Cute xs) → (cys : Cute ys) → ⟦ cxs ⟧ R ⟦ cys ⟧ → Cute (xs ⁺++⁺ ys)
+cute-++ {x ∷ []} {y ∷ ys} cxs cys xsRys = cute-cons x (y ∷ ys) cys {!!}
+cute-++ {x' ∷ x ∷ xs} {y ∷ ys} cxs cys xsRys = {!!}
+
+-- In particular, thanks to reflexivity of R, doubling is a primitive thing we can do
+-- to cute lists.
+cute-double : {xs : List⁺ X} → Cute xs → Cute (xs ⁺++⁺ xs)
+cute-double cxs = cute-++ cxs cxs reflexive
 
 -- Repeat gives us monomial representing xⁿ.
 -- If we can show that repeat is cute, then exponentiation will be its
@@ -119,5 +123,6 @@ repeat⁺ x (suc zero , _) = x ∷ []
 repeat⁺ x (suc (suc n) , _) = x ∷⁺ (repeat⁺ x (suc n , record {nonZero = tt}))
 
 repeat-cute : ∀ x n → Cute (repeat⁺ x n)
-repeat-cute x (suc zero , _) = {!!}
-repeat-cute x (suc (suc n) , _) = {!repeat-cute x (suc n , record {nonZero = tt})!}
+repeat-cute x (suc zero , _) = cute-singleton x
+repeat-cute x (suc (suc n) , _) = cute-cons x (repeat⁺ x (suc n , record { nonZero = tt }))
+                                    (repeat-cute x (suc n , record { nonZero = tt })) {!!} -- this goal will likely be too hard to fill.
