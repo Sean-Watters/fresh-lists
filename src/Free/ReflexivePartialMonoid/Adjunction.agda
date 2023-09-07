@@ -10,6 +10,7 @@ open import Algebra.Structure.PartialMonoid
 open import Data.FreshList.InductiveInductive
 open import Free.ReflexivePartialMonoid.Base
 open import Free.ReflexivePartialMonoid.Properties
+open import Free.ReflexivePartialMonoid.Power
 open import Category.Base
 
 open import Axiom.UniquenessOfIdentityProofs
@@ -221,30 +222,17 @@ Functor.homomorphism (FREE ext) = eqRPMonMorphism ext (ext map-comp)
 
 open Adjunction
 
+
 foldr-∙' : (X : SetObj) (Y : ReflexivePartialMonoid)
          → (f : proj₁ X → Carrier Y)
          → FreeRPMon' (proj₁ X) (proj₂ X) → Carrier Y
 foldr-∙' X Y f (inj₁ tt) = ε Y
-foldr-∙' X Y f (inj₂ (x , n)) = {!!}
+foldr-∙' X Y f (inj₂ (x , n , _)) = pow (proof Y) n (f x)
 
 foldr-∙ : (X : SetObj) (Y : ReflexivePartialMonoid)
         → (f : proj₁ X → Carrier Y)
         → FreeRPMon (proj₁ X) (proj₂ X) → Carrier Y
-foldr-∙ (X , X-set) Y f [] = ε Y
-foldr-∙ (X , X-set) Y f (cons x xs x#xs) = op Y {!!} {!!} {!!} where
---∙[ Y ] {f x} {foldr-∙ (X , X-set) Y f xs} (lem (X , X-set) Y f x xs x#xs) where
-  R-refl : ∀ (Z : ReflexivePartialMonoid) {u v} → u ≡ v → _R_ Z u v
-  R-refl Z refl = reflexive (proof Z)
-
-  lem : (X : SetObj) (Y : ReflexivePartialMonoid) (f : proj₁ X → Carrier Y)
-      → (x : proj₁ X) (xs : FreeRPMon (proj₁ X) (proj₂ X)) (x#xs : x # xs)
-      → _R_ Y (f x) (foldr-∙ X Y f xs)
-  lem X Y f x [] [] = ε-compatʳ (proof Y)
-  lem X Y f x (cons .x ys y#ys) (refl ∷ x#ys) = R-refl Y {!lem X Y f x ys x#ys!}
-
-
-
---foldr (λ a b → ∙[ Y ] {f a} {b} {!!}) (ε Y)
+foldr-∙ (X , X-set) Y f x = foldr-∙' (X , X-set) Y f (to-alt X X-set x) 
 
 RPMon-Adjunction : (ext : Extensionality _ _) → (FREE ext) ⊣ (FORGET ext)
 to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (cons x [] [])

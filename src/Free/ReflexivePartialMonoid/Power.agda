@@ -5,8 +5,8 @@ open import Algebra.Structure.PartialMonoid
 open import Relation.Binary.PropositionalEquality
 
 module Free.ReflexivePartialMonoid.Power
-  {a b c : Level} {A : Set a}
-  {_R_ : A → A → Set c}
+  {a b : Level} {A : Set a}
+  {_R_ : A → A → Set b}
   {∙ : (x y : A) → x R y → A}
   {ε : A}
   (X-RPMon : IsReflexivePartialMonoid _≡_ _R_ ∙ ε)
