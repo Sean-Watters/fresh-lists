@@ -88,9 +88,9 @@ eqRPMonMorphism : Extensionality _ _
 eqRPMonMorphism ext {A} {B} {MkRPMonMorphism f p q r} {MkRPMonMorphism .f p' q' r'} refl =
   begin
     MkRPMonMorphism f p q r
-  ≡⟨ cong (λ z → MkRPMonMorphism f z q r) (A-set (isPMon $ proof B) p p')  ⟩
+  ≡⟨ cong (λ z → MkRPMonMorphism f z q r) (A-set (proof B) p p')  ⟩
     MkRPMonMorphism f p' q r
-  ≡⟨ cong-RPMonMorphism A B f p' (funprop ext (R-prop $ isPMon $ proof B) (λ x y z → q z) λ x y z → q' z) lem ⟩
+  ≡⟨ cong-RPMonMorphism A B f p' (funprop ext (R-prop $ proof B) (λ x y z → q z) λ x y z → q' z) lem ⟩
     MkRPMonMorphism f p' q' r'
   ∎ where
     open ≡-Reasoning
@@ -99,9 +99,9 @@ eqRPMonMorphism ext {A} {B} {MkRPMonMorphism f p q r} {MkRPMonMorphism .f p' q' 
     funprop ext propZ f g = ext λ x → ext (λ y → ext (λ Yxy → propZ (f x y Yxy) (g x y Yxy)))
 
     lem : (λ {x} {y} → r {x} {y}) ≡ subst (λ z → {x y : Carrier A} (p₁ : (A R x) y) → f (op A x y p₁) ≡ op B (f x) (f y) (z x y p₁))
-                    (sym (funprop ext (R-prop (isPMon (proof B))) (λ x y z → q z) (λ x y z → q' z)))
+                    (sym (funprop ext (R-prop (proof B)) (λ x y z → q z) (λ x y z → q' z)))
                     r'
-    lem = implicit-extensionality ext (implicit-extensionality ext (ext (λ x₁ → A-set (isPMon (proof B)) (r x₁) _)))
+    lem = implicit-extensionality ext (implicit-extensionality ext (ext (λ x₁ → A-set (proof B) (r x₁) _)))
 
 
 RPMON : Extensionality _ _ → Category
@@ -140,7 +140,7 @@ Category.identityʳ (SET ext) = ext (λ x → refl)
 ---------------------------
 
 FORGET : (ext : Extensionality _ _) → Functor (RPMON ext) (SET ext)
-Functor.act (FORGET ext) (MkRPMon X _ _ _ proof) = X , (A-set $ isPMon proof)
+Functor.act (FORGET ext) (MkRPMon X _ _ _ proof) = X , (A-set $ proof)
 Functor.fmap (FORGET ext) (MkRPMonMorphism f _ _ _) x = f x
 Functor.identity (FORGET ext) = ext (λ _ → refl)
 Functor.homomorphism (FORGET ext) = ext (λ _ → refl)
@@ -221,19 +221,6 @@ Functor.homomorphism (FREE ext) = eqRPMonMorphism ext (ext map-comp)
 
 open Adjunction
 
-triple : (X : ReflexivePartialMonoid) → Carrier X → Carrier X
-triple X x = op X xx x {!assoc (isPMon $ proof X) {x} {xx} {ε X} (ε-compatʳ (isPMon $ proof X))!} where
-  xx : Carrier X
-  xx = op X x x $ reflexive (proof X)
-
-power : (X : ReflexivePartialMonoid) → Carrier X → ℕ⁺ → Carrier X
-power X x (suc zero , p) = x
-power X x (suc (suc n) , p) = op X x (power X x (suc n , record {nonZero = tt})) (lem (suc n , record {nonZero = tt})) where
-  lem : ∀ n → _R_ X x (power X x n)
-  lem (suc zero , p) = reflexive (proof X)
-  lem (suc (suc zero) , p) = {!!}
-  lem (suc (suc (suc n)) , p) = {!assoc (isPMon $ proof X) ? (lem (suc (suc n) , record {nonZero = tt}))!}
-
 foldr-∙' : (X : SetObj) (Y : ReflexivePartialMonoid)
          → (f : proj₁ X → Carrier Y)
          → FreeRPMon' (proj₁ X) (proj₂ X) → Carrier Y
@@ -252,7 +239,7 @@ foldr-∙ (X , X-set) Y f (cons x xs x#xs) = op Y {!!} {!!} {!!} where
   lem : (X : SetObj) (Y : ReflexivePartialMonoid) (f : proj₁ X → Carrier Y)
       → (x : proj₁ X) (xs : FreeRPMon (proj₁ X) (proj₂ X)) (x#xs : x # xs)
       → _R_ Y (f x) (foldr-∙ X Y f xs)
-  lem X Y f x [] [] = ε-compatʳ (isPMon $ proof Y)
+  lem X Y f x [] [] = ε-compatʳ (proof Y)
   lem X Y f x (cons .x ys y#ys) (refl ∷ x#ys) = R-refl Y {!lem X Y f x ys x#ys!}
 
 
