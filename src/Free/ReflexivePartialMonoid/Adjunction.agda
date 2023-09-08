@@ -296,7 +296,14 @@ adjunction-lemma X Y h x (suc n)
 -- The last thing we need is to show is that the two representations of FreeRPMon are isomorphic objects in the category
 
 from-alt-morphism : (X : SetObj) → RPMonMorphism (FreeRPMon'-Obj X) (FreeRPMon-Obj X)
-from-alt-morphism (X , X-set) = MkRPMonMorphism (from-alt X X-set) refl {!id!} {!!}
+from-alt-morphism (X , X-set) = MkRPMonMorphism (from-alt X X-set) refl
+                                                (λ {x} {y} → subst₂ (domain' X X-set) (sym (to-from-alt X X-set x)) (sym (to-from-alt X X-set y)))
+                                                (λ {x} {y} p → cong (from-alt X X-set) (∙-cong (proof (FreeRPMon'-Obj (X , X-set)))
+                                                                                               {r = p}
+                                                                                               {(subst₂ (X ~' X-set) (sym (to-from-alt X X-set x)) (sym (to-from-alt X X-set y)) p)}
+                                                                                               (sym (to-from-alt X X-set x))
+                                                                                               (sym (to-from-alt X X-set y))))
+
 
 to-alt-morphism : (X : SetObj) → RPMonMorphism (FreeRPMon-Obj X) (FreeRPMon'-Obj X)
 to-alt-morphism (X , X-set) = MkRPMonMorphism (to-alt X X-set) refl id lem where
@@ -309,23 +316,12 @@ to-alt-morphism (X , X-set) = MkRPMonMorphism (to-alt X X-set) refl id lem where
   lem {cons x xs x#xs} {cons y ys y#ys} (rep refl) rewrite length-repeat X X-set x (length xs + suc (length ys)) = refl
 
 RPMon-Adjunction : (ext : Extensionality _ _) → (FREE ext) ⊣ (FORGET ext)
-to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (cons x [] [])
+to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (from-alt X X-set (inj₂ (x , 1 , nonZero)))
 from (RPMon-Adjunction ext) {X , X-set} {Y} f
   = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) refl (foldr-∙'-preserves-R (X , X-set) Y f) (foldr-∙-preserves-∙ (X , X-set) Y f)
-left-inverse-of (RPMon-Adjunction ext) {X , X-set} {Y} h = {!!} where -- eqRPMonMorphism ext (ext (λ x → {!!})) where
-  h' : RPMonMorphism (FreeRPMon'-Obj (X , X-set)) Y
-  h' = {!!}
-
-  h'' : RPMonMorphism (FreeRPMon-Obj (X , X-set)) Y
-  h'' = {!!} -- apply inv to h'
-
-  left-inverse' : from (RPMon-Adjunction ext) (to (RPMon-Adjunction ext) h'' ) ≡ h''
-  left-inverse' = {!!}
-
-  lem1 : (x : FreeRPMon X X-set) → to-alt {!!} {!!} {! fun (from (RPMon-Adjunction ext) (to (RPMon-Adjunction ext) h)) x !} ≡ to-alt _ _ {! fun h x !}
-  lem1 = {!!}
-
-  lem : ∀ x → fun (from (RPMon-Adjunction ext) (to (RPMon-Adjunction ext) h)) x ≡ fun h x
-  lem x = {!adjunction-lemma X Y  !}
+left-inverse-of (RPMon-Adjunction ext) {X , X-set} {Y} h = eqRPMonMorphism ext (ext (λ x → lem x)) where
+  lem : ∀ xs → foldr-∙ (X , X-set) Y (λ x → fun h (cons x [] [])) xs  ≡ fun h xs
+  lem [] = sym (preserves-ε h)
+  lem (cons x xs x#xs) = trans (adjunction-lemma (X , X-set) Y (rpmon-comp (from-alt-morphism (X , X-set)) h) x (length xs)) (cong (fun h) (from-to-alt X X-set (cons x xs x#xs)))
 right-inverse-of (RPMon-Adjunction ext) k = ext (λ x → refl)
 to-natural (RPMon-Adjunction ext) f g = ext (λ x → refl)
