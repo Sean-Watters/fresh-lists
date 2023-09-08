@@ -272,8 +272,9 @@ foldr-∙-preserves-∙ : (X : SetObj) (Y : ReflexivePartialMonoid)
                      ≡ op Y (foldr-∙ X Y f x)
                             (foldr-∙ X Y f y)
                             (foldr-∙'-preserves-R X Y f p)
-foldr-∙-preserves-∙ (X , X-set) Y f {x} {y} p = {! foldr-∙'-preserves-∙ (X , X-set) Y f {to-alt X X-set x} {to-alt X X-set y} p!}
-
+foldr-∙-preserves-∙ (X , X-set) Y f {x} {y} p
+  = trans (cong (foldr-∙' (X , X-set) Y f) (to-from-alt X X-set (∙' X X-set (to-alt X X-set x) (to-alt X X-set y) p) ))
+          (foldr-∙'-preserves-∙ (X , X-set) Y f {to-alt X X-set x} {to-alt X X-set y} p)
 
 RPMon-Adjunction : (ext : Extensionality _ _) → (FREE ext) ⊣ (FORGET ext)
 to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (cons x [] [])
