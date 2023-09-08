@@ -182,7 +182,7 @@ pow-R-step (suc n) (suc m) x xˢⁿRxxˢᵐ = xxˢⁿRxˢᵐ where
   xˢⁿRx = powR-R' (suc n) x
   xⁿRx  = powR-R' n x
 
-  -- The proofs involving one layer of multiplication, required to state the types of later steps.
+  -- The proofs that involve one layer of multiplication. These are required to state the types of later steps.
   xRxxᵐ : x R (x ∙[ xRxᵐ ] xᵐ)
   xRxxᵐ = subst (x R_) (sym $ pow-suc m x xRxᵐ) xRxˢᵐ
 
@@ -205,37 +205,43 @@ pow-R-step (suc n) (suc m) x xˢⁿRxxˢᵐ = xxˢⁿRxˢᵐ where
   xxˢⁿRxˢᵐ : (x ∙[ xRxˢⁿ ] xˢⁿ) R xˢᵐ -- the goal
   xxˢⁿRxˢᵐ = subst₂ _R_ (∙-cong refl (trans (sym $ pow-commutes' n x xRxⁿ xⁿRx) (pow-suc n x xRxⁿ))) (pow-suc m x xRxᵐ) x∙xⁿxRxxᵐ
 
--- We can apply the above k many times
+
+
+-- We can apply the above step lemma k many times, so that
+-- if any bracketing of x^n is defined, they all are.
 pow-R-steps : ∀ k n m x → (pow n x) R (pow (m + k) x) → (pow (n + k) x) R (pow m x)
 pow-R-steps zero n m x r = subst₂ (λ u v → pow u x R pow v x) (sym $ +-identityʳ n) (+-identityʳ m) r
 pow-R-steps (suc k) n m x r = subst (λ z → pow z x R pow m x) (sym $ +-suc n k) (pow-R-step (n + k) m x (pow-R-steps k n (suc m) x (subst (λ z → pow n x R pow z x) (+-suc m k) r)))
 
--- And all of that to show that (x^n)(x^m) is always defined.
+-- And therefore, (x^n)(x^m) is always defined for all n and m.
 powRpow : ∀ n m x → (pow n x) R (pow m x)
 powRpow n m x = pow-R-steps n 0 m x ε-compatˡ
 
--- -- (x^n)(x^m) ≡ x^(n+m)
--- pow-mult : ∀ n m x → (r : pow n x R pow m x) → pow n x ∙[ r ] pow m x ≡ pow (n + m) x
--- pow-mult zero m x r = trans (cong (∙ ε (pow m x)) (R-prop r ε-compatˡ)) (identityˡ {pow m x})
--- pow-mult (suc n) m x r =
---   begin
---     (pow (suc n) x) ∙[ r ] (pow m x)
---   ≡⟨ ∙-cong (sym $ pow-suc n x (pow-R n x)) refl ⟩
---     (x ∙[ pow-R n x ] pow n x) ∙[ subst (_R pow m x) (sym $ pow-suc n x (pow-R n x)) r ] (pow m x)
---   ≡⟨ {!!} ⟩
---     x ∙[ subst (x R_) (sym $ pow-mult n m x xⁿRxᵐ) (pow-R (n + m) x) ] (pow n x ∙[ xⁿRxᵐ ] pow m x)
---   ≡⟨ ∙-cong refl (pow-mult n m x xⁿRxᵐ) ⟩
---     x ∙[ pow-R (n + m) x ] (pow (n + m) x)
---   ≡⟨ pow-suc (n + m) x (pow-R (n + m) x) ⟩
---     pow (suc n + m) x
---   ∎ where open ≡-Reasoning
---           xⁿRxᵐ : pow n x R pow m x
---           xⁿRxᵐ = powRpow n m x
+-- (x^n)(x^m) ≡ x^(n+m)
+pow-mult : ∀ n m x → (r : pow n x R pow m x) → pow n x ∙[ r ] pow m x ≡ pow (n + m) x
+pow-mult zero m x r = trans (cong (∙ ε (pow m x)) (R-prop r ε-compatˡ)) (identityˡ {pow m x})
+pow-mult (suc n) m x r =
+  begin
+    (pow (suc n) x) ∙[ r ] xᵐ
+  ≡⟨ ∙-cong (sym $ pow-suc n x xRxⁿ) refl ⟩
+    (x ∙[ xRxⁿ ] xⁿ) ∙[ xxⁿRxᵐ ] xᵐ
+  ≡⟨ assocʳ₃ {x} {xⁿ} {xᵐ} xRxⁿ xxⁿRxᵐ xⁿRxᵐ xRxⁿxᵐ ⟩
+    x ∙[ xRxⁿxᵐ ] (xⁿ ∙[ xⁿRxᵐ ] xᵐ)
+  ≡⟨ ∙-cong refl (pow-mult n m x xⁿRxᵐ) ⟩
+    x ∙[ pow-R (n + m) x ] xⁿ⁺ᵐ
+  ≡⟨ pow-suc (n + m) x xRxⁿ⁺ᵐ ⟩
+    pow (suc n + m) x
+  ∎ where
+    open ≡-Reasoning
+    xⁿ = pow n x
+    xᵐ = pow m x
+    xⁿ⁺ᵐ = pow (n + m) x
+    xRxⁿ = pow-R n x
+    xRxⁿ⁺ᵐ = pow-R (n + m) x
+    xⁿRxᵐ = powRpow n m x
 
+    xxⁿRxᵐ : (x ∙[ xRxⁿ ] xⁿ) R xᵐ
+    xxⁿRxᵐ = subst (_R xᵐ) (sym $ pow-suc n x xRxⁿ) r
 
-  -- powRpow (suc n) zero x = ε-compatʳ
-  -- powRpow (suc zero) (suc m) x = pow-R (suc m) x
-  -- powRpow (suc (suc n)) (suc zero) x = lemmaR (pow-R (suc n) x)
-  -- powRpow (suc (suc n)) (suc (suc m)) x = {!powRpow (suc n) (suc m) x !}
-
---powRpow-lemma (pow-R (suc n) x) (pow-R (suc m) x) (powRpow (suc n) (suc m) x)
+    xRxⁿxᵐ : x R (xⁿ ∙[ xⁿRxᵐ ] xᵐ)
+    xRxⁿxᵐ = subst (x R_) (sym $ pow-mult n m x xⁿRxᵐ) (pow-R (n + m) x)

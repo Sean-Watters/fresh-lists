@@ -234,7 +234,8 @@ foldr-∙ : (X : SetObj) (Y : ReflexivePartialMonoid)
         → FreeRPMon (proj₁ X) (proj₂ X) → Carrier Y
 foldr-∙ (X , X-set) Y f x = foldr-∙' (X , X-set) Y f (to-alt X X-set x)
 
-
+-- infix operators that take 4 arguments (due to instance args) aren't fun,
+-- so here are some new names for the multiplication-is-defined relation
 domain = _~_
 domain' = _~'_
 
@@ -246,14 +247,41 @@ foldr-∙'-preserves-R : (X : SetObj) (Y : ReflexivePartialMonoid)
                      → _R_ Y (foldr-∙' X Y f x) (foldr-∙' X Y f y)
 foldr-∙'-preserves-R X Y f {inj₁ tt} {y} xRy = ε-compatˡ (proof Y)
 foldr-∙'-preserves-R X Y f {inj₂ (x , n , p)} {inj₁ tt} xRy = ε-compatʳ (proof Y)
-foldr-∙'-preserves-R (X , X-set) Y f {inj₂ (x , n , p)} {inj₂ (y , m , q)} xRy rewrite ~'→≡ X X-set xRy = {!!}
+foldr-∙'-preserves-R (X , X-set) Y f {inj₂ (x , n , p)} {inj₂ (y , m , q)} xRy
+  rewrite ~'→≡ X X-set xRy
+  = powRpow (proof Y) n m (f y)
 
+foldr-∙'-preserves-∙ : (X : SetObj) (Y : ReflexivePartialMonoid)
+                     → (f : proj₁ X → Carrier Y)
+                     → {x y : FreeRPMon' (proj₁ X) (proj₂ X)}
+                     → (p : domain' (proj₁ X) (proj₂ X) x y)
+                     → foldr-∙' X Y f (∙' (proj₁ X) (proj₂ X) x y p)
+                     ≡ op Y (foldr-∙' X Y f x)
+                            (foldr-∙' X Y f y)
+                            (foldr-∙'-preserves-R X Y f p)
+foldr-∙'-preserves-∙ (X , X-set) Y f oneb = sym $ identityˡ (proof Y)
+foldr-∙'-preserves-∙ (X , X-set) Y f onel = sym $ identityˡ (proof Y)
+foldr-∙'-preserves-∙ (X , X-set) Y f oner = sym $ identityʳ (proof Y)
+foldr-∙'-preserves-∙ (X , X-set) Y f (rep {n , _} {m , _} {x} refl) = sym $ pow-mult (proof Y) n m (f x) (powRpow (proof Y) n m (f x))
+
+foldr-∙-preserves-∙ : (X : SetObj) (Y : ReflexivePartialMonoid)
+                     → (f : proj₁ X → Carrier Y)
+                     → {x y : FreeRPMon (proj₁ X) (proj₂ X)}
+                     → (p : domain (proj₁ X) (proj₂ X) x y)
+                     → foldr-∙ X Y f (∙ (proj₁ X) (proj₂ X) x y p)
+                     ≡ op Y (foldr-∙ X Y f x)
+                            (foldr-∙ X Y f y)
+                            (foldr-∙'-preserves-R X Y f p)
+foldr-∙-preserves-∙ (X , X-set) Y f {x} {y} p = {! foldr-∙'-preserves-∙ (X , X-set) Y f {to-alt X X-set x} {to-alt X X-set y} p!}
 
 
 RPMon-Adjunction : (ext : Extensionality _ _) → (FREE ext) ⊣ (FORGET ext)
 to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (cons x [] [])
 from (RPMon-Adjunction ext) {X , X-set} {Y} f
-  = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) refl {!!} {!!}
-left-inverse-of (RPMon-Adjunction ext) = {!!}
-right-inverse-of (RPMon-Adjunction ext) = {!!}
-to-natural (RPMon-Adjunction ext) = {!!}
+  = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) refl (foldr-∙'-preserves-R (X , X-set) Y f) (foldr-∙-preserves-∙ (X , X-set) Y f)
+left-inverse-of (RPMon-Adjunction ext) h = eqRPMonMorphism ext (ext (λ x → lem x)) where
+  lem : ∀ x → fun (from (RPMon-Adjunction ext) (to (RPMon-Adjunction ext) h)) x ≡ fun h x
+  lem [] = sym $ preserves-ε h
+  lem (cons x xs x#xs) = {!!}
+right-inverse-of (RPMon-Adjunction ext) k = ext (λ x → refl)
+to-natural (RPMon-Adjunction ext) f g = ext (λ x → refl)
