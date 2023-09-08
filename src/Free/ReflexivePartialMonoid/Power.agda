@@ -163,7 +163,7 @@ pow-suc (suc n) x r =
     pow (suc (suc n)) x
   ∎ where open ≡-Reasoning
 
--- If (x^m)(x^m) is defined, then (x^n+1)(x^m-1) is defined.
+-- If (x^n)(x^m) is defined, then (x^n+1)(x^m-1) is defined.
 pow-R-step : ∀ n m x → (pow n x) R (pow (suc m) x) → (pow (suc n) x) R (pow m x)
 pow-R-step zero m x r = pow-R m x
 pow-R-step (suc n) zero x r = ε-compatʳ

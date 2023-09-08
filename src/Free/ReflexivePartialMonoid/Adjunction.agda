@@ -140,17 +140,18 @@ Category.identityʳ (SET ext) = ext (λ x → refl)
 -- The Forgetful Functor --
 ---------------------------
 
+open Functor
+
 FORGET : (ext : Extensionality _ _) → Functor (RPMON ext) (SET ext)
-Functor.act (FORGET ext) (MkRPMon X _ _ _ proof) = X , (A-set $ proof)
-Functor.fmap (FORGET ext) (MkRPMonMorphism f _ _ _) x = f x
-Functor.identity (FORGET ext) = ext (λ _ → refl)
-Functor.homomorphism (FORGET ext) = ext (λ _ → refl)
+act (FORGET ext) (MkRPMon X _ _ _ proof) = X , (A-set $ proof)
+fmap (FORGET ext) (MkRPMonMorphism f _ _ _) x = f x
+identity (FORGET ext) = ext (λ _ → refl)
+homomorphism (FORGET ext) = ext (λ _ → refl)
 
 
 ----------------------
 -- The Free Functor --
 ----------------------
-
 
 FreeRPMon'-map : (X Y : SetObj) → SetFun X Y → (FreeRPMon' (proj₁ X) (proj₂ X)) → (FreeRPMon' (proj₁ Y) (proj₂ Y))
 FreeRPMon'-map X Y f (inj₁ tt) = inj₁ tt
@@ -209,12 +210,19 @@ map-comp : {X Y Z : SetObj} {f : SetFun X Y} {g : SetFun Y Z} (xs : FreeRPMon (p
 map-comp {X , X-set} {Y , Y-set} {Z , Z-set} {f} {g} [] = refl
 map-comp {X , X-set} {Y , Y-set} {Z , Z-set} {f} {g} (cons x xs x#xs) = WithIrr.cons-cong _≡_ Z-set refl (cong (repeat Z Z-set (g (f x))) (sym $ length-repeat Y Y-set (f x) (length xs)))
 
+FreeRPMon-Obj : SetObj → ReflexivePartialMonoid
+FreeRPMon-Obj (X , X-set) = MkRPMon (FreeRPMon X X-set) (_~_ X X-set) (∙ X X-set) [] (isReflexivePartialMonoid X X-set)
+
+-- Defining the alt presentation as an object here too, for later.
+FreeRPMon'-Obj : SetObj → ReflexivePartialMonoid
+FreeRPMon'-Obj (X , X-set) = MkRPMon (FreeRPMon' X X-set) (_~'_ X X-set) (∙' X X-set) (inj₁ tt) (isReflexivePartialMonoid' X X-set)
 
 FREE : (ext : Extensionality _ _) → Functor (SET ext) (RPMON ext)
-Functor.act (FREE ext) (X , X-set) = MkRPMon (FreeRPMon X X-set) (_~_ X X-set) (∙ X X-set) [] (isReflexivePartialMonoid X X-set)
-Functor.fmap (FREE ext) {X} {Y} f = MkRPMonMorphism (FreeRPMon-map X Y f) refl (map-preserves-R X Y f) (map-preserves-∙ X Y f)
-Functor.identity (FREE ext) = eqRPMonMorphism ext (ext map-id)
-Functor.homomorphism (FREE ext) = eqRPMonMorphism ext (ext map-comp)
+act (FREE ext) = FreeRPMon-Obj
+fmap (FREE ext) {X} {Y} f = MkRPMonMorphism (FreeRPMon-map X Y f) refl (map-preserves-R X Y f) (map-preserves-∙ X Y f)
+identity (FREE ext) = eqRPMonMorphism ext (ext map-id)
+homomorphism (FREE ext) = eqRPMonMorphism ext (ext map-comp)
+
 
 -----------------------------------
 -- The Free-Forgetful Adjunction --
@@ -276,13 +284,48 @@ foldr-∙-preserves-∙ (X , X-set) Y f {x} {y} p
   = trans (cong (foldr-∙' (X , X-set) Y f) (to-from-alt X X-set (∙' X X-set (to-alt X X-set x) (to-alt X X-set y) p) ))
           (foldr-∙'-preserves-∙ (X , X-set) Y f {to-alt X X-set x} {to-alt X X-set y} p)
 
+adjunction-lemma : (X : SetObj) (Y : ReflexivePartialMonoid)
+                → (h : RPMonMorphism (FreeRPMon'-Obj X) Y)
+                → (x : proj₁ X) (n : ℕ)
+                → pow (proof Y) (suc n) (fun h (inj₂ (x , 1 , nonZero))) ≡ fun h (inj₂ (x , suc n , nonZero))
+adjunction-lemma X Y h x zero = refl
+adjunction-lemma X Y h x (suc n)
+  = trans (∙-cong (proof Y) refl (adjunction-lemma X Y h x n))
+          (sym $ preserves-∙ h (rep refl))
+
+-- The last thing we need is to show is that the two representations of FreeRPMon are isomorphic objects in the category
+
+from-alt-morphism : (X : SetObj) → RPMonMorphism (FreeRPMon'-Obj X) (FreeRPMon-Obj X)
+from-alt-morphism (X , X-set) = MkRPMonMorphism (from-alt X X-set) refl {!id!} {!!}
+
+to-alt-morphism : (X : SetObj) → RPMonMorphism (FreeRPMon-Obj X) (FreeRPMon'-Obj X)
+to-alt-morphism (X , X-set) = MkRPMonMorphism (to-alt X X-set) refl id lem where
+  lem : {x y : Carrier (FreeRPMon-Obj (X , X-set))} (p : (FreeRPMon-Obj (X , X-set) R x) y)
+      → to-alt X X-set (op (FreeRPMon-Obj (X , X-set)) x y p)
+      ≡ op (FreeRPMon'-Obj (X , X-set)) (to-alt X X-set x) (to-alt X X-set y) (id p)
+  lem {[]} {[]} oneb = refl
+  lem {[]} {cons y ys y#ys} onel rewrite rep-len X X-set ys y#ys = refl
+  lem {cons x xs x#xs} {[]} oner rewrite rep-len X X-set xs x#xs = refl
+  lem {cons x xs x#xs} {cons y ys y#ys} (rep refl) rewrite length-repeat X X-set x (length xs + suc (length ys)) = refl
+
 RPMon-Adjunction : (ext : Extensionality _ _) → (FREE ext) ⊣ (FORGET ext)
 to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (cons x [] [])
 from (RPMon-Adjunction ext) {X , X-set} {Y} f
   = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) refl (foldr-∙'-preserves-R (X , X-set) Y f) (foldr-∙-preserves-∙ (X , X-set) Y f)
-left-inverse-of (RPMon-Adjunction ext) h = eqRPMonMorphism ext (ext (λ x → lem x)) where
+left-inverse-of (RPMon-Adjunction ext) {X , X-set} {Y} h = {!!} where -- eqRPMonMorphism ext (ext (λ x → {!!})) where
+  h' : RPMonMorphism (FreeRPMon'-Obj (X , X-set)) Y
+  h' = {!!}
+
+  h'' : RPMonMorphism (FreeRPMon-Obj (X , X-set)) Y
+  h'' = {!!} -- apply inv to h'
+
+  left-inverse' : from (RPMon-Adjunction ext) (to (RPMon-Adjunction ext) h'' ) ≡ h''
+  left-inverse' = {!!}
+
+  lem1 : (x : FreeRPMon X X-set) → to-alt {!!} {!!} {! fun (from (RPMon-Adjunction ext) (to (RPMon-Adjunction ext) h)) x !} ≡ to-alt _ _ {! fun h x !}
+  lem1 = {!!}
+
   lem : ∀ x → fun (from (RPMon-Adjunction ext) (to (RPMon-Adjunction ext) h)) x ≡ fun h x
-  lem [] = sym $ preserves-ε h
-  lem (cons x xs x#xs) = {!!}
+  lem x = {!adjunction-lemma X Y  !}
 right-inverse-of (RPMon-Adjunction ext) k = ext (λ x → refl)
 to-natural (RPMon-Adjunction ext) f g = ext (λ x → refl)
