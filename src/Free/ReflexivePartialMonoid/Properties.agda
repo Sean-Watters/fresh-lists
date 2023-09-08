@@ -305,3 +305,12 @@ IsPartialMonoid.assocʳ isPartialMonoid = ∙-assocʳ
 isReflexivePartialMonoid : IsReflexivePartialMonoid {A = FreeRPMon} _≡_ _~_ ∙ []
 IsReflexivePartialMonoid.isPMon isReflexivePartialMonoid = isPartialMonoid
 IsReflexivePartialMonoid.reflexive isReflexivePartialMonoid = ~'-reflexive
+
+
+-----------------
+-- Relatedness --
+-----------------
+
+-- If xn ~ ym, then x ≡ y.
+~'→≡ : {x y : A} {n m : ℕ⁺} → (inj₂ $ x , n) ~' (inj₂ $ y , m) → x ≡ y
+~'→≡ (rep refl) = refl

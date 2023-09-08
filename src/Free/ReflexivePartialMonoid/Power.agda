@@ -5,8 +5,8 @@ open import Algebra.Structure.PartialMonoid
 open import Relation.Binary.PropositionalEquality
 
 module Free.ReflexivePartialMonoid.Power
-  {a b : Level} {A : Set a}
-  {_R_ : A → A → Set b}
+  {ℓa ℓb : Level} {A : Set ℓa}
+  {_R_ : A → A → Set ℓb}
   {∙ : (x y : A) → x R y → A}
   {ε : A}
   (X-RPMon : IsReflexivePartialMonoid _≡_ _R_ ∙ ε)
@@ -30,6 +30,7 @@ module Free.ReflexivePartialMonoid.Power
 open import Function
 open import Data.Product hiding (assocˡ; assocʳ)
 open import Data.Nat
+open import Data.Nat.Properties
 open IsReflexivePartialMonoid X-RPMon
 
 
@@ -119,9 +120,118 @@ mutual
                                  (pow-commutes (suc n) x _ _)
                                  (lemmaR (pow-R (suc n) x))
 
+----------------
+-- Properties --
+----------------
 
--- Simple consequence: pow and powR agree
+
+∙-cong : ∀ {x y x' y'} {r : x R y} {r' : x' R y'}
+       → x ≡ x' → y ≡ y' → x ∙[ r ] y ≡ x' ∙[ r' ] y'
+∙-cong {x} {y} refl refl = cong (∙-syntax x y) (R-prop _ _)
+
+-- computes the new R
+∙-cong' : ∀ {x y x' y'} (r : x R y)
+       → x ≡ x' → y ≡ y'
+       → Σ[ r' ∈ (x' R y') ] (x ∙[ r ] y ≡ x' ∙[ r' ] y')
+∙-cong' {x} {y} r refl refl = r , cong (∙-syntax x y) (R-prop _ _)
+
+
+-- pow and powR agree
 pow=powR : (n : ℕ) → (x : A) → pow n x ≡ powR n x
 pow=powR zero x = refl
 pow=powR (suc zero) x = refl
 pow=powR (suc (suc n)) x = pow-commutes (suc n) x _ _
+
+-- And so we don't need to talk about powR at all any more.
+powR-R' : (n : ℕ) → (x : A) → pow n x R x
+powR-R' n x = subst (_R x) (sym $ pow=powR n x) (powR-R n x)
+
+
+pow-commutes' : (n : ℕ) (x : A) (r : x R pow n x) (r' : pow n x R x)
+              → x ∙[ r ] pow n x ≡ pow n x ∙[ r' ] x
+pow-commutes' n x r r' = trans (pow-commutes n x r (subst (_R x) (pow=powR n x) r')) (∙-cong (sym $ pow=powR n x) refl)
+
+-- x(x^n) ≡ x^(n+1)
+pow-suc : ∀ n x → (r : x R pow n x) → x ∙[ r ] pow n x ≡ pow (suc n) x
+pow-suc zero x r = trans (cong (∙ x ε) (R-prop _ _)) (identityʳ {x})
+pow-suc (suc n) x r =
+  begin
+    x ∙[ r ] (pow (suc n) x)
+  ≡⟨ ∙-cong refl (sym $ pow-suc n x (pow-R n x)) ⟩
+    x ∙[ subst (x R_) (sym $ pow-suc n x (pow-R n x)) (pow-R (suc n) x) ] (x ∙[ pow-R n x ] (pow n x))
+  ≡⟨ ∙-cong refl (pow-suc n x (pow-R n x))  ⟩
+    pow (suc (suc n)) x
+  ∎ where open ≡-Reasoning
+
+-- If (x^m)(x^m) is defined, then (x^n+1)(x^m-1) is defined.
+pow-R-step : ∀ n m x → (pow n x) R (pow (suc m) x) → (pow (suc n) x) R (pow m x)
+pow-R-step zero m x r = pow-R m x
+pow-R-step (suc n) zero x r = ε-compatʳ
+pow-R-step (suc n) (suc m) x r = xxˢⁿRxˢᵐ where
+  xᵐ  = pow m x
+  xⁿ  = pow n x
+  xˢᵐ = pow (suc m) x
+  xˢⁿ = pow (suc n) x
+
+  xRxᵐ  = pow-R m x
+  xRxⁿ  = pow-R n x
+  xRxˢⁿ = pow-R (suc n) x
+  xRxˢᵐ = pow-R (suc m) x
+  xˢⁿRx = powR-R' (suc n) x
+  xⁿRx  = powR-R' n x
+
+  xRxxᵐ : x R (x ∙[ xRxᵐ ] xᵐ)
+  xRxxᵐ = subst (x R_) (sym $ pow-suc m x xRxᵐ) xRxˢᵐ
+
+  xxⁿRx∙xxᵐ : (x ∙[ xRxⁿ ] xⁿ) R (x ∙[ xRxxᵐ ] (x ∙[ xRxᵐ ] xᵐ))
+  xxⁿRx∙xxᵐ = subst₂ _R_ (sym $ pow-suc n x xRxⁿ) (∙-cong refl (sym $ pow-suc m x xRxᵐ)) r
+
+  xxⁿRx : (x ∙[ xRxⁿ ] xⁿ) R x
+  xxⁿRx = subst (_R x) (sym $ pow-suc n x xRxⁿ) xˢⁿRx
+
+  xxⁿ∙xRxxᵐ : ((x ∙[ xRxⁿ ] xⁿ) ∙[ xxⁿRx ] x) R (x ∙[ xRxᵐ ] xᵐ)
+  xxⁿ∙xRxxᵐ = subst (_R (x ∙[ xRxᵐ ] xᵐ)) (∙-cong refl refl) (proj₂ $ assocL1 xRxxᵐ xxⁿRx∙xxᵐ)
+
+  xRxⁿx : x R (xⁿ ∙[ xⁿRx ] x)
+  xRxⁿx = subst (x R_) (trans (sym $ pow-suc n x xRxⁿ) (pow-commutes' n x xRxⁿ xⁿRx)) xRxˢⁿ
+
+  x∙xⁿxRxxᵐ : (x ∙[ xRxⁿx ] (xⁿ ∙[ xⁿRx ] x)) R (x ∙[ xRxᵐ ] xᵐ)
+  x∙xⁿxRxxᵐ = {!!}
+
+  xxˢⁿRxˢᵐ : (x ∙[ xRxˢⁿ ] xˢⁿ) R xˢᵐ
+  xxˢⁿRxˢᵐ = {!!}
+
+-- We can apply the above k many times
+pow-R-steps : ∀ k n m x → (pow n x) R (pow (m + k) x) → (pow (n + k) x) R (pow m x)
+pow-R-steps zero n m x r = subst₂ (λ u v → pow u x R pow v x) (sym $ +-identityʳ n) (+-identityʳ m) r
+pow-R-steps (suc k) n m x r = subst (λ z → pow z x R pow m x) (sym $ +-suc n k) (pow-R-step (n + k) m x (pow-R-steps k n (suc m) x (subst (λ z → pow n x R pow z x) (+-suc m k) r)))
+
+-- And all of that to show that (x^n)(x^m) is always defined.
+powRpow : ∀ n m x → (pow n x) R (pow m x)
+powRpow n m x = pow-R-steps n 0 m x ε-compatˡ
+
+-- -- (x^n)(x^m) ≡ x^(n+m)
+-- pow-mult : ∀ n m x → (r : pow n x R pow m x) → pow n x ∙[ r ] pow m x ≡ pow (n + m) x
+-- pow-mult zero m x r = trans (cong (∙ ε (pow m x)) (R-prop r ε-compatˡ)) (identityˡ {pow m x})
+-- pow-mult (suc n) m x r =
+--   begin
+--     (pow (suc n) x) ∙[ r ] (pow m x)
+--   ≡⟨ ∙-cong (sym $ pow-suc n x (pow-R n x)) refl ⟩
+--     (x ∙[ pow-R n x ] pow n x) ∙[ subst (_R pow m x) (sym $ pow-suc n x (pow-R n x)) r ] (pow m x)
+--   ≡⟨ {!!} ⟩
+--     x ∙[ subst (x R_) (sym $ pow-mult n m x xⁿRxᵐ) (pow-R (n + m) x) ] (pow n x ∙[ xⁿRxᵐ ] pow m x)
+--   ≡⟨ ∙-cong refl (pow-mult n m x xⁿRxᵐ) ⟩
+--     x ∙[ pow-R (n + m) x ] (pow (n + m) x)
+--   ≡⟨ pow-suc (n + m) x (pow-R (n + m) x) ⟩
+--     pow (suc n + m) x
+--   ∎ where open ≡-Reasoning
+--           xⁿRxᵐ : pow n x R pow m x
+--           xⁿRxᵐ = powRpow n m x
+
+
+  -- powRpow (suc n) zero x = ε-compatʳ
+  -- powRpow (suc zero) (suc m) x = pow-R (suc m) x
+  -- powRpow (suc (suc n)) (suc zero) x = lemmaR (pow-R (suc n) x)
+  -- powRpow (suc (suc n)) (suc (suc m)) x = {!powRpow (suc n) (suc m) x !}
+
+--powRpow-lemma (pow-R (suc n) x) (pow-R (suc m) x) (powRpow (suc n) (suc m) x)

@@ -232,12 +232,28 @@ foldr-∙' X Y f (inj₂ (x , n , _)) = pow (proof Y) n (f x)
 foldr-∙ : (X : SetObj) (Y : ReflexivePartialMonoid)
         → (f : proj₁ X → Carrier Y)
         → FreeRPMon (proj₁ X) (proj₂ X) → Carrier Y
-foldr-∙ (X , X-set) Y f x = foldr-∙' (X , X-set) Y f (to-alt X X-set x) 
+foldr-∙ (X , X-set) Y f x = foldr-∙' (X , X-set) Y f (to-alt X X-set x)
+
+
+domain = _~_
+domain' = _~'_
+
+
+foldr-∙'-preserves-R : (X : SetObj) (Y : ReflexivePartialMonoid)
+                     → (f : proj₁ X → Carrier Y)
+                     → {x y : FreeRPMon' (proj₁ X) (proj₂ X)}
+                     → domain' (proj₁ X) (proj₂ X) x y
+                     → _R_ Y (foldr-∙' X Y f x) (foldr-∙' X Y f y)
+foldr-∙'-preserves-R X Y f {inj₁ tt} {y} xRy = ε-compatˡ (proof Y)
+foldr-∙'-preserves-R X Y f {inj₂ (x , n , p)} {inj₁ tt} xRy = ε-compatʳ (proof Y)
+foldr-∙'-preserves-R (X , X-set) Y f {inj₂ (x , n , p)} {inj₂ (y , m , q)} xRy rewrite ~'→≡ X X-set xRy = {!!}
+
+
 
 RPMon-Adjunction : (ext : Extensionality _ _) → (FREE ext) ⊣ (FORGET ext)
 to (RPMon-Adjunction ext) {X , X-set} {Y} f x = fun f (cons x [] [])
 from (RPMon-Adjunction ext) {X , X-set} {Y} f
-  = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) {!!} {!!} {!!}
+  = MkRPMonMorphism (foldr-∙ (X , X-set) Y f) refl {!!} {!!}
 left-inverse-of (RPMon-Adjunction ext) = {!!}
 right-inverse-of (RPMon-Adjunction ext) = {!!}
 to-natural (RPMon-Adjunction ext) = {!!}
