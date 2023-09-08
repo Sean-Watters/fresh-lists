@@ -32,7 +32,6 @@ record IsPartialMonoid
   assocL1 : ∀ {x y z} → (yz : y R z) → (p : x R (∙[ yz ])) → Σ[ xy ∈ x R y ] (∙[ xy ] R z)
   assocL1 yz p = let (a , b , _) = assocˡ yz p in a , b
 
-
   assocR1 : ∀ {x y z} → (xy : x R y) → (p : ∙[ xy ] R z) → Σ[ yz ∈ y R z ] (x R ∙[ yz ])
   assocR1 yz p = let (a , b , _) = assocʳ yz p in a , b
 
@@ -41,6 +40,9 @@ record IsPartialMonoid
 
   identityʳ' : ∀ {x} (r : x R ε) → ∙[ r ] ≈ x
   identityʳ' {x} r = subst (λ z → ∙[ z ] ≈ x) (R-prop ε-compatʳ r) identityʳ
+
+  assocˡ₁ : ∀ {x y z} → (yz : y R z) → (p : x R (∙[ yz ])) → x R y
+  assocˡ₁ yz p = let (a , b , _) = assocˡ yz p in a
 
   assocˡ₃ : ∀ {x y z} → (yz : y R z) → (p : x R (∙[ yz ])) → (xy : x R y) → (q : ∙[ xy ] R z ) → (∙ x (∙ y z yz) p ≈ ∙ (∙ x y xy) z q)
   assocˡ₃ {x} {y} {z} yx p xy q = subst (λ w → ∙ x (∙ y z yx) p ≈ ∙ (∙ x y (proj₁ w)) z (proj₂ w)) goal (proj₂ (proj₂ (assocˡ yx p)))

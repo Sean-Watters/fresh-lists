@@ -167,12 +167,14 @@ pow-suc (suc n) x r =
 pow-R-step : ∀ n m x → (pow n x) R (pow (suc m) x) → (pow (suc n) x) R (pow m x)
 pow-R-step zero m x r = pow-R m x
 pow-R-step (suc n) zero x r = ε-compatʳ
-pow-R-step (suc n) (suc m) x r = xxˢⁿRxˢᵐ where
+pow-R-step (suc n) (suc m) x xˢⁿRxxˢᵐ = xxˢⁿRxˢᵐ where
+  -- The monomials that appear in the derivation.
   xᵐ  = pow m x
   xⁿ  = pow n x
   xˢᵐ = pow (suc m) x
   xˢⁿ = pow (suc n) x
 
+  -- The required proofs that the individual monomials are related to x in various directions.
   xRxᵐ  = pow-R m x
   xRxⁿ  = pow-R n x
   xRxˢⁿ = pow-R (suc n) x
@@ -180,26 +182,28 @@ pow-R-step (suc n) (suc m) x r = xxˢⁿRxˢᵐ where
   xˢⁿRx = powR-R' (suc n) x
   xⁿRx  = powR-R' n x
 
+  -- The proofs involving one layer of multiplication, required to state the types of later steps.
   xRxxᵐ : x R (x ∙[ xRxᵐ ] xᵐ)
   xRxxᵐ = subst (x R_) (sym $ pow-suc m x xRxᵐ) xRxˢᵐ
-
-  xxⁿRx∙xxᵐ : (x ∙[ xRxⁿ ] xⁿ) R (x ∙[ xRxxᵐ ] (x ∙[ xRxᵐ ] xᵐ))
-  xxⁿRx∙xxᵐ = subst₂ _R_ (sym $ pow-suc n x xRxⁿ) (∙-cong refl (sym $ pow-suc m x xRxᵐ)) r
 
   xxⁿRx : (x ∙[ xRxⁿ ] xⁿ) R x
   xxⁿRx = subst (_R x) (sym $ pow-suc n x xRxⁿ) xˢⁿRx
 
-  xxⁿ∙xRxxᵐ : ((x ∙[ xRxⁿ ] xⁿ) ∙[ xxⁿRx ] x) R (x ∙[ xRxᵐ ] xᵐ)
-  xxⁿ∙xRxxᵐ = subst (_R (x ∙[ xRxᵐ ] xᵐ)) (∙-cong refl refl) (proj₂ $ assocL1 xRxxᵐ xxⁿRx∙xxᵐ)
-
   xRxⁿx : x R (xⁿ ∙[ xⁿRx ] x)
   xRxⁿx = subst (x R_) (trans (sym $ pow-suc n x xRxⁿ) (pow-commutes' n x xRxⁿ xⁿRx)) xRxˢⁿ
 
-  x∙xⁿxRxxᵐ : (x ∙[ xRxⁿx ] (xⁿ ∙[ xⁿRx ] x)) R (x ∙[ xRxᵐ ] xᵐ)
-  x∙xⁿxRxxᵐ = {!!}
+  -- The derivation proper, starting from the assumption and arriving at the goal.
+  xxⁿRx∙xxᵐ : (x ∙[ xRxⁿ ] xⁿ) R (x ∙[ xRxxᵐ ] (x ∙[ xRxᵐ ] xᵐ))
+  xxⁿRx∙xxᵐ = subst₂ _R_ (sym $ pow-suc n x xRxⁿ) (∙-cong refl (sym $ pow-suc m x xRxᵐ)) xˢⁿRxxˢᵐ -- the assumption
 
-  xxˢⁿRxˢᵐ : (x ∙[ xRxˢⁿ ] xˢⁿ) R xˢᵐ
-  xxˢⁿRxˢᵐ = {!!}
+  xxⁿ∙xRxxᵐ : ((x ∙[ xRxⁿ ] xⁿ) ∙[ xxⁿRx ] x) R (x ∙[ xRxᵐ ] xᵐ)
+  xxⁿ∙xRxxᵐ = subst (_R (x ∙[ xRxᵐ ] xᵐ)) (∙-cong refl refl) (proj₂ $ assocL1 xRxxᵐ xxⁿRx∙xxᵐ)
+
+  x∙xⁿxRxxᵐ : (x ∙[ xRxⁿx ] (xⁿ ∙[ xⁿRx ] x)) R (x ∙[ xRxᵐ ] xᵐ)
+  x∙xⁿxRxxᵐ = subst (_R (x ∙[ xRxᵐ ] xᵐ)) (assocʳ₃ xRxⁿ xxⁿRx xⁿRx xRxⁿx) xxⁿ∙xRxxᵐ
+
+  xxˢⁿRxˢᵐ : (x ∙[ xRxˢⁿ ] xˢⁿ) R xˢᵐ -- the goal
+  xxˢⁿRxˢᵐ = subst₂ _R_ (∙-cong refl (trans (sym $ pow-commutes' n x xRxⁿ xⁿRx) (pow-suc n x xRxⁿ))) (pow-suc m x xRxᵐ) x∙xⁿxRxxᵐ
 
 -- We can apply the above k many times
 pow-R-steps : ∀ k n m x → (pow n x) R (pow (m + k) x) → (pow (n + k) x) R (pow m x)
