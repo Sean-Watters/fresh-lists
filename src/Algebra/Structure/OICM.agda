@@ -92,30 +92,6 @@ denialApartness {X} {_≈_} isEq ≡-dec =
     ... | yes x=y = inj₁ x=y
     ... | no ¬x=y = inj₂ ¬x=y
 
-{-
-denialApartness : {X : Set} {_≈_ : X → X → Set} → IsEquivalence _≈_ → Decidable _≈_ → IsPropDecTightApartnessRelation {X} _≈_ (λ x y → ¬ x ≈ y)
-IsPropDecTightApartnessRelation.isEquivalence (denialApartness isEq ≡-dec) = isEq
-IsApartnessRelation.irrefl (IsPropDecTightApartnessRelation.isAR (denialApartness isEq ≡-dec)) x≡y ¬x≡y = ¬x≡y x≡y
-IsApartnessRelation.sym (IsPropDecTightApartnessRelation.isAR (denialApartness isEq ≡-dec)) ¬x≡y y≡x = ¬x≡y (IsEquivalence.sym isEq y≡x )
-IsApartnessRelation.cotrans (IsPropDecTightApartnessRelation.isAR (denialApartness isEq ≡-dec)) {x} {y} ¬x≡y z with ≡-dec x z | ≡-dec z y
-... | yes x≡z | yes z≡y = ⊥-elim (¬x≡y (IsEquivalence.trans isEq x≡z z≡y))
-... | yes x≡z | no ¬z≡y = inj₂ ¬z≡y
-... | no ¬x≡z | _ = inj₁ ¬x≡z
-IsPropDecTightApartnessRelation.prop (denialApartness isEq ≡-dec) p q = refl
-proj₁ (IsPropDecTightApartnessRelation.tight (denialApartness isEq ≡-dec) x y) ¬¬x=y with ≡-dec x y
-... | yes x≈y = x≈y
-... | no ¬x≈y = ⊥-elim (¬¬x=y ¬x≈y)
-proj₂ (IsPropDecTightApartnessRelation.tight (denialApartness isEq ≡-dec) x y) x≈y ¬x≈y = ⊥-elim (¬x≈y x≈y)
-IsPropDecTightApartnessRelation.dec (denialApartness isEq ≡-dec) x y with ≡-dec x y
-... | yes x≈y = no λ ¬x≈y → ⊥-elim (¬x≈y x≈y)
-... | no ¬x≈y = yes ¬x≈y
-{-
-IsPropDecTightApartnessRelation.dec (denialApartness isEq ≡-dec) x y with ≡-dec x y
-... | yes x≡y = inj₁ x≡y
-... | no ¬x≡y = inj₂ ¬x≡y
--}
--}
-
 -- NB: **Necessarily** strictly ordered when idempotent, non-strict when not.
 record IsOrderedCommutativeMonoid
   { S : Set }
