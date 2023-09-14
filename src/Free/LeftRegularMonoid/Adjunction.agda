@@ -26,7 +26,7 @@ open import Category.Base
 module _
   {X : Set}
   {_≠_ : X → X → Set}
-  (≠-AR : IsPropDecApartnessRelation _≡_ _≠_)
+  (≠-AR : IsPropDecTightApartnessRelation _≡_ _≠_)
   where
 
   leftregularBand : IsLeftRegularMonoidWithPropDecApartness _≡_ (λ x y → ¬ (x ≡ y)) (union ≠-AR) []
@@ -35,7 +35,7 @@ module _
   IsSemigroup.assoc (IsMonoid.isSemigroup (IsLeftRegularMonoidWithPropDecApartness.isICM leftregularBand)) = assoc ≠-AR
   IsMonoid.identity (IsLeftRegularMonoidWithPropDecApartness.isICM leftregularBand) = (unitˡ ≠-AR , unitʳ ≠-AR)
   IsLeftRegularMonoidWithPropDecApartness.leftregular leftregularBand = leftregular ≠-AR
-  IsLeftRegularMonoidWithPropDecApartness.isApartness leftregularBand = denialApartness ≡-isEquivalence (WithIrr.lift-decEq _≠_ (IsPropDecApartnessRelation.prop ≠-AR) (_≟_ ≠-AR))
+  IsLeftRegularMonoidWithPropDecApartness.isApartness leftregularBand = denialApartness ≡-isEquivalence (WithIrr.lift-decEq _≠_ (IsPropDecTightApartnessRelation.prop ≠-AR) (_≟_ ≠-AR))
 
 ---------------------------------------------------------------------------
 -- The Category of Left Regular Monoids with Decidable Apartness relations --
@@ -82,9 +82,9 @@ eqLrbMorphism ext {A} {B} {MkLrbMorphism .f refl p∙} {MkLrbMorphism f q q∙} 
     uipB = Axiom.UniquenessOfIdentityProofs.Decidable⇒UIP.≡-irrelevant decB
       where
         decB : Decidable (_≡_ {A = Carrier B})
-        decB x y with IsLeftRegularMonoidWithPropDecApartness.dec (proof B) x y
+        decB x y with IsLeftRegularMonoidWithPropDecApartness.eqOrApart (proof B) x y
         ... | inj₁ x≡y = yes x≡y
-        ... | inj₂ x≠y = no λ x≡y → IsPropDecApartnessRelation.irrefl (IsLeftRegularMonoidWithPropDecApartness.isApartness (proof B)) x≡y x≠y
+        ... | inj₂ x≠y = no λ x≡y → IsPropDecTightApartnessRelation.irrefl (IsLeftRegularMonoidWithPropDecApartness.isApartness (proof B)) x≡y x≠y
 
 LRB : Extensionality _ _ → Category
 Category.Obj (LRB ext) = LeftRegularMonoidWithPropDecApartness
@@ -105,7 +105,7 @@ record DecApartnessType : Set₁ where
   field
     Carrier : Set
     _¬≈_ : Carrier → Carrier → Set
-    proof : IsPropDecApartnessRelation _≡_ _¬≈_
+    proof : IsPropDecTightApartnessRelation _≡_ _¬≈_
 open DecApartnessType
 
 AT : Category
@@ -143,9 +143,9 @@ map-remove : {X Y : DecApartnessType} →
              (f : Carrier X → Carrier Y) → (xs : UniqueList (proof X)) → (y : Carrier X) →
              (UL-map {X} {Y} f (xs -[ y ]X)) -[ f y ]Y ≡ (UL-map {X} {Y} f xs) -[ f y ]Y
 map-remove f [] y = refl
-map-remove {X} {Y} f (cons x xs x#xs) y with IsPropDecApartnessRelation.dec (proof X) x y | IsPropDecApartnessRelation.dec (proof Y) (f x) (f y) in eqfxfy
+map-remove {X} {Y} f (cons x xs x#xs) y with IsPropDecTightApartnessRelation.eqOrApart (proof X) x y | IsPropDecTightApartnessRelation.eqOrApart (proof Y) (f x) (f y) in eqfxfy
 ... | inj₁ x≡y  | inj₁ fx≡fy  = cong (_-[_] (proof Y) (UL-map f xs)) (sym fx≡fy)
-... | inj₁ x≡y  | inj₂ ¬fx≈fy = ⊥-elim (IsPropDecApartnessRelation.irrefl (proof Y) (cong f x≡y) ¬fx≈fy)
+... | inj₁ x≡y  | inj₂ ¬fx≈fy = ⊥-elim (IsPropDecTightApartnessRelation.irrefl (proof Y) (cong f x≡y) ¬fx≈fy)
 ... | inj₂ ¬x≈y | inj₁ fx≡fy  rewrite eqfxfy = begin
   mapf (xs -[ y ]X) -[ f x ]Y
     ≡⟨ cong (λ z → mapf (xs -[ y ]X) -[ z ]Y) fx≡fy ⟩
@@ -162,7 +162,7 @@ map-remove {X} {Y} f (cons x xs x#xs) y with IsPropDecApartnessRelation.dec (pro
       _-[_]X = _-[_] (proof X)
       _-[_]Y = _-[_] (proof Y)
 
-... | inj₂ ¬x≈y | inj₂ ¬fx≈fy rewrite eqfxfy = WithIrr.cons-cong _ (IsPropDecApartnessRelation.prop (proof Y)) refl (begin
+... | inj₂ ¬x≈y | inj₂ ¬fx≈fy rewrite eqfxfy = WithIrr.cons-cong _ (IsPropDecTightApartnessRelation.prop (proof Y)) refl (begin
   (mapf (xs -[ y ]X) -[ f x ]Y) -[ f y ]Y
     ≡⟨ -[]-order-irrelevant (proof Y) (mapf (xs -[ y ]X)) (f x) (f y) ⟩
   (mapf (xs -[ y ]X) -[ f y ]Y) -[ f x ]Y
@@ -181,7 +181,7 @@ map-remove {X} {Y} f (cons x xs x#xs) y with IsPropDecApartnessRelation.dec (pro
 map-union : {X Y : DecApartnessType} → (f : Carrier X → Carrier Y) → (xs ys : UniqueList (proof X)) →
             UL-map {X} {Y} f (union (proof X) xs ys) ≡ union (proof Y) (UL-map {X} {Y} f xs) (UL-map {X} {Y} f ys)
 map-union f [] ys = refl
-map-union {X} {Y} f (cons x xs x#xs) ys = WithIrr.cons-cong _ (IsPropDecApartnessRelation.prop (proof Y)) refl (begin
+map-union {X} {Y} f (cons x xs x#xs) ys = WithIrr.cons-cong _ (IsPropDecTightApartnessRelation.prop (proof Y)) refl (begin
   mapf (unionX xs ys -[ x ]X) -[ f x ]Y
     ≡⟨ cong (λ w → mapf w -[ f x ]Y) (remove-union (proof X) xs ys x)  ⟩
   mapf (unionX (xs -[ x ]X) (ys -[ x ]X)) -[ f x ]Y
@@ -212,14 +212,14 @@ identity (UNIQUELIST ext) {X} = eqLrbMorphism ext (ext lemma)
   where
     lemma : ∀ xs → UL-map id xs ≡ xs
     lemma [] = refl
-    lemma (cons x xs x#xs) = WithIrr.cons-cong _ (IsPropDecApartnessRelation.prop (proof X)) refl
+    lemma (cons x xs x#xs) = WithIrr.cons-cong _ (IsPropDecTightApartnessRelation.prop (proof X)) refl
                                                (trans (cong (λ w → _-[_] (proof X) w x) (lemma xs) )
                                                       (remove-fresh-idempotent (proof X) xs x x#xs))
 homomorphism (UNIQUELIST ext) {X} {Y} {Z} {f} {g} = eqLrbMorphism ext (ext lemma)
   where
     lemma : ∀ xs → UL-map (λ x → g (f x)) xs ≡ UL-map g (UL-map f xs)
     lemma [] = refl
-    lemma (cons x xs x#xs) = WithIrr.cons-cong _ (IsPropDecApartnessRelation.prop (proof Z)) refl
+    lemma (cons x xs x#xs) = WithIrr.cons-cong _ (IsPropDecTightApartnessRelation.prop (proof Z)) refl
                                                (begin
                                                  mapgf  xs -[ g (f x) ]Z
                                                    ≡⟨ cong (_-[ g (f x) ]Z) (lemma xs) ⟩
@@ -256,7 +256,7 @@ foldr-∙-leftregular : (X : DecApartnessType) → (B : LeftRegularMonoidWithPro
                       (ys : UniqueList (proof X)) → (x : Carrier X) → (b : Carrier B) →
                       _∙_ B (_∙_ B (h x) b) (foldr-∙ X B h (ys -[ x ]X))  ≡ _∙_ B (_∙_ B (h x) b) (foldr-∙ X B h ys)
 foldr-∙-leftregular X B h [] x b = refl
-foldr-∙-leftregular X B h (cons y ys y#ys) x b with IsPropDecApartnessRelation.dec (proof X) y x
+foldr-∙-leftregular X B h (cons y ys y#ys) x b with IsPropDecTightApartnessRelation.eqOrApart (proof X) y x
 ... | inj₁ refl = begin
   (h y ∙' b) ∙' foldr-∙' ys
     ≡⟨ cong (_∙' foldr-∙' ys) (sym (IsLeftRegularMonoidWithPropDecApartness.leftregular (proof B) (h y) b)) ⟩
@@ -326,7 +326,7 @@ left-inverse-of (UL-Adjunction ext) {X} {B} h = eqLrbMorphism ext (ext lemma)
       fun h (cons x [] []) ∙' fun h xs
        ≡⟨ sym (preserves-∙ h (cons x [] []) xs) ⟩
       fun h (unionX (cons x [] []) xs)
-       ≡⟨ cong (fun h) (WithIrr.cons-cong _ (IsPropDecApartnessRelation.prop (proof X)) refl (remove-fresh-idempotent (proof X) xs x x#xs)) ⟩
+       ≡⟨ cong (fun h) (WithIrr.cons-cong _ (IsPropDecTightApartnessRelation.prop (proof X)) refl (remove-fresh-idempotent (proof X) xs x x#xs)) ⟩
       fun h (cons x xs x#xs)
         ∎ where
         open ≡-Reasoning

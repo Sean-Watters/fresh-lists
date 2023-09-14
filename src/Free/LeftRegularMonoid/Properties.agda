@@ -4,7 +4,7 @@ open import Algebra.Structure.OICM
 
 module Free.LeftRegularMonoid.Properties
   {X : Set} {_≈_ : X → X → Set} {_≠_ : X → X → Set}
-  (≠-AR : IsPropDecApartnessRelation _≈_ _≠_)
+  (≠-AR : IsPropDecTightApartnessRelation _≈_ _≠_)
   where
 
 open import Data.Empty
@@ -18,14 +18,14 @@ open import Algebra.Structures
 open import Free.LeftRegularMonoid.Base ≠-AR
 
 private
-  ≠-irrefl  = IsPropDecApartnessRelation.irrefl ≠-AR
-  ≠-sym  = IsPropDecApartnessRelation.sym ≠-AR
-  ≠-cotrans = IsPropDecApartnessRelation.cotrans ≠-AR
-  ≠-prop = IsPropDecApartnessRelation.prop ≠-AR
-  ≠-dec = IsPropDecApartnessRelation.dec ≠-AR
-  ≈-refl = IsPropDecApartnessRelation.refl ≠-AR
-  ≈-sym = IsPropDecApartnessRelation.≈-sym ≠-AR
-  ≈-trans = IsPropDecApartnessRelation.trans ≠-AR
+  ≠-irrefl  = IsPropDecTightApartnessRelation.irrefl ≠-AR
+  ≠-sym  = IsPropDecTightApartnessRelation.sym ≠-AR
+  ≠-cotrans = IsPropDecTightApartnessRelation.cotrans ≠-AR
+  ≠-prop = IsPropDecTightApartnessRelation.prop ≠-AR
+  ≠-dec = IsPropDecTightApartnessRelation.eqOrApart ≠-AR
+  ≈-refl = IsPropDecTightApartnessRelation.refl ≠-AR
+  ≈-sym = IsPropDecTightApartnessRelation.≈-sym ≠-AR
+  ≈-trans = IsPropDecTightApartnessRelation.trans ≠-AR
 
   ≠-cons-cong = WithIrr.cons-cong _≠_ ≠-prop
 
