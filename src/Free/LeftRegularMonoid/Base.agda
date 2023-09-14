@@ -31,13 +31,6 @@ x ≟ y with ≠-dec x y
 ... | inj₁ x≈y = yes x≈y
 ... | inj₂ x≠y = no λ x≈y → ≠-irrefl x≈y x≠y
 
--- probably not needed
-≠-tight : Tight _≈_ _≠_
-proj₁ (≠-tight x y) ¬x≠y with ≠-dec x y
-... | inj₁ x≈y = x≈y
-... | inj₂ x≠y = ⊥-elim (¬x≠y x≠y)
-proj₂ (≠-tight x y) = ≠-irrefl
-
 UniqueList : Set
 UniqueList = List# _≠_
 
