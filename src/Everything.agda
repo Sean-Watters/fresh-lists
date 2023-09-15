@@ -42,6 +42,8 @@ open import Free.PointedSet.Adjunction
 -- Freshlists for equality relation
 open import Free.ReflexivePartialMonoid.Base
 open import Free.ReflexivePartialMonoid.Properties
+open import Free.ReflexivePartialMonoid.Power
+open import Free.ReflexivePartialMonoid.Adjunction
 
 -- Equivalence between Ordering Principle and Set ≃ STO
 open import OrderingPrinciple.Base
