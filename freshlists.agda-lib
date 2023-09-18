@@ -1,4 +1,4 @@
 name: freshlists
 depend: standard-library
 include: src/
-flags: --safe --without-K
+flags: --safe --cubical-compatible --warning=noUnsupportedIndexedMatch

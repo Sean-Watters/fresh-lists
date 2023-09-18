@@ -1,12 +1,8 @@
-{-# OPTIONS --safe --without-K #-}
+module Relation.Binary.Isomorphism where
 
 open import Function
 open import Relation.Binary.PropositionalEquality
 
-module Relation.Binary.Isomorphism where
-
-
--- can't find this in stdlib, but I know it's there somewhere...
 record _≃_ {n} (A B : Set n) : Set n where
   constructor MkIso
   field

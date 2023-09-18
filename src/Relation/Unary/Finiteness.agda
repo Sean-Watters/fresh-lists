@@ -1,24 +1,12 @@
-{-# OPTIONS --safe --without-K #-}
-
-open import Level
-
-open import Data.Empty
-open import Data.Fin using (Fin)
-open import Data.List
-open import Data.Nat using ()
-open import Data.Product
-open import Data.Vec
-open import Data.Vec.Bounded
-
-open import Relation.Nullary
-open import Relation.Binary.Isomorphism
 open import Relation.Binary
-
 
 module Relation.Unary.Finiteness {a b} (X : Setoid a b) where
 
+open import Level
+open import Data.List
+open import Data.Product
 open import Data.List.Membership.Setoid X
-open import Data.Vec.Relation.Unary.Unique.Setoid X
+
 open Setoid
 
 is-enumeration : (L : List (Carrier X)) → Set (a ⊔ b)

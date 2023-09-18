@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
 module Axiom.UniquenessOfIdentityProofs.Properties where
 
 open import Axiom.UniquenessOfIdentityProofs

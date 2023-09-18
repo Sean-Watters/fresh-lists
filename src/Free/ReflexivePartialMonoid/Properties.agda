@@ -56,22 +56,6 @@ to-from iso = sym ∘ to-from-alt
 -- Is Set --
 ------------
 
-suc-lem : ∀ {n m} (p : suc n ≡ suc m) → p ≡ cong suc (suc-injective p)
-suc-lem refl = refl
-
-UIP-ℕ : UIP ℕ
-UIP-ℕ {zero} {zero} refl refl = refl
-UIP-ℕ {suc n} {suc m} p q = trans (trans (suc-lem p) (cong (cong suc) (UIP-ℕ {n} {m} (suc-injective p) (suc-injective q)))) (sym $ suc-lem q)
-
-pred⁺ : ℕ⁺ → ℕ
-pred⁺ (suc n , p) = n
-
-suc⁺ : ℕ → ℕ⁺
-suc⁺ n = (suc n , nonZero)
-
-UIP-ℕ⁺ : UIP ℕ⁺
-UIP-ℕ⁺ = UIP-Retract suc⁺ pred⁺ (λ { (suc n , p) → refl }) UIP-ℕ
-
 FreeRPMon'-set : UIP FreeRPMon'
 FreeRPMon'-set = UIP-⊎ UIP-⊤ (UIP-× A-set UIP-ℕ⁺)
 

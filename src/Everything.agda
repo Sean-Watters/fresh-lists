@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --safe --cubical-compatible #-}
 module Everything where
 
 -- Freshlists defined inductive-inductively and as a sigma type, and a
@@ -8,9 +8,14 @@ open import Data.FreshList.Sigma
 
 -- Definitions of various variations on ordered monoids
 open import Algebra.Structure.OICM
+open import Algebra.Structure.PartialMonoid
 
--- Constantly true and constantly false relations
+-- Bits and pieces
 open import Relation.Const
+open import Relation.Unary.Finiteness
+open import Relation.Binary.Isomorphism
+open import Data.PosNat
+open import Axiom.UniquenessOfIdentityProofs.Properties
 
 -- Definitions of categories, functors, adjunctions
 open import Category.Base
@@ -47,3 +52,9 @@ open import Free.ReflexivePartialMonoid.Adjunction
 
 -- Equivalence between Ordering Principle and Set ≃ STO
 open import OrderingPrinciple.Base
+
+
+
+
+
+

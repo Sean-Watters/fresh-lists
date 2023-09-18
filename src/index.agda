@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --safe --cubical-compatible #-}
 ----------------------------------------------------------------------------------------------------
 -- Index of the Formalized Proofs in the paper
 --
