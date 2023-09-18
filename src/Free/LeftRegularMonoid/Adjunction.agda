@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
 module Free.LeftRegularMonoid.Adjunction where
 
 open import Data.Empty

@@ -1,10 +1,7 @@
-{-# OPTIONS --safe --without-K #-}
-
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
 
 module Free.ReflexivePartialMonoid.Adjunction where
-
 
 open import Algebra.Structure.PartialMonoid
 open import Data.FreshList.InductiveInductive
@@ -27,8 +24,6 @@ open import Data.PosNat
 -- The Category of Reflexive Partial Monoids --
 -----------------------------------------------
 
--- thought for later if stuck, should we enforce that C is a set and
--- R is prop valued?
 record ReflexivePartialMonoid : Set₁ where
   constructor MkRPMon
   field

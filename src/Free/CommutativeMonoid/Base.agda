@@ -1,5 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
-
 open import Algebra.Structure.OICM
 
 module Free.CommutativeMonoid.Base

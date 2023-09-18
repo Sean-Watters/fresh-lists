@@ -1,4 +1,3 @@
-{-# OPTIONS --without-K --safe #-}
 module Data.FreshList.Sigma where
 
 open import Level hiding (zero; suc)

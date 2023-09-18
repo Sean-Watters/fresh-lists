@@ -1,5 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
-
 module Free.Monoid.Adjunction where
 
 open import Axiom.Extensionality.Propositional

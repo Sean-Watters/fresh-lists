@@ -1,4 +1,3 @@
-{-# OPTIONS --without-K --safe #-}
 module Free.Monoid.Base where
 
 open import Data.FreshList.InductiveInductive

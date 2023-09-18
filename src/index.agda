@@ -3,13 +3,14 @@
 -- Index of the Formalized Proofs in the paper
 --
 --     A Fresh Look at Commutativity: Free Algebraic Structures via Fresh Lists
+--     by Clemens Kupke, Fredrik Nordvall Forsberg, and Sean Watters
 --
---         Submitted to APLAS'23.
+--     APLAS'23.
 ----------------------------------------------------------------------------------------------------
 --
 -- Source files can be found at
 --
---   https://github.com/aplas23-freecomm/freecomm-agda
+--   https://github.com/Sean-Watters/fresh-lists
 --
 -- See `README.md` for versions of Agda and the standard library that these
 -- files are tested with.
@@ -178,8 +179,8 @@ module _ where
            IdCMon.SL-map {X} {Y} f (xs ∪X  ys) ≡ (IdCMon.SL-map {X} {Y} f xs) ∪Y (IdCMon.SL-map {X} {Y} f ys)
   Lemma-20 = IdCMon.SL-map-preserves-∪
 
-  Theorem-21 : (ext : Extensionality _ _) → Functor STO (OICM ext)
-  Theorem-21 = IdCMon.SORTEDLIST
+  Theorem-21 : (ext : Extensionality _ _) → IdCMon.SORTEDLIST ext ⊣ IdCMon.FORGET ext
+  Theorem-21 = IdCMon.SL-Adjunction
 
   Proposition-22a : (ext : Extensionality _ _)
                   → OrderingPrinciple → IsEquiv FORGETSTO × IsEquiv (FORGETOICM ext)

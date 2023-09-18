@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --without-K  #-}
 module Free.IdempotentCommutativeMonoid.Adjunction where
 
 open import Algebra hiding (IdempotentCommutativeMonoid)

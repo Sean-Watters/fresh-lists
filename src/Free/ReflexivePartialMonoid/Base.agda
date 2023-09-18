@@ -1,8 +1,5 @@
-{-# OPTIONS --safe --without-K #-}
-
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality
-
 
 module Free.ReflexivePartialMonoid.Base
   (A : Set)

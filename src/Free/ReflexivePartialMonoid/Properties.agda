@@ -1,8 +1,5 @@
-{-# OPTIONS --safe --without-K #-}
-
 open import Axiom.UniquenessOfIdentityProofs
 open import Axiom.UniquenessOfIdentityProofs.Properties
-
 
 module Free.ReflexivePartialMonoid.Properties
   (A : Set)

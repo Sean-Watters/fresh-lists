@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
 open import Relation.Binary
 open import Data.FreshList.InductiveInductive
 open import Data.List using (List; []; _∷_)

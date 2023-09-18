@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
 module Free.PointedSet.Adjunction where
 
 open import Level

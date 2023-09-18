@@ -1,5 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
-
 open import Algebra.Structure.OICM
 open import Relation.Binary.PropositionalEquality
 

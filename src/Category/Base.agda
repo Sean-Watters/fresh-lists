@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
 module Category.Base where
 
 open import Level renaming (zero to lzero; suc to lsuc)

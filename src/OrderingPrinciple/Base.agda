@@ -1,34 +1,11 @@
-{-# OPTIONS --safe --without-K  #-}
 module OrderingPrinciple.Base where
 
 open import Algebra
 open import Function as F hiding (id)
 
-
-{-
-
-open import Data.Product hiding (map)
-open import Data.Sum
-open import Data.Empty
-open import Data.Nat renaming (_<_ to _<N_)
-open import Data.Nat.Induction
-open import Induction.WellFounded
-
-open import Relation.Binary hiding (NonEmpty; StrictTotalOrder)
-open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEquivalence)
-open import Relation.Nullary
-open import Relation.Nullary.Decidable hiding (map)
-
-open import Data.FreshList.InductiveInductive
-open import Free.IdempotentCommutativeMonoid.Base
-import Free.IdempotentCommutativeMonoid.Properties as FICM
-open import Category.Base
-
--}
-
 open import Data.Product
 
-open import Relation.Binary -- hiding (NonEmpty; StrictTotalOrder)
+open import Relation.Binary
 open import Relation.Binary.PropositionalEquality renaming (isEquivalence to ≡-isEquivalence)
 
 open import Axiom.UniquenessOfIdentityProofs

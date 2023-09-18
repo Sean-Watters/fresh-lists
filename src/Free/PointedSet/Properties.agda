@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
 module Free.PointedSet.Properties where
 
 open import Data.FreshList.InductiveInductive

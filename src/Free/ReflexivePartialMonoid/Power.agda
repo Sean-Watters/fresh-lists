@@ -1,5 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
-
 open import Level renaming (suc to lsuc; zero to lzero)
 open import Algebra.Structure.PartialMonoid
 open import Relation.Binary.PropositionalEquality
@@ -12,21 +10,6 @@ module Free.ReflexivePartialMonoid.Power
   (X-RPMon : IsReflexivePartialMonoid _≡_ _R_ ∙ ε)
   where
 
--- Theorem : Exponentiation is defined for any reflexive partial monoid.
---
--- Proof Sketch :
----- (1) By reflexivity, x^(2^n) is trivially defined for all (x : X) and (n : ℕ).
----- (2) To produce x^k, we:
--------- (a) Choose n such that (2^n)>k.
--------- (b) Re-write x^(2^n) to be right-bracketed using associativity.
--------- (c) Chop off outer x's until we have k many x's in term. This is now x^k.
---
--- We can make this easier by talking about "cute lists", thanks to conor. More at 6
-
-
-
-------- Direct approach -----------------------------
-
 open import Function
 open import Data.Product hiding (assocˡ; assocʳ)
 open import Data.Nat
@@ -38,9 +21,6 @@ private
   ∙-syntax = ∙
   infix 5 ∙-syntax
   syntax ∙-syntax x y r = x ∙[ r ] y
-
-
--- lemma : ∀ {x y z} → y R z → (xy↓ : x R y) → x R (x ∙[ xy↓ ] y)
 
 lemma : ∀ {x y} → (xy↓ : x R y) → y R (x ∙[ xy↓ ] y)
 lemma {x} {y} xy↓ = proj₁ $ assocʳ {x} {y} {x ∙[ xy↓ ] y} xy↓ reflexive

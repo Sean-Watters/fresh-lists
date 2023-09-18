@@ -1,4 +1,3 @@
-{-# OPTIONS --without-K --safe #-}
 open import Data.Unit
 open import Data.Empty
 open import Relation.Nullary

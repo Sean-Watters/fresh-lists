@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --without-K #-}
 module Free.CommutativeMonoid.Adjunction where
 
 open import Data.Nat using (ℕ; zero; suc; _+_; z≤n; s≤s) renaming (_<_ to _<ℕ_)
