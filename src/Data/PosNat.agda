@@ -4,6 +4,7 @@ open import Data.Product
 open import Data.Nat
 open import Data.Nat.Properties
 open import Data.Unit
+open import Function
 open import Relation.Binary.PropositionalEquality
 
 open import Axiom.UniquenessOfIdentityProofs
@@ -38,5 +39,15 @@ UIP-ℕ⁺ = UIP-Retract suc⁺ pred⁺ (λ { (suc n , p) → refl }) UIP-ℕ
 succ⁺ : ℕ⁺ → ℕ⁺
 succ⁺ (n , p) = suc n , nonZero
 
+NonZero-+suc : ∀ x y → NonZero (x + suc y)
+NonZero-+suc x y rewrite +-suc x y = record { nonZero = tt }
+
 _⁺+⁺_ : ℕ⁺ → ℕ⁺ → ℕ⁺
 (suc n , p) ⁺+⁺ (m , q) = (suc n + m , nonZero)
+
+double : ℕ → ℕ
+double zero = zero
+double (suc n) = suc (suc (double n))
+
+double⁺ : ℕ⁺ → ℕ⁺
+double⁺ (suc n , _) = suc (suc (double n)) , nonZero

@@ -31,6 +31,7 @@ open import Data.Nat
 open import Data.Nat.Properties
 open import Data.PosNat
 open import Data.Product hiding (assocˡ; assocʳ)
+open import Data.Product.Properties using (,-injectiveˡ)
 open import Function
 
 open IsReflexivePartialMonoid X-RPMon
@@ -320,3 +321,31 @@ pow-suc x {u} (powable f) xRxˢⁿ⁺ˢᵐ = powable g where
     = let (xˢⁿ , xˢᵐ , xˢⁿRxˢᵐ) = f (suc⁺ n) (suc⁺ m) refl
           (xRxˢⁿ , xxˢⁿRxˢᵐ) = assocL1 xˢⁿRxˢᵐ (subst (x R_) (pow-mult x (powable f) xˢⁿ xˢᵐ xˢⁿRxˢᵐ ) xRxˢⁿ⁺ˢᵐ)
       in pow-suc x {suc n , _} xˢⁿ xRxˢⁿ , xˢᵐ , subst (_R pow xˢᵐ) (pow-suc-lem xˢⁿ (pow-suc x xˢⁿ xRxˢⁿ) xRxˢⁿ) xxˢⁿRxˢᵐ
+
+pow-+ : ∀ x {n m} → (p : Powable n x) → (q : Powable m x) → pow p R pow q → Powable (n ⁺+⁺ m) x
+pow-+ x {suc zero , _} {suc m , _} (powable f) q r = pow-suc x q r
+pow-+ x {suc (suc n) , _} {suc m , _} (powable f) q r = powable g where
+  g : (a b : ℕ⁺) → suc⁺ (suc n + suc m) ≡ a ⁺+⁺ b
+    → Σ[ pa ∈ Powable a x ] Σ[ pb ∈ Powable b x ] ((pow pa) R (pow pb))
+  g = {!!}
+
+-- The trick : We define doubling as (n+n) rather than by induction, so that we can
+-- deploy reflexivity to get our proof of xⁿRxⁿ for free.
+pow-double : ∀ {x n} → Powable n x → Powable (n ⁺+⁺ n) x
+pow-double {x} p = pow-+ x p p reflexive
+
+-- So now to show that xⁿ is defined in general, we double and take a
+-- powable prefix.
+pow-all : ∀ x n → Powable n x
+pow-all x (suc zero , _) = pow-1 x
+pow-all x (suc (suc zero) , _) = pow-double (pow-1 x)
+pow-all x (suc m@(suc (suc n)) , _) with pow-double (pow-all x (m , _))
+... | powable f = proj₁ (f (suc m , _) (suc n , _) (lemma (suc n , _))) where
+  -- 2n=(1+n)+(n-1).
+  -- Since we force both args of + to be nonzero, this is only valid for n≥2.
+  lemma : (n : ℕ⁺) → (succ⁺ n) ⁺+⁺ (succ⁺ n) ≡ (succ⁺ (succ⁺ n)) ⁺+⁺ n
+  lemma n = ℕ⁺-cong (cong suc (+-suc (proj₁ n) (proj₁ n)))
+
+power : ℕ → X → X
+power zero x = ε
+power (suc n) x = pow (pow-all x (suc n , nonZero))
