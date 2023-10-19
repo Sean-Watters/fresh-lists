@@ -72,7 +72,7 @@ Category.identityʳ (MON ext) = eqMonMorphism ext refl
 
 open Functor
 
-FORGET : (@0 ext : Extensionality _ _) → Functor (MON ext) HSET
+FORGET : (ext : Extensionality _ _) → Functor (MON ext) HSET
 act (FORGET _) X = hset (Carrier X) (isSet X)
 fmap (FORGET _) f x = fun f x
 identity (FORGET _) = refl

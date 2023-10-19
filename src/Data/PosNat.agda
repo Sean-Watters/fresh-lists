@@ -22,6 +22,9 @@ UIP-ℕ : UIP ℕ
 UIP-ℕ {zero} {zero} refl refl = refl
 UIP-ℕ {suc n} {suc m} p q = trans (trans (suc-lem p) (cong (cong suc) (UIP-ℕ {n} {m} (suc-injective p) (suc-injective q)))) (sym (suc-lem q))
 
+to-ℕ : ℕ⁺ → ℕ
+to-ℕ = proj₁
+
 pred⁺ : ℕ⁺ → ℕ
 pred⁺ (suc n , p) = n
 
@@ -30,3 +33,10 @@ suc⁺ n = (suc n , nonZero)
 
 UIP-ℕ⁺ : UIP ℕ⁺
 UIP-ℕ⁺ = UIP-Retract suc⁺ pred⁺ (λ { (suc n , p) → refl }) UIP-ℕ
+
+
+succ⁺ : ℕ⁺ → ℕ⁺
+succ⁺ (n , p) = suc n , nonZero
+
+_⁺+⁺_ : ℕ⁺ → ℕ⁺ → ℕ⁺
+(suc n , p) ⁺+⁺ (m , q) = (suc n + m , nonZero)

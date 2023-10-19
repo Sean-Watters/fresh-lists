@@ -274,77 +274,80 @@ strengthen-∉ x≉a x∉as (there x∈as) = x∉as x∈as
 -- Union Properties --
 ----------------------
 
-∈union-elim : ∀ {a} {xs ys : SortedList} -> (p : Acc _<ℕ_ (length xs + length ys)) → a ∈ (union xs ys p) -> a ∈ xs ⊎ a ∈ ys
-∈union-elim {a} {[]} {ys} p a∈ys = inj₂ a∈ys
-∈union-elim {a} {cons x xs x#xs} {[]} p a∈xs = inj₁ a∈xs
-∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) a∈xs∪ys with compare x y
-∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri< x<y ¬x≈y ¬y<x = inj₁ (here a≈x)
-∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪yys) | tri< x<y ¬x≈y ¬y<x with ∈union-elim {a} {xs} {cons y ys y#ys} _ a∈xs∪yys
-... | inj₁ a∈xs = inj₁ (there a∈xs)
-... | inj₂ a∈yys = inj₂ a∈yys
-∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri≈ ¬x<y x≈y ¬y<x = inj₁ (here a≈x)
-∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪ys) | tri≈ ¬x<y x≈y ¬y<x with ∈union-elim {a} {xs} {ys} _ a∈xs∪ys
-... | inj₁ a∈xs = inj₁ (there a∈xs)
-... | inj₂ a∈ys = inj₂ (there a∈ys)
-∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈y) | tri> ¬x<y ¬x≈y y<x = inj₂ (here a≈y)
-∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xxs∪ys) | tri> ¬x<y ¬x≈y y<x with ∈union-elim {a} {cons x xs x#xs} {ys} _ a∈xxs∪ys
-... | inj₁ a∈xxs = inj₁ a∈xxs
-... | inj₂ a∈ys = inj₂ (there a∈ys)
+opaque
+  unfolding union
 
-∈∪-elim : ∀ {a} {xs ys : SortedList} -> a ∈ (xs ∪ ys) -> a ∈ xs ⊎ a ∈ ys
-∈∪-elim {a} {xs} {ys} = ∈union-elim (<-wellFounded (length xs + length ys))
+  ∈union-elim : ∀ {a} {xs ys : SortedList} -> (p : Acc _<ℕ_ (length xs + length ys)) → a ∈ (union xs ys p) -> a ∈ xs ⊎ a ∈ ys
+  ∈union-elim {a} {[]} {ys} p a∈ys = inj₂ a∈ys
+  ∈union-elim {a} {cons x xs x#xs} {[]} p a∈xs = inj₁ a∈xs
+  ∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) a∈xs∪ys with compare x y
+  ∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri< x<y ¬x≈y ¬y<x = inj₁ (here a≈x)
+  ∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪yys) | tri< x<y ¬x≈y ¬y<x with ∈union-elim {a} {xs} {cons y ys y#ys} _ a∈xs∪yys
+  ... | inj₁ a∈xs = inj₁ (there a∈xs)
+  ... | inj₂ a∈yys = inj₂ a∈yys
+  ∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈x) | tri≈ ¬x<y x≈y ¬y<x = inj₁ (here a≈x)
+  ∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xs∪ys) | tri≈ ¬x<y x≈y ¬y<x with ∈union-elim {a} {xs} {ys} _ a∈xs∪ys
+  ... | inj₁ a∈xs = inj₁ (there a∈xs)
+  ... | inj₂ a∈ys = inj₂ (there a∈ys)
+  ∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (here a≈y) | tri> ¬x<y ¬x≈y y<x = inj₂ (here a≈y)
+  ∈union-elim {a} {cons x xs x#xs} {cons y ys y#ys} (acc rs) (there a∈xxs∪ys) | tri> ¬x<y ¬x≈y y<x with ∈union-elim {a} {cons x xs x#xs} {ys} _ a∈xxs∪ys
+  ... | inj₁ a∈xxs = inj₁ a∈xxs
+  ... | inj₂ a∈ys = inj₂ (there a∈ys)
 
-∉∪-intro : ∀ {a} {xs ys : SortedList} -> a ∉ xs -> a ∉ ys -> a ∉ (xs ∪ ys)
-∉∪-intro {a} {[]} {ys} a∉xs a∉ys = a∉ys
-∉∪-intro {a} {cons x xs fx} {ys} a∉xs a∉ys a∈∪ with ∈∪-elim a∈∪
-... | inj₁ a∈xs = a∉xs a∈xs
-... | inj₂ a∈ys = a∉ys a∈ys
+  ∈∪-elim : ∀ {a} {xs ys : SortedList} -> a ∈ (xs ∪ ys) -> a ∈ xs ⊎ a ∈ ys
+  ∈∪-elim {a} {xs} {ys} = ∈union-elim (<-wellFounded (length xs + length ys))
+
+  ∉∪-intro : ∀ {a} {xs ys : SortedList} -> a ∉ xs -> a ∉ ys -> a ∉ (xs ∪ ys)
+  ∉∪-intro {a} {[]} {ys} a∉xs a∉ys = a∉ys
+  ∉∪-intro {a} {cons x xs fx} {ys} a∉xs a∉ys a∈∪ with ∈∪-elim a∈∪
+  ... | inj₁ a∈xs = a∉xs a∈xs
+  ... | inj₂ a∈ys = a∉ys a∈ys
 
 
-∈union-introˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
-∈union-introˡ {a} {cons x xs x#xs} (here a≈x) [] p = here a≈x
-∈union-introˡ {a} {cons x xs x#xs} (here a≈x) (cons y ys y#ys) (acc rs) with compare x y
-... | tri< _ _ _ = here a≈x
-... | tri≈ _ _ _ = here a≈x
-... | tri> _ _ _ = there (∈union-introˡ {a} {cons x xs x#xs} (here a≈x) ys _)
-∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) [] p = there a∈xs
-∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) (cons y ys y#ys) (acc rs) with compare x y
-... | tri< _ _ _ = there (∈union-introˡ {a} {xs} a∈xs (cons y ys y#ys) _)
-... | tri≈ _ _ _ = there (∈union-introˡ {a} {xs} a∈xs ys _)
-... | tri> _ _ _ = there (∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) ys _)
+  ∈union-introˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
+  ∈union-introˡ {a} {cons x xs x#xs} (here a≈x) [] p = here a≈x
+  ∈union-introˡ {a} {cons x xs x#xs} (here a≈x) (cons y ys y#ys) (acc rs) with compare x y
+  ... | tri< _ _ _ = here a≈x
+  ... | tri≈ _ _ _ = here a≈x
+  ... | tri> _ _ _ = there (∈union-introˡ {a} {cons x xs x#xs} (here a≈x) ys _)
+  ∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) [] p = there a∈xs
+  ∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) (cons y ys y#ys) (acc rs) with compare x y
+  ... | tri< _ _ _ = there (∈union-introˡ {a} {xs} a∈xs (cons y ys y#ys) _)
+  ... | tri≈ _ _ _ = there (∈union-introˡ {a} {xs} a∈xs ys _)
+  ... | tri> _ _ _ = there (∈union-introˡ {a} {cons x xs x#xs} (there a∈xs) ys _)
 
-∈union-introʳ : ∀ {a} {ys : SortedList} -> (xs : SortedList) → a ∈ ys -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
-∈union-introʳ {a} {ys} [] a∈ys p = a∈ys
-∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) a∈yys (acc rs) with compare x y
-... | tri< _ _ _ = there (∈union-introʳ {a} {cons y ys y#ys} xs a∈yys _)
-∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri≈ _ x≈y _ = here (≈-trans a≈y (≈-sym x≈y))
-∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri≈ _ _ _ = there (∈union-introʳ {a} {ys} xs a∈ys _)
-∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri> _ _ _ = here a≈y
-∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri> _ _ _ = there (∈union-introʳ {a} {ys} (cons x xs x#xs) a∈ys _)
+  ∈union-introʳ : ∀ {a} {ys : SortedList} -> (xs : SortedList) → a ∈ ys -> (p : Acc _<ℕ_ (length xs + length ys)) -> a ∈ (union xs ys p)
+  ∈union-introʳ {a} {ys} [] a∈ys p = a∈ys
+  ∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) a∈yys (acc rs) with compare x y
+  ... | tri< _ _ _ = there (∈union-introʳ {a} {cons y ys y#ys} xs a∈yys _)
+  ∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri≈ _ x≈y _ = here (≈-trans a≈y (≈-sym x≈y))
+  ∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri≈ _ _ _ = there (∈union-introʳ {a} {ys} xs a∈ys _)
+  ∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (here a≈y) (acc rs) | tri> _ _ _ = here a≈y
+  ∈union-introʳ {a} {cons y ys y#ys} (cons x xs x#xs) (there a∈ys) (acc rs) | tri> _ _ _ = there (∈union-introʳ {a} {ys} (cons x xs x#xs) a∈ys _)
 
-∈∪-introˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> a ∈ (xs ∪ ys)
-∈∪-introˡ {a} {xs} a∈xs ys = ∈union-introˡ a∈xs ys (<-wellFounded (length xs + length ys))
+  ∈∪-introˡ : ∀ {a} {xs : SortedList} -> a ∈ xs -> (ys : SortedList) -> a ∈ (xs ∪ ys)
+  ∈∪-introˡ {a} {xs} a∈xs ys = ∈union-introˡ a∈xs ys (<-wellFounded (length xs + length ys))
 
-∈∪-introʳ : ∀ {x} {ys : SortedList} -> (xs : SortedList) -> x ∈ ys -> x ∈ (xs ∪ ys)
-∈∪-introʳ {a} {ys} xs a∈ys = ∈union-introʳ {a} {ys} xs a∈ys (<-wellFounded (length xs + length ys))
+  ∈∪-introʳ : ∀ {x} {ys : SortedList} -> (xs : SortedList) -> x ∈ ys -> x ∈ (xs ∪ ys)
+  ∈∪-introʳ {a} {ys} xs a∈ys = ∈union-introʳ {a} {ys} xs a∈ys (<-wellFounded (length xs + length ys))
 
-∈∪-intro : ∀ {a} {xs ys : SortedList} -> (a ∈ xs) ⊎ (a ∈ ys) → a ∈ (xs ∪ ys)
-∈∪-intro {xs = xs} {ys} (inj₁ a∈xs) = ∈∪-introˡ a∈xs ys
-∈∪-intro {xs = xs} {ys} (inj₂ a∈ys) = ∈∪-introʳ xs a∈ys
+  ∈∪-intro : ∀ {a} {xs ys : SortedList} -> (a ∈ xs) ⊎ (a ∈ ys) → a ∈ (xs ∪ ys)
+  ∈∪-intro {xs = xs} {ys} (inj₁ a∈xs) = ∈∪-introˡ a∈xs ys
+  ∈∪-intro {xs = xs} {ys} (inj₂ a∈ys) = ∈∪-introʳ xs a∈ys
 
-∉∪-introˡ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ xs
-∉∪-introˡ {ys = ys} ¬p a∈xs = ¬p (∈∪-introˡ a∈xs ys)
+  ∉∪-introˡ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ xs
+  ∉∪-introˡ {ys = ys} ¬p a∈xs = ¬p (∈∪-introˡ a∈xs ys)
 
-∉∪-introʳ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ ys
-∉∪-introʳ {xs = xs} ¬p a∈ys = ¬p (∈∪-introʳ xs a∈ys)
+  ∉∪-introʳ : ∀ {a} {xs ys : SortedList} -> a ∉ (xs ∪ ys) -> a ∉ ys
+  ∉∪-introʳ {xs = xs} ¬p a∈ys = ¬p (∈∪-introʳ xs a∈ys)
 
-∪-idʳ : (xs : SortedList) -> (xs ∪ []) ≡ xs
-∪-idʳ [] = refl
-∪-idʳ (cons x xs fx) rewrite ∪-idʳ xs = refl
+  ∪-idʳ : (xs : SortedList) -> (xs ∪ []) ≡ xs
+  ∪-idʳ [] = refl
+  ∪-idʳ (cons x xs fx) rewrite ∪-idʳ xs = refl
 
-∪-id : Identity _≈L_ [] _∪_
-proj₁ ∪-id = λ x → ≈L-refl
-proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
+  ∪-id : Identity _≈L_ [] _∪_
+  proj₁ ∪-id = λ x → ≈L-refl
+  proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
 
 ∪-comm : ( xs ys : SortedList ) -> (xs ∪ ys) ≈L (ys ∪ xs)
 ∪-comm xs ys = extensionality (xs ∪ ys) (ys ∪ xs) (λ x → f xs ys x , f ys xs x)
@@ -393,29 +396,38 @@ proj₂ ∪-id = λ x → ≡→≈L (∪-idʳ x)
 -- Insert Properties --
 -----------------------
 
-insert-consview : ∀ {x} {xs : SortedList} → (fx : x # xs) → insert x xs ≡ cons x xs fx
-insert-consview {xs = []} [] = refl
-insert-consview {x} {xs = cons y ys y#ys} x#xs with compare x y
-... | tri< _ _ _ = WithIrr.cons-cong _<_ (IsPropStrictTotalOrder.<-prop <-STO) refl refl
-insert-consview {x} {cons y ys y#ys} (x<y ∷ x#xs) | tri≈ _ x≈y _ = ⊥-elim (<-irrefl x≈y x<y)
-insert-consview {x} {cons y ys y#ys} (x<y ∷ x#ys) | tri> _ _ y<x = ⊥-elim (<-irrefl (≈-refl {x}) (<-trans x<y y<x))
+opaque
+  unfolding union
 
-∈insert-introˡ' : {a x : X} {xs : SortedList} → a ≈ x → a ∈ (insert x xs)
-∈insert-introˡ' {xs = xs} p = ∈∪-introˡ (here p) xs
+  insert-consview : ∀ {x} {xs : SortedList} → (fx : x # xs) → insert x xs ≡ cons x xs fx
+  insert-consview {xs = []} [] = refl
+  insert-consview {x} {xs = cons y ys y#ys} x#xs with compare x y
+  ... | tri< _ _ _ = WithIrr.cons-cong _<_ (IsPropStrictTotalOrder.<-prop <-STO) refl refl
+  insert-consview {x} {cons y ys y#ys} (x<y ∷ x#xs) | tri≈ _ x≈y _ = ⊥-elim (<-irrefl x≈y x<y)
+  insert-consview {x} {cons y ys y#ys} (x<y ∷ x#ys) | tri> _ _ y<x = ⊥-elim (<-irrefl (≈-refl {x}) (<-trans x<y y<x))
 
-∈insert-introˡ : (x : X) (xs : SortedList) → x ∈ (insert x xs)
-∈insert-introˡ x xs = ∈∪-introˡ (here ≈-refl) xs
+  ∈insert-introˡ' : {a x : X} {xs : SortedList} → a ≈ x → a ∈ (insert x xs)
+  ∈insert-introˡ' {xs = xs} p = ∈∪-introˡ (here p) xs
 
-∈insert-introʳ : {a x : X} {xs : SortedList} → a ∈ xs → a ∈ (insert x xs)
-∈insert-introʳ {x = x} = ∈∪-introʳ (cons x [] [])
+  ∈insert-introˡ : (x : X) (xs : SortedList) → x ∈ (insert x xs)
+  ∈insert-introˡ x xs = ∈∪-introˡ (here ≈-refl) xs
 
-∈insert-elim : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ a ∈ xs
-∈insert-elim {a} {x} {xs} p with ∈∪-elim {a} {cons x [] []} {xs} p
-... | inj₁ (here p) = inj₁ p
-... | inj₂ p = inj₂ p
+  ∈insert-introʳ : {a x : X} {xs : SortedList} → a ∈ xs → a ∈ (insert x xs)
+  ∈insert-introʳ {x = x} = ∈∪-introʳ (cons x [] [])
 
-insert-preserves-≈L : {x y : X} {xs ys : SortedList} → x ≈ y → xs ≈L ys → insert x xs ≈L insert y ys
-insert-preserves-≈L p q = ∪-preserves-≈L (cons p []) q
+  ∈insert-elim : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ a ∈ xs
+  ∈insert-elim {a} {x} {xs} p with ∈∪-elim {a} {cons x [] []} {xs} p
+  ... | inj₁ (here p) = inj₁ p
+  ... | inj₂ p = inj₂ p
+
+  insert-preserves-≈L : {x y : X} {xs ys : SortedList} → x ≈ y → xs ≈L ys → insert x xs ≈L insert y ys
+  insert-preserves-≈L p q = ∪-preserves-≈L (cons p []) q
+
+  insert-comm : ∀ x y xs → insert x (insert y xs) ≈L insert y (insert x xs)
+  insert-comm x y xs = ≈L-trans (≈L-sym (∪-assoc (cons x [] []) (cons y [] []) xs)) (≈L-trans (∪-preserves-≈L (∪-comm (cons x [] []) (cons y [] [])) ≈L-refl) (∪-assoc (cons y [] []) (cons x [] []) xs))
+
+
+
 
 -------------------------------
 -- Insertion Sort Properties --
@@ -758,6 +770,14 @@ module WithFinCarrier (isEnum : Enumerated) where
 
 ⊆-respects-≈L : {xs xs' ys ys' : SortedList} → xs ≈L xs' → ys ≈L ys' → xs ⊆ ys → xs' ⊆ ys'
 ⊆-respects-≈L p q r s = ∈-preserves-≈L (r (∈-preserves-≈L s (≈L-sym p))) q
+
+⊆-preserves-∈ : ∀ {xs ys} {a} → a ∈ xs → xs ⊆ ys → a ∈ ys
+⊆-preserves-∈ p q = q p
+
+insert-preserves-⊆ : ∀ {xs ys x y} → x ≈ y → xs ⊆ ys → insert x xs ⊆ insert y ys
+insert-preserves-⊆ {xs} {ys} {x} {y} x≈y xs⊆ys {a} p with ∈∪-elim {a} {cons x [] []} {xs} p
+... | inj₁ (here a≈x) = ∈∪-introˡ {a} {cons y [] []} (here $ ≈-trans a≈x x≈y) ys
+... | inj₂ a∈xs = ∈∪-introʳ {a} {ys} (cons y [] []) (⊆-preserves-∈ a∈xs xs⊆ys)
 
 ⊆-[]-initial : ∀ {xs} -> [] ⊆ xs
 ⊆-[]-initial ()

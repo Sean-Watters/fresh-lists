@@ -105,7 +105,7 @@ Category.identityʳ PDTO = refl
 
 open Functor
 
-FORGET : (@0 ext : Extensionality _ _) → Functor (OCM ext) PDTO
+FORGET : (ext : Extensionality _ _) → Functor (OCM ext) PDTO
 act (FORGET _) (MkOCM X _≤_ _ _ proof) = MkTo X _≤_ (IsOrderedCommutativeMonoid.isPDTO proof)
 fmap (FORGET _) f x = fun f x
 identity (FORGET _) = refl
