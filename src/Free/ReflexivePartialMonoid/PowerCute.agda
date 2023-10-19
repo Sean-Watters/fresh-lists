@@ -260,6 +260,8 @@ pow-1 x = powable f where
 x¹≡x : ∀ x {z} (p : Powable (1 , z) x) → pow p ≡ x
 x¹≡x x (powable _) = refl
 
+-- For all n, x, pow {n} {x} is a constant function.
+-- In other words, xⁿ is uniquely defined.
 pow-unique : ∀ {n x} → (p q : Powable n x) → pow p ≡ pow q
 pow-unique {suc zero , _} {x} (powable p) (powable q) = refl
 pow-unique {suc (suc n) , _} {x} (powable p) (powable q)
@@ -302,6 +304,13 @@ pow-mult x {(suc (suc n) , _)} {(suc m , _)} (powable xⁿ⁺ᵐ) (powable xⁿ)
       ≡ op (pow x1') (op (pow xn) (pow xm) xnRxm) xRxnxm
   p = assocʳ (proj₂ (proj₂ (xⁿ (1 , nonZero) (suc n , nonZero) refl))) r
 
+pow-suc-lem : ∀ {n x} (p : Powable n x) (p+ : Powable (succ⁺ n) x) (r : x R pow p) → op x (pow p) r ≡ pow p+
+pow-suc-lem {suc n , _} {x} (powable f) (powable g) r
+  = cong-op (sym $ x¹≡x x (proj₁ (g (1 , nonZero) (suc n , nonZero) refl)))
+            (pow-unique (powable f) (proj₁ (proj₂ (g (1 , record { nonZero = tt }) (suc n , record { nonZero = tt }) refl))))
+            r
+            (proj₂ (proj₂ (g (1 , nonZero) (suc n , nonZero) refl)))
+
 pow-suc : ∀ x {n} → (xⁿ : Powable n x) → x R (pow xⁿ) → Powable (succ⁺ n) x
 pow-suc x {u} (powable f) xRxˢⁿ⁺ˢᵐ = powable g where
   g : (a b : ℕ⁺) → succ⁺ u ≡ a ⁺+⁺ b
@@ -310,4 +319,4 @@ pow-suc x {u} (powable f) xRxˢⁿ⁺ˢᵐ = powable g where
   g (suc (suc n) , record { nonZero = tt }) (suc m , record { nonZero = tt }) refl
     = let (xˢⁿ , xˢᵐ , xˢⁿRxˢᵐ) = f (suc⁺ n) (suc⁺ m) refl
           (xRxˢⁿ , xxˢⁿRxˢᵐ) = assocL1 xˢⁿRxˢᵐ (subst (x R_) (pow-mult x (powable f) xˢⁿ xˢᵐ xˢⁿRxˢᵐ ) xRxˢⁿ⁺ˢᵐ)
-      in {!!} , {!xˢᵐ!} , {!f!}
+      in pow-suc x {suc n , _} xˢⁿ xRxˢⁿ , xˢᵐ , subst (_R pow xˢᵐ) (pow-suc-lem xˢⁿ (pow-suc x xˢⁿ xRxˢⁿ) xRxˢⁿ) xxˢⁿRxˢᵐ
