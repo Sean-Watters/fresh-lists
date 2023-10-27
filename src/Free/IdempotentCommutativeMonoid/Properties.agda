@@ -406,28 +406,28 @@ opaque
   insert-consview {x} {cons y ys y#ys} (x<y ∷ x#xs) | tri≈ _ x≈y _ = ⊥-elim (<-irrefl x≈y x<y)
   insert-consview {x} {cons y ys y#ys} (x<y ∷ x#ys) | tri> _ _ y<x = ⊥-elim (<-irrefl (≈-refl {x}) (<-trans x<y y<x))
 
-  ∈insert-introˡ' : {a x : X} {xs : SortedList} → a ≈ x → a ∈ (insert x xs)
-  ∈insert-introˡ' {xs = xs} p = ∈∪-introˡ (here p) xs
+∈insert-introˡ' : {a x : X} {xs : SortedList} → a ≈ x → a ∈ (insert x xs)
+∈insert-introˡ' {xs = xs} p = ∈∪-introˡ (here p) xs
 
-  ∈insert-introˡ : (x : X) (xs : SortedList) → x ∈ (insert x xs)
-  ∈insert-introˡ x xs = ∈∪-introˡ (here ≈-refl) xs
+∈insert-introˡ : (x : X) (xs : SortedList) → x ∈ (insert x xs)
+∈insert-introˡ x xs = ∈∪-introˡ (here ≈-refl) xs
 
-  ∈insert-introʳ : {a x : X} {xs : SortedList} → a ∈ xs → a ∈ (insert x xs)
-  ∈insert-introʳ {x = x} = ∈∪-introʳ (cons x [] [])
+∈insert-introʳ : {a x : X} {xs : SortedList} → a ∈ xs → a ∈ (insert x xs)
+∈insert-introʳ {x = x} = ∈∪-introʳ (cons x [] [])
 
-  ∈insert-elim : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ a ∈ xs
-  ∈insert-elim {a} {x} {xs} p with ∈∪-elim {a} {cons x [] []} {xs} p
-  ... | inj₁ (here p) = inj₁ p
-  ... | inj₂ p = inj₂ p
+∈insert-elim : {a x : X} {xs : SortedList} → a ∈ (insert x xs) → a ≈ x ⊎ a ∈ xs
+∈insert-elim {a} {x} {xs} p with ∈∪-elim {a} {cons x [] []} {xs} p
+... | inj₁ (here p) = inj₁ p
+... | inj₂ p = inj₂ p
 
-  insert-preserves-≈L : {x y : X} {xs ys : SortedList} → x ≈ y → xs ≈L ys → insert x xs ≈L insert y ys
-  insert-preserves-≈L p q = ∪-preserves-≈L (cons p []) q
+insert-preserves-≈L : {x y : X} {xs ys : SortedList} → x ≈ y → xs ≈L ys → insert x xs ≈L insert y ys
+insert-preserves-≈L p q = ∪-preserves-≈L (cons p []) q
 
-  insert-comm : ∀ x y xs → insert x (insert y xs) ≈L insert y (insert x xs)
-  insert-comm x y xs = ≈L-trans (≈L-sym (∪-assoc (cons x [] []) (cons y [] []) xs)) (≈L-trans (∪-preserves-≈L (∪-comm (cons x [] []) (cons y [] [])) ≈L-refl) (∪-assoc (cons y [] []) (cons x [] []) xs))
+insert-comm : ∀ x y xs → insert x (insert y xs) ≈L insert y (insert x xs)
+insert-comm x y xs = ≈L-trans (≈L-sym (∪-assoc (cons x [] []) (cons y [] []) xs)) (≈L-trans (∪-preserves-≈L (∪-comm (cons x [] []) (cons y [] [])) ≈L-refl) (∪-assoc (cons y [] []) (cons x [] []) xs))
 
-
-
+insert-idempotent : ∀ y x xs → x ≡ y → insert y (insert x xs) ≈L insert x xs
+insert-idempotent x .x xs refl = ≈L-trans (≈L-sym $ ∪-assoc (cons x [] []) (cons x [] []) xs) (∪-preserves-≈L {ys = xs} (∪-idempotent (cons x [] [])) ≈L-refl)
 
 -------------------------------
 -- Insertion Sort Properties --
