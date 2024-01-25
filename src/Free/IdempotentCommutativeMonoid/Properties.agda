@@ -429,6 +429,9 @@ insert-comm x y xs = ≈L-trans (≈L-sym (∪-assoc (cons x [] []) (cons y [] [
 insert-idempotent : ∀ y x xs → x ≡ y → insert y (insert x xs) ≈L insert x xs
 insert-idempotent x .x xs refl = ≈L-trans (≈L-sym $ ∪-assoc (cons x [] []) (cons x [] []) xs) (∪-preserves-≈L {ys = xs} (∪-idempotent (cons x [] [])) ≈L-refl)
 
+insert-idempotent' : ∀ y x xs → x ≡ y → insert y (insert x xs) ≈L insert y xs
+insert-idempotent' x .x xs refl = insert-idempotent x x xs refl
+
 -------------------------------
 -- Insertion Sort Properties --
 -------------------------------
@@ -785,6 +788,10 @@ insert-preserves-⊆ {xs} {ys} {x} {y} x≈y xs⊆ys {a} p with ∈∪-elim {a} 
 ⊆-weaken : ∀ {x xs ys} {fx : x # xs} → (cons x xs fx) ⊆ ys → xs ⊆ ys
 ⊆-weaken sub a∈xs = sub (there a∈xs)
 
+⊆-step : ∀ {a xs ys} {p : a # xs} {q : a # ys} → xs ⊆ ys → cons a xs p ⊆ cons a ys q
+⊆-step p (here x) = here x
+⊆-step p (there q) = there (p q)
+
 cons⊈[] : ∀ {x xs} {fx : x # xs} -> cons x xs fx ⊈ []
 cons⊈[] {x} {xs} {fx} p with p (here ≈-refl)
 ... | ()
@@ -840,3 +847,25 @@ IsPartialOrder.antisym ⊆-isPO = ⊆-antisym
 IsLattice.isPartialOrder ⊆-isLattice = ⊆-isPO
 IsLattice.supremum ⊆-isLattice = ∪-supremum
 IsLattice.infimum ⊆-isLattice = ∩-infimum
+
+----------------------------------
+-- Properties of set difference
+----------------------------------
+-[] : ∀ A → ([] -< A >) ≈L []
+-[] [] = []
+-[] (cons x xs x#xs) = -[] xs
+
+-[]-subset : ∀ A x → (A -[ x ]) ⊆ A
+-[]-subset (cons x xs x#xs) y p with x ≈? y
+... | yes q = there p
+... | no ¬q = ⊆-preserves-∈ p (⊆-step (-[]-subset xs y))
+
+-<>-subset : ∀ A B → (A -< B >) ⊆ A
+-<>-subset A [] p = p
+-<>-subset [] (cons x xs x#xs) p = ∈-preserves-≈L p (-[] (cons x xs x#xs))
+-<>-subset (cons y ys y#ys) (cons x xs x#xs) p with y ≈? x
+... | yes q = there (-<>-subset ys xs p)
+... | no ¬q = ⊆-preserves-∈ (-<>-subset (cons y (ys -[ x ]) (-[]-fresh ys x y y#ys)) xs p) (⊆-step (-[]-subset ys x))
+
+-<>-subset' : ∀ A B C → A ⊆ B → (A -< C >) ⊆ B
+-<>-subset' A B C sub p = sub (-<>-subset A C p)

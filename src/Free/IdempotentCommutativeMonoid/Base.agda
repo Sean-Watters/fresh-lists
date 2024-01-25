@@ -69,3 +69,34 @@ _∩_ (cons x xs p) ys with any? (x ≈?_) ys
 insertion-sort : List X → SortedList
 insertion-sort [] = []
 insertion-sort (x ∷ xs) = insert x (insertion-sort xs)
+
+-- Element removal
+mutual
+  _-[_] : SortedList → X → SortedList
+  [] -[ y ] = []
+  cons x xs x#xs -[ y ] with x ≈? y
+  ... | yes _ = xs
+  ... | no  _ = cons x (xs -[ y ]) (-[]-fresh xs y x x#xs)
+
+  -[]-fresh : (xs : SortedList) → (y : X) → (z : X) → z # xs → z # (xs -[ y ])
+  -[]-fresh [] y x z#xs = z#xs
+  -[]-fresh (cons x xs x#xs) y z (z≠x ∷ z#xs) with x ≈? y
+  ... | yes _ = z#xs
+  ... | no  _ = z≠x ∷ -[]-fresh xs y z z#xs
+
+  -- remove-fresh-idempotent : (xs : SortedList) → (y : X) → y # xs → xs -[ y ] ≡ xs
+  -- remove-fresh-idempotent [] y y#xs = refl
+  -- remove-fresh-idempotent (cons x xs x#xs) y (y≠x ∷ y#xs) with ≠-dec x y
+  -- ... | inj₁ x≈y = ⊥-elim (≠-irrefl x≈y (≠-sym y≠x))
+  -- ... | inj₂ x≠y = ≠-cons-cong refl (remove-fresh-idempotent xs y y#xs)
+
+  -- remove-removes : (xs : SortedList) → (y : X) → y # (xs -[ y ])
+  -- remove-removes [] y = []
+  -- remove-removes (cons x xs x#xs) y with ≠-dec x y
+  -- ... | inj₁ x≈y = ≠-resp-≈ x≈y x#xs
+  -- ... | inj₂ x≠y = ≠-sym x≠y ∷ remove-removes xs y
+
+-- Set difference
+_-<_> : SortedList → SortedList → SortedList
+xs -< [] > = xs
+xs -< cons x ys x#xs > = (xs -[ x ]) -< ys >
