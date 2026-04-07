@@ -8,7 +8,7 @@ open import Data.Product hiding (map)
 open import Data.Sum
 open import Data.Unit using (⊤; tt)
 open import Data.Bool hiding (_≤_)
-open import Data.Bool.Properties using (push-function-into-if)
+open import Data.Bool.Properties using (if-float)
 open import Function
 
 open import Relation.Binary hiding (NonEmpty; TotalOrder; Irrelevant)
@@ -141,7 +141,7 @@ SL-map-countlem X Y f (cons x xs x#xs) (cons y ys y#ys) (acc p) (acc q) a =
     (if does $ a =Y? (f x) then suc cfxs else cfxs) + (if does $ a =Y? (f y) then suc cfys else cfys)
   ≡⟨⟩
     (if does (a =Y? f x) then 1 + cfxs else 0 + cfxs) + (if does (a =Y? f y) then 1 + cfys else 0 + cfys)
-  ≡⟨ cong₂ _+_ (sym $ push-function-into-if (_+ cfxs) (does $ a =Y? (f x))) (sym $ push-function-into-if (_+ cfys) (does $ a =Y? (f y))) ⟩
+  ≡⟨ cong₂ _+_ (sym $ if-float (_+ cfxs) (does $ a =Y? (f x))) (sym $ if-float (_+ cfys) (does $ a =Y? (f y))) ⟩
     ((if does (a =Y? (f x)) then 1 else 0) + cfxs) + ((if does (a =Y? (f y)) then 1 else 0) + cfys)
   ≡⟨⟩
     (cfx + cfxs) + (cfy + cfys)
@@ -161,11 +161,11 @@ SL-map-countlem X Y f (cons x xs x#xs) (cons y ys y#ys) (acc p) (acc q) a =
     cfyfys = count (proof Y) (insert (proof Y) (f y) (SL-map X Y f ys)) a
 
     acc1 : Acc _<ℕ_ (length (SL-map X Y f xs) + length (insert (proof Y) (f y) (SL-map X Y f ys)))
-    acc1 = p _ (s≤s (≤-reflexive (cong₂ _+_ (sym $ SL-map-length X Y f xs) (trans (insert-length (proof Y) (f y) (SL-map X Y f ys) _) (cong suc (sym $ SL-map-length X Y f ys))))))
+    acc1 = p (s≤s (≤-reflexive (cong₂ _+_ (sym $ SL-map-length X Y f xs) (trans (insert-length (proof Y) (f y) (SL-map X Y f ys) _) (cong suc (sym $ SL-map-length X Y f ys))))))
 
     acc2 : Acc _<ℕ_ (length (SL-map X Y f (cons x xs x#xs)) + length (SL-map X Y f ys))
-    acc2 = p _ (s≤s (≤-reflexive (trans (cong₂ _+_ (trans (insert-length (proof Y) (f x) (SL-map X Y f xs) _) (cong suc (sym $ SL-map-length X Y f xs))) (sym $ SL-map-length X Y f ys))
-                                        (sym $ +-suc _ _))))
+    acc2 = p (s≤s (≤-reflexive (trans (cong₂ _+_ (trans (insert-length (proof Y) (f x) (SL-map X Y f xs) _) (cong suc (sym $ SL-map-length X Y f xs))) (sym $ SL-map-length X Y f ys))
+                                      (sym $ +-suc _ _))))
 
     -- Note for cleanup later: the two cases here can probably be generalised to one lemma. Maybe.
     lem : count (proof Y) (SL-map X Y f (union (proof X) (cons x xs x#xs) (cons y ys y#ys) (acc p))) a
@@ -174,18 +174,18 @@ SL-map-countlem X Y f (cons x xs x#xs) (cons y ys y#ys) (acc p) (acc q) a =
     lem with IsPropDecTotalOrder.total (proof X) x y
     ... | inj₁ x≤y =
       begin
-        count (proof Y) (insert (proof Y) (f x) (SL-map X Y f (union (proof X) xs (cons y ys y#ys) (p _ ≤ℕ-refl)))) a
+        count (proof Y) (insert (proof Y) (f x) (SL-map X Y f (union (proof X) xs (cons y ys y#ys) (p ≤ℕ-refl)))) a
       ≡⟨ insert-countlem (proof Y) (f x) (SL-map X Y f (union (proof X) xs (cons y ys y#ys) _)) a _ ⟩
         (if does $ a =Y? (f x)
-         then suc (count (proof Y) (SL-map X Y f (union (proof X) xs (cons y ys y#ys) (p _ ≤ℕ-refl))) a)
-         else      count (proof Y) (SL-map X Y f (union (proof X) xs (cons y ys y#ys) (p _ ≤ℕ-refl))) a)
+         then suc (count (proof Y) (SL-map X Y f (union (proof X) xs (cons y ys y#ys) (p ≤ℕ-refl))) a)
+         else      count (proof Y) (SL-map X Y f (union (proof X) xs (cons y ys y#ys) (p ≤ℕ-refl))) a)
       ≡⟨ cong (λ z → if (does $ a =Y? (f x)) then suc z else z) (SL-map-countlem X Y f xs (cons y ys y#ys) _ acc1 a) ⟩
         (if does $ a =Y? (f x)
          then suc (cfxs + count (proof Y) (SL-map X Y f (cons y ys y#ys)) a)
          else      cfxs + count (proof Y) (SL-map X Y f (cons y ys y#ys)) a)
       ≡⟨⟩
         (if does $ a =Y? (f x) then ((suc cfxs) + cfyfys) else (cfxs  + cfyfys))
-      ≡⟨ (sym $ push-function-into-if (_+ cfyfys) (does $ a =Y? (f x))) ⟩
+      ≡⟨ (sym $ if-float (_+ cfyfys) (does $ a =Y? (f x))) ⟩
         (if does $ a =Y? (f x) then suc cfxs else cfxs) + cfyfys
       ≡⟨ cong ((if does $ a =Y? (f x) then suc cfxs else cfxs) +_) (insert-countlem (proof Y) (f y) (SL-map X Y f ys) a _) ⟩
         (if does $ a =Y? (f x) then suc cfxs else cfxs)
@@ -193,11 +193,11 @@ SL-map-countlem X Y f (cons x xs x#xs) (cons y ys y#ys) (acc p) (acc q) a =
       ∎
     ... | inj₂ y≤x =
       begin
-        count (proof Y) (insert (proof Y) (f y) (SL-map X Y f (union (proof X) (cons x xs x#xs) ys (p _ (s≤s (≤-reflexive (sym $ +-suc _ _))))))) a
+        count (proof Y) (insert (proof Y) (f y) (SL-map X Y f (union (proof X) (cons x xs x#xs) ys (p (s≤s (≤-reflexive (sym $ +-suc _ _))))))) a
       ≡⟨ insert-countlem (proof Y) (f y) (SL-map X Y f (union (proof X) (cons x xs x#xs) ys _)) a _ ⟩
         (if (does $ a =Y? (f y))
-         then suc (count (proof Y) (SL-map X Y f (union (proof X) (cons x xs x#xs) ys (p _ _))) a)
-         else      count (proof Y) (SL-map X Y f (union (proof X) (cons x xs x#xs) ys (p _ _))) a)
+         then suc (count (proof Y) (SL-map X Y f (union (proof X) (cons x xs x#xs) ys (p _))) a)
+         else      count (proof Y) (SL-map X Y f (union (proof X) (cons x xs x#xs) ys (p _))) a)
       ≡⟨ cong (λ z → if (does $ a =Y? (f y)) then suc z else z) (SL-map-countlem X Y f (cons x xs x#xs) ys _ acc2 a) ⟩
         (if (does $ a =Y? (f y))
          then suc (count (proof Y) (SL-map X Y f (cons x xs x#xs)) a + cfys)
@@ -206,7 +206,7 @@ SL-map-countlem X Y f (cons x xs x#xs) (cons y ys y#ys) (acc p) (acc q) a =
         (if (does $ a =Y? (f y)) then ((suc cfxfxs) + cfys) else (cfxfxs + cfys))
       ≡⟨ cong (λ z → if does $ (a =Y? f y) then z else cfxfxs + cfys) (sym $ +-suc _ _) ⟩
         (if (does $ a =Y? (f y)) then (cfxfxs + suc cfys  ) else (cfxfxs + cfys))
-      ≡⟨ (sym $ push-function-into-if (cfxfxs +_) (does $ a =Y? (f y))) ⟩
+      ≡⟨ (sym $ if-float (cfxfxs +_) (does $ a =Y? (f y))) ⟩
         cfxfxs
         + (if does $ a =Y? (f y) then suc cfys else cfys)
       ≡⟨ cong (_+ (if does $ (a =Y? f y) then suc cfys else cfys)) (insert-countlem (proof Y) (f x) (SL-map X Y f xs) a _) ⟩
@@ -279,7 +279,7 @@ foldr-∙-preserves-∙ A B f (cons x xs x#xs) [] (acc p) = sym $ identityʳ (pr
 foldr-∙-preserves-∙ A B f (cons x xs x#xs) (cons y ys y#ys) (acc p) with IsPropDecTotalOrder.total (proof A) x y
 ... | inj₁ _ =
   begin
-    (f x) ∙' (foldr-∙ A B f (union (proof A) xs (cons y ys y#ys) (p (length xs + (suc $ length ys)) (s≤s (≤-reflexive refl)))))
+    (f x) ∙' (foldr-∙ A B f (union (proof A) xs (cons y ys y#ys) (p (s≤s (≤-reflexive refl)))))
   ≡⟨ cong (f x ∙'_) (foldr-∙-preserves-∙ A B f xs (cons y ys y#ys) _) ⟩
     (f x) ∙' (fxs ∙' ((f y) ∙' fys))
   ≡⟨ sym $ assoc (proof B) _ _ _ ⟩
@@ -291,7 +291,7 @@ foldr-∙-preserves-∙ A B f (cons x xs x#xs) (cons y ys y#ys) (acc p) with IsP
     fys = foldr (λ a as → f a ∙' as) (ε B) ys
 ... | inj₂ _ =
   begin
-    (f y) ∙' (foldr-∙ A B f (union (proof A) (cons x xs x#xs) ys (p (length (cons x xs x#xs) + length ys) (s≤s (≤-reflexive (sym (+-suc (length xs) (length ys))))))))
+    (f y) ∙' (foldr-∙ A B f (union (proof A) (cons x xs x#xs) ys (p (s≤s (≤-reflexive (sym (+-suc (length xs) (length ys))))))))
   ≡⟨ cong (f y ∙'_) (foldr-∙-preserves-∙ A B f (cons x xs x#xs) ys _) ⟩
     (f y ∙' (((f x) ∙' fxs) ∙' fys))
   ≡⟨ sym $ assoc (proof B) _ _ _ ⟩

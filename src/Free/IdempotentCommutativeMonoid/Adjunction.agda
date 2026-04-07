@@ -71,13 +71,16 @@ module _ {X : Set} {_<_ : X → X → Set} (<-STO : IsPropStrictTotalOrder _≡_
     idem SL-isICM x = ≈L→≡ (∪-idempotent x)
 
     SL-isSTO : IsPropStrictTotalOrder _≡_ _<L_
-    IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO SL-isSTO) = ≡-isEquivalence
-    IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO SL-isSTO) = <L-trans
-    IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO SL-isSTO) x y = Tri≈L→Tri≡ x y (compareL x y)
-    IsPropStrictTotalOrder.≈-prop SL-isSTO
+    SL-isSTO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.isEquivalence = ≡-isEquivalence
+    SL-isSTO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.irrefl refl = <-lex-irrefl (≈L-refl)
+    SL-isSTO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.trans = <L-trans
+    SL-isSTO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.<-resp-≈ .proj₁ refl p = p
+    SL-isSTO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.<-resp-≈ .proj₂ refl p = p
+    SL-isSTO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.compare x y = Tri≈L→Tri≡ x y (compareL x y)
+    SL-isSTO .IsPropStrictTotalOrder.≈-prop
       = Axiom.UniquenessOfIdentityProofs.Decidable⇒UIP.≡-irrelevant
           (WithIrr.lift-decEq _<_ (IsPropStrictTotalOrder.<-prop <-STO) (IsPropStrictTotalOrder._≟_ <-STO))
-    IsPropStrictTotalOrder.<-prop SL-isSTO = <L-prop
+    SL-isSTO .IsPropStrictTotalOrder.<-prop = <L-prop
 
     SL-isOICM : IsOrderedIdempotentCommutativeMonoid _≡_ _<L_ (_∪_ <-STO) []
     IsOrderedIdempotentCommutativeMonoid.isICM SL-isOICM = SL-isICM

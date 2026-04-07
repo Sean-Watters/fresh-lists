@@ -42,9 +42,9 @@ opaque
   union [] ys rs = ys
   union (cons x xs x#xs) [] rs = cons x xs x#xs
   union (cons x xs x#xs) (cons y ys y#ys) (acc rs) with <-tri x y
-  ... | tri< x<y x≉y y≮x = cons x (union xs (cons y ys y#ys) (rs _ ≤-refl)) (union-fresh x#xs (x<y ∷ (#-trans <-trans x y ys x<y y#ys)))
-  ... | tri≈ x≮y x≈y y≮x = cons x (union xs ys (rs _ (s≤s (≤-trans (n≤1+n _) (≤-reflexive $ sym $ +-suc _ _))))) (union-fresh x#xs (#-resp-≈ y#ys (≈-sym x≈y)))
-  ... | tri> x≮y x≉y y<x = cons y (union (cons x xs x#xs) ys (rs _ (s≤s (≤-reflexive $ sym $ +-suc _ _)))) (union-fresh (y<x ∷ #-trans <-trans y x xs y<x x#xs) y#ys)
+  ... | tri< x<y x≉y y≮x = cons x (union xs (cons y ys y#ys) (rs ≤-refl)) (union-fresh x#xs (x<y ∷ (#-trans <-trans x y ys x<y y#ys)))
+  ... | tri≈ x≮y x≈y y≮x = cons x (union xs ys (rs (s≤s (≤-trans (n≤1+n _) (≤-reflexive $ sym $ +-suc _ _))))) (union-fresh x#xs (#-resp-≈ y#ys (≈-sym x≈y)))
+  ... | tri> x≮y x≉y y<x = cons y (union (cons x xs x#xs) ys (rs (s≤s (≤-reflexive $ sym $ +-suc _ _)))) (union-fresh (y<x ∷ #-trans <-trans y x xs y<x x#xs) y#ys)
   
   union-fresh {a} {[]} {ys} {acc rs} a#xs a#ys = a#ys
   union-fresh {a} {cons x xs x#xs} {[]} {acc rs} a#xs a#ys = a#xs

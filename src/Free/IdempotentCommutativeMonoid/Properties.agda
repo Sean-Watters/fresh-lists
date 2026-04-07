@@ -489,6 +489,10 @@ compareL (cons x xs fx) (cons y ys fy) with compare x y
 ... | tri≈ xs≮ys xs≈ys xs≯ys = tri≈ (λ { (here x<y) → x≮y x<y ; (there _ xs<ys) → xs≮ys xs<ys}) (cons x≈y xs≈ys) λ { (here y<x) → x≯y y<x ; (there _ ys<xs) → xs≯ys ys<xs}
 ... | tri> xs≮ys xs≉ys xs>ys = tri> (λ { (here x<y) → x≮y x<y ; (there _ xs<ys) → xs≮ys xs<ys}) (λ { (cons _ xs≈ys) → xs≉ys xs≈ys}) (there (≈-sym x≈y) xs>ys)
 
+<-lex-irrefl : ∀ {x y} → x ≈L y → ¬ (x <-lex y)
+<-lex-irrefl (cons p ps) (here q) = <-irrefl p q
+<-lex-irrefl (cons p ps) (there q qs) = <-lex-irrefl ps qs
+
 <L-prop : Irrelevant _<-lex_
 <L-prop [] [] = refl
 <L-prop (here x<y) (here x<y') = cong here (IsPropStrictTotalOrder.<-prop <-STO x<y x<y')
@@ -496,12 +500,34 @@ compareL (cons x xs fx) (cons y ys fy) with compare x y
 <L-prop (there x=y xs<ys) (here x<y) = ⊥-elim (<-irrefl x=y x<y)
 <L-prop (there x=y xs<ys) (there x=y' xs<ys') = cong₂ there (IsPropStrictTotalOrder.≈-prop <-STO x=y x=y') (<L-prop xs<ys xs<ys')
 
+<-lex-resp-≈Lʳ : _<-lex_ Respectsʳ _≈L_
+<-lex-resp-≈Lʳ (cons p ps) [] = []
+<-lex-resp-≈Lʳ (cons p ps) (here q) = here (<-resp-≈ .proj₁ p q)
+<-lex-resp-≈Lʳ (cons p ps) (there q qs) = there (≈-trans q p) (<-lex-resp-≈Lʳ ps qs)
+
+<-lex-resp-≈Lˡ : _<-lex_ Respectsˡ _≈L_
+<-lex-resp-≈Lˡ [] [] = []
+<-lex-resp-≈Lˡ (cons p ps) (here q) = here (<-resp-≈ .proj₂ p q)
+<-lex-resp-≈Lˡ (cons p ps) (there q qs) = there (≈-trans (≈-sym p) q) (<-lex-resp-≈Lˡ ps qs)
+
+<-lex-resp-≈L : _<-lex_ Respects₂ _≈L_
+<-lex-resp-≈L .proj₁ = <-lex-resp-≈Lʳ
+<-lex-resp-≈L .proj₂ = <-lex-resp-≈Lˡ
+
 <-lex-STO : IsPropStrictTotalOrder _≈L_ _<-lex_
-IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO <-lex-STO) = isEquivalence
-IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO <-lex-STO) = <-lex-trans
-IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO <-lex-STO) = compareL
-IsPropStrictTotalOrder.≈-prop <-lex-STO = ≈L-prop
-IsPropStrictTotalOrder.<-prop <-lex-STO = <L-prop
+<-lex-STO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.isEquivalence = isEquivalence
+<-lex-STO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.irrefl = <-lex-irrefl
+<-lex-STO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.trans = <-lex-trans
+<-lex-STO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder .IsStrictPartialOrder.<-resp-≈ = <-lex-resp-≈L
+<-lex-STO .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.compare = compareL
+<-lex-STO .IsPropStrictTotalOrder.≈-prop = ≈L-prop
+<-lex-STO .IsPropStrictTotalOrder.<-prop = <L-prop
+
+-- IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO <-lex-STO) = isEquivalence
+-- IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO <-lex-STO) = <-lex-trans
+-- IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO <-lex-STO) = compareL
+-- IsPropStrictTotalOrder.≈-prop <-lex-STO = ≈L-prop
+-- IsPropStrictTotalOrder.<-prop <-lex-STO = <L-prop
 
 <L-trans = <-lex-trans
 _<L_ = _<-lex_

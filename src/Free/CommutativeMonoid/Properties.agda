@@ -440,8 +440,8 @@ insert-countlem-yes : ∀ x xs a p
 insert-countlem-yes x [] .x (acc p) refl = ifL $ does-too refl
 insert-countlem-yes x (cons y ys y#ys) .x (acc p) refl with total x y
 insert-countlem-yes x (cons y ys y#ys) .x (acc p) refl | inj₁ u with x ≟ y
-... | yes refl = trans (ifL $ does-too refl) (cong suc (trans (cong (λ z → count z x) (union-idˡ (cons y ys y#ys) (p (suc $ length ys) ≤ℕ-refl))) (ifL $ does-too refl)))
-... | no x≢y   = trans (ifL $ does-too refl) (cong suc (trans (cong (λ z → count z x) (union-idˡ (cons y ys y#ys) (p (suc $ length ys) ≤ℕ-refl))) (ifR $ does-not x≢y)))
+... | yes refl = trans (ifL $ does-too refl) (cong suc (trans (cong (λ z → count z x) (union-idˡ (cons y ys y#ys) (p ≤ℕ-refl))) (ifL $ does-too refl)))
+... | no x≢y   = trans (ifL $ does-too refl) (cong suc (trans (cong (λ z → count z x) (union-idˡ (cons y ys y#ys) (p ≤ℕ-refl))) (ifR $ does-not x≢y)))
 insert-countlem-yes x (cons y ys y#ys) .x (acc p) refl | inj₂ u with x ≟ y
 ... | yes refl = cong suc (insert-countlem-yes x ys x _ refl)
 ... | no x≢y   = insert-countlem-yes x ys x _ refl
@@ -454,11 +454,11 @@ insert-countlem-no : ∀ x xs a p
 insert-countlem-no x [] a (acc p) a≢x = ifR $ does-not a≢x
 insert-countlem-no x (cons y ys y#ys) a (acc p) a≢x with total x y
 insert-countlem-no x (cons y ys y#ys) a (acc p) a≢x | inj₁ _ with a ≟ y
-... | yes refl = trans (ifR $ does-not a≢x) (trans (cong (λ z → count z a) (union-idˡ (cons y ys y#ys) (p (suc $ length ys) ≤ℕ-refl))) (ifL $ does-too refl))
-... | no a≢y   = trans (ifR $ does-not a≢x) (trans (cong (λ z → count z a) (union-idˡ (cons y ys y#ys) (p (suc $ length ys) ≤ℕ-refl))) (ifR $ does-not a≢y))
+... | yes refl = trans (ifR $ does-not a≢x) (trans (cong (λ z → count z a) (union-idˡ (cons y ys y#ys) (p ≤ℕ-refl))) (ifL $ does-too refl))
+... | no a≢y   = trans (ifR $ does-not a≢x) (trans (cong (λ z → count z a) (union-idˡ (cons y ys y#ys) (p ≤ℕ-refl))) (ifR $ does-not a≢y))
 insert-countlem-no x (cons y ys y#ys) a (acc p) a≢x | inj₂ _ with a ≟ y
-... | yes refl = cong suc (insert-countlem-no x ys a (p (suc $ length ys) ≤ℕ-refl) a≢x)
-... | no a≢y   = insert-countlem-no x ys a (p (suc $ length ys) ≤ℕ-refl) a≢x
+... | yes refl = cong suc (insert-countlem-no x ys a (p ≤ℕ-refl) a≢x)
+... | no a≢y   = insert-countlem-no x ys a (p ≤ℕ-refl) a≢x
 
 
 insert-countlem : ∀ x xs a p
@@ -472,12 +472,12 @@ insert-length : ∀ x xs p
               → length (insert' x xs p) ≡ suc (length xs)
 insert-length x [] (acc p) = refl
 insert-length x (cons y ys y#ys) (acc p) with total x y
-... | inj₁ _ = cong (suc ∘ length) (union-idˡ (cons y ys y#ys) (p (suc $ length ys) ≤ℕ-refl))
+... | inj₁ _ = cong (suc ∘ length) (union-idˡ (cons y ys y#ys) (p ≤ℕ-refl))
 ... | inj₂ _ = cong suc (insert-length x ys _)
 
 insert≡cons : ∀ {x xs} (x#xs : x # xs) p
             → insert' x xs p ≡ cons x xs x#xs
 insert≡cons {x} {[]} [] (acc p) = refl
 insert≡cons {x} {cons y ys y#ys} (x≤y ∷ x#ys) (acc p) with total x y
-... | inj₁ _ = cons-cong refl (union-idˡ (cons y ys y#ys) (p (suc $ length ys) ≤ℕ-refl))
-... | inj₂ y≤x = cons-cong (≤-antisym y≤x x≤y) (trans (insert≡cons {x} {ys} x#ys (p (suc $ length ys) ≤ℕ-refl)) (cons-cong (≤-antisym x≤y y≤x) refl))
+... | inj₁ _ = cons-cong refl (union-idˡ (cons y ys y#ys) (p ≤ℕ-refl))
+... | inj₂ y≤x = cons-cong (≤-antisym y≤x x≤y) (trans (insert≡cons {x} {ys} x#ys (p ≤ℕ-refl)) (cons-cong (≤-antisym x≤y y≤x) refl))

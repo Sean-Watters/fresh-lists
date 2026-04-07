@@ -7,7 +7,7 @@ module Free.ReflexivePartialMonoid.Base
   where
 
 open import Data.Nat
-open import Data.PosNat
+open import Data.PosNat hiding (double)
 open import Data.Sum
 open import Data.Product
 open import Data.Unit

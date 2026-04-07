@@ -39,9 +39,9 @@ union-fresh : {a : X} {xs ys : SortedList} {p : Acc _<ℕ_ (length xs + length y
 union [] ys (acc rs) = ys
 union (cons x xs x#xs) [] (acc rs) = cons x xs x#xs
 union (cons x xs x#xs) (cons y ys y#ys) (acc rs) with total x y
-... | inj₁ x≤y = cons x (union xs (cons y ys y#ys) (rs _ ≤ℕ-refl))
+... | inj₁ x≤y = cons x (union xs (cons y ys y#ys) (rs ≤ℕ-refl))
                         (union-fresh x#xs (#-trans ≤-trans x y (cons y ys y#ys) x≤y (≤-refl ∷ y#ys)))
-... | inj₂ y≤x = cons y (union (cons x xs x#xs) ys (rs _ (s≤s (≤ℕ-reflexive (sym (+-suc _ _))))))
+... | inj₂ y≤x = cons y (union (cons x xs x#xs) ys (rs (s≤s (≤ℕ-reflexive (sym (+-suc _ _))))))
                         (union-fresh (#-trans ≤-trans y x (cons x xs x#xs) y≤x (≤-refl ∷ x#xs)) y#ys)
 
 union-fresh {a} {[]} {ys} {acc rs} a#xs a#ys = a#ys

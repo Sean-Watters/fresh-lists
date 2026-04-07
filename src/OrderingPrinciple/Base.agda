@@ -120,14 +120,19 @@ STO≃Set-gives-OP (FORGETSTO⁻¹ , ((η , (η⁻¹ , η-inv)) , (ε , (ε⁻¹
       _<_ : X → X → Set
       x < y = transform ε⁻¹ XX x <' transform ε⁻¹ XX y
       proof : IsPropStrictTotalOrder _≡_ _<_
-      IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO proof) = ≡-isEquivalence
-      IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO proof) {i} i<j j<k = IsStrictTotalOrder.trans isSTO' i<j j<k
-      IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO proof) x y with IsStrictTotalOrder.compare isSTO' (transform ε⁻¹ XX x) (transform ε⁻¹ XX y)
-      ... | tri< x<y ¬x=y' ¬y<x = tri< x<y (λ x=y → ¬x=y' (cong (transform ε⁻¹ XX) x=y)) ¬y<x
-      ... | tri≈ ¬x<y x=y' ¬y<x = tri≈ ¬x<y (trans (sym (cong (_$ x) (proj₂ (ε-inv XX)))) (trans (cong (transform ε XX) x=y') (cong (_$ y) (proj₂ (ε-inv XX))))) ¬y<x
-      ... | tri> ¬x<y ¬x=y' y<x = tri> ¬x<y (λ x=y → ¬x=y' (cong (transform ε⁻¹ XX) x=y)) y<x
-      IsPropStrictTotalOrder.≈-prop proof = X-set
-      IsPropStrictTotalOrder.<-prop proof = IsPropStrictTotalOrder.<-prop proof'
+      proof .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.isStrictPartialOrder = {!!}
+      proof .IsPropStrictTotalOrder.isSTO .IsStrictTotalOrder.compare = {!!}
+      proof .IsPropStrictTotalOrder.≈-prop = {!!}
+      proof .IsPropStrictTotalOrder.<-prop = {!!}
+
+      -- IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO proof) = ≡-isEquivalence
+      -- IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO proof) {i} i<j j<k = IsStrictTotalOrder.trans isSTO' i<j j<k
+      -- IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO proof) x y with IsStrictTotalOrder.compare isSTO' (transform ε⁻¹ XX x) (transform ε⁻¹ XX y)
+      -- ... | tri< x<y ¬x=y' ¬y<x = tri< x<y (λ x=y → ¬x=y' (cong (transform ε⁻¹ XX) x=y)) ¬y<x
+      -- ... | tri≈ ¬x<y x=y' ¬y<x = tri≈ ¬x<y (trans (sym (cong (_$ x) (proj₂ (ε-inv XX)))) (trans (cong (transform ε XX) x=y') (cong (_$ y) (proj₂ (ε-inv XX))))) ¬y<x
+      -- ... | tri> ¬x<y ¬x=y' y<x = tri> ¬x<y (λ x=y → ¬x=y' (cong (transform ε⁻¹ XX) x=y)) y<x
+      -- IsPropStrictTotalOrder.≈-prop proof = X-set
+      -- IsPropStrictTotalOrder.<-prop proof = IsPropStrictTotalOrder.<-prop proof'
 
 -------------------------------------------------------------
 -- A version of the Ordering Principle for arbitrary types --
@@ -172,24 +177,26 @@ STO≃Set-gives-OP' (FORGETSTO⁻¹ , ((η , (η⁻¹ , η-inv)) , (ε , (ε⁻�
       _<_ : X → X → Set
       x < y = transform ε⁻¹ X x <' transform ε⁻¹ X y
       proof : IsPropStrictTotalOrder _≡_ _<_
-      IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO proof) = ≡-isEquivalence
-      IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO proof) {i} i<j j<k = IsStrictTotalOrder.trans isSTO' i<j j<k
-      IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO proof) x y with IsStrictTotalOrder.compare isSTO' (transform ε⁻¹ X x) (transform ε⁻¹ X y)
-      ... | tri< x<y ¬x=y' ¬y<x = tri< x<y (λ x=y → ¬x=y' (cong (transform ε⁻¹ X) x=y)) ¬y<x
-      ... | tri≈ ¬x<y x=y' ¬y<x = tri≈ ¬x<y (trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) x=y') (cong (_$ y) (proj₂ (ε-inv X))))) ¬y<x
-      ... | tri> ¬x<y ¬x=y' y<x = tri> ¬x<y (λ x=y → ¬x=y' (cong (transform ε⁻¹ X) x=y)) y<x
-      IsPropStrictTotalOrder.≈-prop proof {x} {y} p q = lemma (IsPropStrictTotalOrder.≈-prop proof' (cong (transform ε⁻¹ X) p) (cong (transform ε⁻¹ X) q))
-        where
-          whisker : ∀ p → p ≡ trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) (cong (transform ε⁻¹ X) p)) (cong (_$ y) (proj₂ (ε-inv X))))
-          whisker refl = sym (trans-symˡ (cong (_$ x) (proj₂ (ε-inv X))))
-          lemma : cong (transform ε⁻¹ X) p ≡ cong (transform ε⁻¹ X) q → p ≡ q
-          lemma p=q' = begin
-            p
-              ≡⟨ whisker p ⟩
-            trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) (cong (transform ε⁻¹ X) p)) (cong (_$ y) (proj₂ (ε-inv X))))
-              ≡⟨ cong (λ z → trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) z) (cong (_$ y) (proj₂ (ε-inv X))))) p=q' ⟩
-            trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) (cong (transform ε⁻¹ X) q)) (cong (_$ y) (proj₂ (ε-inv X))))
-              ≡⟨ sym (whisker q) ⟩
-            q
-              ∎ where open ≡-Reasoning
-      IsPropStrictTotalOrder.<-prop proof = IsPropStrictTotalOrder.<-prop proof'
+      proof = {!!}
+
+      -- IsStrictTotalOrder.isEquivalence (IsPropStrictTotalOrder.isSTO proof) = ≡-isEquivalence
+      -- IsStrictTotalOrder.trans (IsPropStrictTotalOrder.isSTO proof) {i} i<j j<k = IsStrictTotalOrder.trans isSTO' i<j j<k
+      -- IsStrictTotalOrder.compare (IsPropStrictTotalOrder.isSTO proof) x y with IsStrictTotalOrder.compare isSTO' (transform ε⁻¹ X x) (transform ε⁻¹ X y)
+      -- ... | tri< x<y ¬x=y' ¬y<x = tri< x<y (λ x=y → ¬x=y' (cong (transform ε⁻¹ X) x=y)) ¬y<x
+      -- ... | tri≈ ¬x<y x=y' ¬y<x = tri≈ ¬x<y (trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) x=y') (cong (_$ y) (proj₂ (ε-inv X))))) ¬y<x
+      -- ... | tri> ¬x<y ¬x=y' y<x = tri> ¬x<y (λ x=y → ¬x=y' (cong (transform ε⁻¹ X) x=y)) y<x
+      -- IsPropStrictTotalOrder.≈-prop proof {x} {y} p q = lemma (IsPropStrictTotalOrder.≈-prop proof' (cong (transform ε⁻¹ X) p) (cong (transform ε⁻¹ X) q))
+      --   where
+      --     whisker : ∀ p → p ≡ trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) (cong (transform ε⁻¹ X) p)) (cong (_$ y) (proj₂ (ε-inv X))))
+      --     whisker refl = sym (trans-symˡ (cong (_$ x) (proj₂ (ε-inv X))))
+      --     lemma : cong (transform ε⁻¹ X) p ≡ cong (transform ε⁻¹ X) q → p ≡ q
+      --     lemma p=q' = begin
+      --       p
+      --         ≡⟨ whisker p ⟩
+      --       trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) (cong (transform ε⁻¹ X) p)) (cong (_$ y) (proj₂ (ε-inv X))))
+      --         ≡⟨ cong (λ z → trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) z) (cong (_$ y) (proj₂ (ε-inv X))))) p=q' ⟩
+      --       trans (sym (cong (_$ x) (proj₂ (ε-inv X)))) (trans (cong (transform ε X) (cong (transform ε⁻¹ X) q)) (cong (_$ y) (proj₂ (ε-inv X))))
+      --         ≡⟨ sym (whisker q) ⟩
+      --       q
+      --         ∎ where open ≡-Reasoning
+      -- IsPropStrictTotalOrder.<-prop proof = IsPropStrictTotalOrder.<-prop proof'
