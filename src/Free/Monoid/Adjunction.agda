@@ -7,6 +7,7 @@ open import Category.Base
 open import Data.FreshList.InductiveInductive
 open import Free.Monoid.Base
 open import Data.Product
+open import Data.Unit using (tt)
 open import Function
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary
