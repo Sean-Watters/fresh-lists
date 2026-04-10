@@ -1,4 +1,3 @@
-{-# OPTIONS --safe --cubical-compatible #-}
 module Free.Category.Base where
 
 open import Algebra.Structure.PartialMonoid
@@ -9,6 +8,8 @@ open import Relation.Binary hiding (REL)
 open import Relation.Binary.PropositionalEquality
 open import Function as Fun using (_∘′_)
 
+open import Axiom.UniquenessOfIdentityProofs
+open import Axiom.Extensionality.Propositional
 
 record Category (ℓ : Level) : Set (lsuc (lsuc ℓ)) where
   eta-equality
@@ -76,18 +77,6 @@ GRAPH⁻ ℓ .assoc = refl
 GRAPH⁻ ℓ .identityˡ = refl
 GRAPH⁻ ℓ .identityʳ = refl
 
--- I think ignoring the 2-cells is ok, since the codomain of Forget is a 1-category?
--- But then are we getting into trouble with Free? Surely the free 2-cells would be
--- trivial...
-CAT : ∀ ℓ → Category (lsuc ℓ)
-CAT ℓ .Obj = Category ℓ
-CAT ℓ .Hom = Functor
-CAT ℓ .id = idFunctor
-CAT ℓ .comp = compFunctor
-CAT ℓ .assoc = {!!}
-CAT ℓ .identityˡ = {!!}
-CAT ℓ .identityʳ = {!!}
-
 record PartialMonoid (ℓ : Level) : Set (lsuc ℓ) where
   constructor MkPMon
   field
@@ -95,10 +84,13 @@ record PartialMonoid (ℓ : Level) : Set (lsuc ℓ) where
     Carrier : Set ℓ
 
     -- A partially defined monoid structure
+    ε : Carrier
     _~_ : Carrier → Carrier → Set
     op : (x y : Carrier) → x ~ y → Carrier
-    ε : Carrier
     proof : IsPartialMonoid (_≡_ {A = Carrier}) _~_ op ε
+
+    -- We also need the partiality relation to be propositonal
+    ~-prop : ∀ {x y} (p q : x ~ y) → p ≡ q
 
     -- And a relation on the carrier which ignores that monoid structure
     R : Carrier → Carrier → Set
@@ -116,48 +108,103 @@ record PMonMorphism {ℓ} (A B : PartialMonoid ℓ) : Set ℓ where
 
     -- which preserves the monoid structure (and ignores the extra relation).
     preserves-ε : fun (A.ε) ≡ B.ε
-    preserves-R : ∀ {x y} → x A.~ y → (fun x) B.~ (fun y)
-    preserves-∙ : ∀ {x y} (p : x A.~ y) → fun (A.op x y p) ≡ B.op (fun x) (fun y) (preserves-R p)
+    preserves-~ : ∀ {x y} → x A.~ y → (fun x) B.~ (fun y)
+    preserves-op : ∀ {x y} (p : x A.~ y) → fun (A.op x y p) ≡ B.op (fun x) (fun y) (preserves-~ p)
 open PMonMorphism
 
 pmon-id : ∀ {ℓ} {A : PartialMonoid ℓ} → PMonMorphism A A
 pmon-id .fun x = x
 pmon-id .preserves-ε = refl
-pmon-id .preserves-R x = x
-pmon-id .preserves-∙ p = refl
+pmon-id .preserves-~ x = x
+pmon-id .preserves-op p = refl
 
 pmon-comp : ∀ {ℓ} {A B C : PartialMonoid ℓ} → PMonMorphism A B → PMonMorphism B C → PMonMorphism A C
 pmon-comp f g .fun x = g .fun (f .fun x)
-pmon-comp f g .preserves-ε = {!!}
-pmon-comp f g .preserves-R = {!!}
-pmon-comp f g .preserves-∙ = {!!}
+pmon-comp {A = A} {B = B} {C = C} f g .preserves-ε =
+  begin
+    g .fun (f .fun (A .ε))
+  ≡⟨ cong (g .fun) (f .preserves-ε) ⟩
+    g .fun (ε B)
+  ≡⟨ g .preserves-ε ⟩
+    C .ε
+  ∎ where open ≡-Reasoning
+pmon-comp f g .preserves-~ x~y = g .preserves-~ (f .preserves-~ x~y)
+pmon-comp {A = A} {B = B} {C = C} f g .preserves-op {x} {y} x~y =
+  begin
+    g .fun (f .fun (op A x y x~y))
+  ≡⟨ cong (g .fun) (f .preserves-op x~y) ⟩
+    g .fun (op B (f .fun x) (f .fun y) (f .preserves-~ x~y))
+  ≡⟨ g .preserves-op (f .preserves-~ x~y) ⟩
+    op C (g .fun (f .fun x)) (g .fun (f .fun y)) (g .preserves-~ (f .preserves-~ x~y))
+  ∎ where open ≡-Reasoning
 
-PMON : ∀ ℓ → Category ℓ
-PMON ℓ .Obj = PartialMonoid ℓ
-PMON ℓ .Hom = PMonMorphism
-PMON ℓ .id = pmon-id
-PMON ℓ .comp = pmon-comp
-PMON ℓ .assoc = {!!}
-PMON ℓ .identityˡ = {!!}
-PMON ℓ .identityʳ = {!!}
+module WithUIP+Funext (uip : ∀ {a} (A : Set a) → UIP A) (ext : ∀ i j → Extensionality i j) where
 
--- Forget the category structure, and functoriality of functors.
-Forget : ∀ ℓ → Functor (CAT ℓ) (GRAPH⁻ ℓ)
-Forget ℓ .act C = (Obj C) , (Hom C)
-Forget ℓ .fmap F = F .act
-Forget ℓ .identity = refl
-Forget ℓ .homomorphism = refl
+  -- First, an eta rule for pmon morphisms.
+  -- We assume definitional equality of f, to tame subst hell a little.
+  pmon-mor-η' : ∀ {ℓ} {A B : PartialMonoid ℓ}
+             → {f : Carrier A → Carrier B}
+             → {pε qε : f (A .ε) ≡ B .ε}
+             → pε ≡ qε
+             → {p~ : ∀ {x y} → (A ._~_) x y → (B ._~_) (f x) (f y)}
+             → {p∙ q∙ : ∀ {x y} → (x~y : (A ._~_) x y) → f ((A .op) x y x~y) ≡ (B .op) (f x) (f y) (p~ x~y) }
+             → (λ {x} {y} → p∙ {x} {y}) ≡ q∙
+             → MkPMonMorphism {ℓ} {A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε p~ q∙
+  pmon-mor-η' refl refl = refl
+
+  -- Now we stengthen it by showing that everything follows from UIP and funext.
+  pmon-mor-η : ∀ {ℓ} {A B : PartialMonoid ℓ}
+             → (f : Carrier A → Carrier B)
+             → (pε qε : f (A .ε) ≡ B .ε)
+             → (p~ : ∀ {x y} → (A ._~_) x y → (B ._~_) (f x) (f y))
+             → (p∙ q∙ : ∀ {x y} → (x~y : (A ._~_) x y) → f ((A .op) x y x~y) ≡ (B .op) (f x) (f y) (p~ x~y) )
+             → MkPMonMorphism {ℓ} {A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε p~ q∙
+  pmon-mor-η {A = A} {B = B} f pε qε p~ p∙ q∙ = pmon-mor-η' pε≡qε p∙≡q∙ where
+    pε≡qε : pε ≡ qε
+    pε≡qε = uip (Carrier B) pε qε
+
+    p∙≡q∙ : (λ {x} {y} → p∙ {x} {y}) ≡ q∙
+    p∙≡q∙ = implicit-extensionality (ext _ _) λ {x} → implicit-extensionality (ext _ _) (λ {y} → ext _ _ (λ x~y → uip (Carrier B) (p∙ x~y) (q∙ x~y)))
+
+  -- ... and from propositionality of ~.
+  eq-~ : ∀ {ℓ} {A B : PartialMonoid ℓ}
+       → (f : Carrier A → Carrier B)
+       → (p q : ∀ {x y} → (A ._~_) x y → (B ._~_) (f x) (f y))
+       → (λ {x} {y} → p {x} {y}) ≡ q
+  eq-~ {A = A} {B} f p q = implicit-extensionality (ext _ _) λ {x} → implicit-extensionality (ext _ _) (λ {y} → ext _ _ λ x~y → B .~-prop (p x~y) (q x~y))
+
+  -- Therefore, two morphisms are equal when their underlying functions are equal.
+  eq-pmon-mor : ∀ {ℓ} {A B : PartialMonoid ℓ} {f g : PMonMorphism A B}
+              → f .fun ≡ g .fun
+              → A ≡ B
+  eq-pmon-mor {A = A} {B} {f} {g} refl rewrite eq-~ (f .fun) (f .preserves-~) (g .preserves-~) = {!pmon-mor-η (f .fun) (f .preserves-ε) (g .preserves-ε) (f .preserves-~) (f .preserves-op) (g .preserves-op) !}
+
+  PMON : ∀ ℓ → Category ℓ
+  PMON ℓ .Obj = PartialMonoid ℓ
+  PMON ℓ .Hom = PMonMorphism
+  PMON ℓ .id = pmon-id
+  PMON ℓ .comp = pmon-comp
+  PMON ℓ .assoc {A} {B} {C} {D} {f} {g} {h} = {!!}
+  PMON ℓ .identityˡ = {!!}
+  PMON ℓ .identityʳ = {!!}
+
+  -- Forget the category structure, and functoriality of functors.
+  Forget : ∀ ℓ → Functor (PMON (lsuc ℓ)) (GRAPH⁻ ℓ)
+  Forget ℓ .act C = {!!}
+  Forget ℓ .fmap F = {!!}
+  Forget ℓ .identity = {!!}
+  Forget ℓ .homomorphism = {!!}
 
 
--- The left-adjoint free functor is, in some sense, fresh lists?
-Free : ∀ ℓ → Functor (GRAPH⁻ ℓ) (PMON (lsuc ℓ))
-Free ℓ .act (X , R) = {!!}
-Free ℓ .fmap = {!!}
-Free ℓ .identity = {!!}
-Free ℓ .homomorphism = {!!}
+  -- The left-adjoint free functor is, in some sense, fresh lists?
+  Free : ∀ ℓ → Functor (GRAPH⁻ ℓ) (PMON (lsuc ℓ))
+  Free ℓ .act (X , R) = {!!}
+  Free ℓ .fmap = {!!}
+  Free ℓ .identity = {!!}
+  Free ℓ .homomorphism = {!!}
 
--- Idea:
---
--- PMON ≅ CAT
---
--- `FList R` may be the
+  -- Idea:
+  --
+  -- PMON ≅ CAT
+  --
+  -- `FList R` may be the
