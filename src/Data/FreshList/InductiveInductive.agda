@@ -99,19 +99,6 @@ module _
       ∎ where open ≡-Reasoning
 
 {-
-    -- Concatenation of fresh lists.
-    -- Requires a "gluability" condition proving that the two lists may actually be concatenated
-    -- Specific choices of R might admit more ergonomic or efficient logically
-    -- equivalent notions of gluability.
-    concat : (xs ys : List# R) → All (_# ys) xs → List# R
-    concat [] ys [] = ys
-    concat (cons x xs x#xs) ys (x#ys ∷ g) = cons x (concat xs ys g) (concat-fresh g x#xs x#ys) where
-      concat-fresh : {a : X} {xs ys : List# R} (g : All (_# ys) xs) (a#xs : a # xs) → a # ys → a # concat xs ys g
-      concat-fresh [] a#xs a#ys = a#ys
-      concat-fresh (x#ys ∷ g) (Rax ∷ a#xs) a#ys = Rax ∷ concat-fresh g a#xs a#ys
-
-    syntax concat xs ys g = xs ++[ g ] ys
-
     snoc : (xs : List# R) (x : X) → All (λ a → R a x) xs → List# R
     snoc xs x p = xs ++[ snoc-fresh p ] (cons x [] []) where
       snoc-fresh : ∀ {x : X} {xs : List# R} → All (λ a → R a x) xs → All (λ a → _#_ {A = X} {R} a (cons x [] [])) xs

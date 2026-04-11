@@ -160,7 +160,7 @@ module WithUIP+Funext (uip : ∀ {a} (A : Set a) → UIP A) (ext : ∀ i j → E
              → MkPMonMorphism {A = A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε q~ q∙
   pmon-mor-η' refl refl refl = refl
 
-  -- Now we stengthen it by showing that everything follows from UIP and funext.
+  -- Now we stengthen it by showing that everything follows from UIP, funext, and propositionality of ~.
   pmon-mor-η : {A B : PartialMonoid ℓc ℓr}
              → (f : Carrier A → Carrier B)
              → (pε qε : f (A .ε) ≡ B .ε)
