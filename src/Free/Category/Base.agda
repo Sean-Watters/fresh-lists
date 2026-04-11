@@ -7,6 +7,7 @@ open import Data.FreshList.InductiveInductive
 open import Relation.Binary hiding (REL)
 open import Relation.Binary.PropositionalEquality
 open import Function as Fun using (_∘′_)
+open import Function.Partial as PFun
 
 open import Axiom.UniquenessOfIdentityProofs
 open import Axiom.Extensionality.Propositional
@@ -86,7 +87,7 @@ record PartialMonoid (ℓ : Level) : Set (lsuc ℓ) where
     -- A partially defined monoid structure
     ε : Carrier
     _~_ : Carrier → Carrier → Set
-    op : (x y : Carrier) → x ~ y → Carrier
+    op : PFun.Op₂ _~_
     proof : IsPartialMonoid (_≡_ {A = Carrier}) _~_ op ε
 
     -- We also need the partiality relation to be propositonal
@@ -108,8 +109,8 @@ record PMonMorphism {ℓ} (A B : PartialMonoid ℓ) : Set ℓ where
 
     -- which preserves the monoid structure (and ignores the extra relation).
     preserves-ε : fun (A.ε) ≡ B.ε
-    preserves-~ : ∀ {x y} → x A.~ y → (fun x) B.~ (fun y)
-    preserves-op : ∀ {x y} (p : x A.~ y) → fun (A.op x y p) ≡ B.op (fun x) (fun y) (preserves-~ p)
+    preserves-~ : Monotonic₁ (A._~_) (B._~_) fun
+    preserves-op : PFun.Preserves₂ fun preserves-~ A.op B.op
 open PMonMorphism
 
 pmon-id : ∀ {ℓ} {A : PartialMonoid ℓ} → PMonMorphism A A
@@ -146,38 +147,38 @@ module WithUIP+Funext (uip : ∀ {a} (A : Set a) → UIP A) (ext : ∀ i j → E
              → {f : Carrier A → Carrier B}
              → {pε qε : f (A .ε) ≡ B .ε}
              → pε ≡ qε
-             → {p~ : ∀ {x y} → (A ._~_) x y → (B ._~_) (f x) (f y)}
-             → {p∙ q∙ : ∀ {x y} → (x~y : (A ._~_) x y) → f ((A .op) x y x~y) ≡ (B .op) (f x) (f y) (p~ x~y) }
-             → (λ {x} {y} → p∙ {x} {y}) ≡ q∙
-             → MkPMonMorphism {ℓ} {A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε p~ q∙
-  pmon-mor-η' refl refl = refl
+             → {p~ q~ : Monotonic₁ (A ._~_) (B ._~_) f}
+             → (p~≡q~ : (λ {x} {y} → p~ {x} {y}) ≡ q~)
+             → {p∙ : PFun.Preserves₂ f p~ (A .op) (B .op)}
+             → {q∙ : PFun.Preserves₂ f q~ (A .op) (B .op)}
+             → (λ {x} {y} → p∙ {x} {y})
+             ≡ (λ {x} {y} (r : A ._~_ x y)
+                   → subst (λ u → f (op A x y r) ≡ op B (f x) (f y) (u r)) (sym p~≡q~) (q∙ r))
+             → MkPMonMorphism {ℓ} {A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε q~ q∙
+  pmon-mor-η' refl refl refl = refl
 
   -- Now we stengthen it by showing that everything follows from UIP and funext.
   pmon-mor-η : ∀ {ℓ} {A B : PartialMonoid ℓ}
              → (f : Carrier A → Carrier B)
              → (pε qε : f (A .ε) ≡ B .ε)
-             → (p~ : ∀ {x y} → (A ._~_) x y → (B ._~_) (f x) (f y))
-             → (p∙ q∙ : ∀ {x y} → (x~y : (A ._~_) x y) → f ((A .op) x y x~y) ≡ (B .op) (f x) (f y) (p~ x~y) )
-             → MkPMonMorphism {ℓ} {A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε p~ q∙
-  pmon-mor-η {A = A} {B = B} f pε qε p~ p∙ q∙ = pmon-mor-η' pε≡qε p∙≡q∙ where
+             → (p~ q~ : Monotonic₁ (A ._~_) (B ._~_) f)
+             → (p∙ : PFun.Preserves₂ f p~ (A .op) (B .op))
+             → (q∙ : PFun.Preserves₂ f q~ (A .op) (B .op))
+             → MkPMonMorphism {ℓ} {A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε q~ q∙
+  pmon-mor-η {A = A} {B = B} f pε qε p~ q~ p∙ q∙ = pmon-mor-η' pε≡qε p~≡q~ (p∙≡q∙ (sym p~≡q~)) where
     pε≡qε : pε ≡ qε
     pε≡qε = uip (Carrier B) pε qε
 
-    p∙≡q∙ : (λ {x} {y} → p∙ {x} {y}) ≡ q∙
-    p∙≡q∙ = implicit-extensionality (ext _ _) λ {x} → implicit-extensionality (ext _ _) (λ {y} → ext _ _ (λ x~y → uip (Carrier B) (p∙ x~y) (q∙ x~y)))
+    p~≡q~ : (λ {x} {y} → p~ {x} {y}) ≡ q~
+    p~≡q~
+      = implicit-extensionality (ext _ _) λ {x} → implicit-extensionality (ext _ _) (λ {y} → ext _ _ λ x~y → B .~-prop (p~ x~y) (q~ x~y))
 
-  -- ... and from propositionality of ~.
-  eq-~ : ∀ {ℓ} {A B : PartialMonoid ℓ}
-       → (f : Carrier A → Carrier B)
-       → (p q : ∀ {x y} → (A ._~_) x y → (B ._~_) (f x) (f y))
-       → (λ {x} {y} → p {x} {y}) ≡ q
-  eq-~ {A = A} {B} f p q = implicit-extensionality (ext _ _) λ {x} → implicit-extensionality (ext _ _) (λ {y} → ext _ _ λ x~y → B .~-prop (p x~y) (q x~y))
+    p∙≡q∙ : (eq : (λ {x} {y} → q~ {x} {y}) ≡ p~)
+          → (λ {x} {y} → p∙ {x} {y})
+          ≡ (λ {x} {y} (r : A ._~_ x y)
+               → subst (λ u → f (op A x y r) ≡ op B (f x) (f y) (u r)) eq (q∙ r))
+    p∙≡q∙ refl = implicit-extensionality (ext _ _) λ {x} → implicit-extensionality (ext _ _) (λ {y} → ext _ _ (λ x~y → uip (Carrier B) (p∙ x~y) (q∙ x~y)))
 
-  -- Therefore, two morphisms are equal when their underlying functions are equal.
-  eq-pmon-mor : ∀ {ℓ} {A B : PartialMonoid ℓ} {f g : PMonMorphism A B}
-              → f .fun ≡ g .fun
-              → A ≡ B
-  eq-pmon-mor {A = A} {B} {f} {g} refl rewrite eq-~ (f .fun) (f .preserves-~) (g .preserves-~) = {!pmon-mor-η (f .fun) (f .preserves-ε) (g .preserves-ε) (f .preserves-~) (f .preserves-op) (g .preserves-op) !}
 
   PMON : ∀ ℓ → Category ℓ
   PMON ℓ .Obj = PartialMonoid ℓ
