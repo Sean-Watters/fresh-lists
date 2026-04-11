@@ -12,6 +12,9 @@ open import Function.Partial as PFun
 open import Axiom.UniquenessOfIdentityProofs
 open import Axiom.Extensionality.Propositional
 
+private variable
+  ℓc ℓr : Level
+
 record Category (ℓ : Level) : Set (lsuc (lsuc ℓ)) where
   eta-equality
 
@@ -78,11 +81,11 @@ GRAPH⁻ ℓ .assoc = refl
 GRAPH⁻ ℓ .identityˡ = refl
 GRAPH⁻ ℓ .identityʳ = refl
 
-record PartialMonoid (ℓ : Level) : Set (lsuc ℓ) where
+record PartialMonoid (ℓc ℓr : Level) : Set (lsuc (ℓc ⊔ ℓr)) where
   constructor MkPMon
   field
     -- A carrier set
-    Carrier : Set ℓ
+    Carrier : Set ℓc
 
     -- A partially defined monoid structure
     ε : Carrier
@@ -94,11 +97,11 @@ record PartialMonoid (ℓ : Level) : Set (lsuc ℓ) where
     ~-prop : ∀ {x y} (p q : x ~ y) → p ≡ q
 
     -- And a relation on the carrier which ignores that monoid structure
-    R : Carrier → Carrier → Set
+    R : Carrier → Carrier → Set ℓr
   open IsPartialMonoid public
 open PartialMonoid
 
-record PMonMorphism {ℓ} (A B : PartialMonoid ℓ) : Set ℓ where
+record PMonMorphism (A B : PartialMonoid ℓc ℓr) : Set (ℓc ⊔ ℓr) where
   constructor MkPMonMorphism
   private
     module A = PartialMonoid A
@@ -113,13 +116,13 @@ record PMonMorphism {ℓ} (A B : PartialMonoid ℓ) : Set ℓ where
     preserves-op : PFun.Preserves₂ fun preserves-~ A.op B.op
 open PMonMorphism
 
-pmon-id : ∀ {ℓ} {A : PartialMonoid ℓ} → PMonMorphism A A
+pmon-id : {A : PartialMonoid ℓc ℓr} → PMonMorphism A A
 pmon-id .fun x = x
 pmon-id .preserves-ε = refl
 pmon-id .preserves-~ x = x
 pmon-id .preserves-op p = refl
 
-pmon-comp : ∀ {ℓ} {A B C : PartialMonoid ℓ} → PMonMorphism A B → PMonMorphism B C → PMonMorphism A C
+pmon-comp : {A B C : PartialMonoid ℓc ℓr} → PMonMorphism A B → PMonMorphism B C → PMonMorphism A C
 pmon-comp f g .fun x = g .fun (f .fun x)
 pmon-comp {A = A} {B = B} {C = C} f g .preserves-ε =
   begin
@@ -143,7 +146,7 @@ module WithUIP+Funext (uip : ∀ {a} (A : Set a) → UIP A) (ext : ∀ i j → E
 
   -- First, an eta rule for pmon morphisms.
   -- We assume definitional equality of f, to tame subst hell a little.
-  pmon-mor-η' : ∀ {ℓ} {A B : PartialMonoid ℓ}
+  pmon-mor-η' : {A B : PartialMonoid ℓc ℓr}
              → {f : Carrier A → Carrier B}
              → {pε qε : f (A .ε) ≡ B .ε}
              → pε ≡ qε
@@ -154,17 +157,17 @@ module WithUIP+Funext (uip : ∀ {a} (A : Set a) → UIP A) (ext : ∀ i j → E
              → (λ {x} {y} → p∙ {x} {y})
              ≡ (λ {x} {y} (r : A ._~_ x y)
                    → subst (λ u → f (op A x y r) ≡ op B (f x) (f y) (u r)) (sym p~≡q~) (q∙ r))
-             → MkPMonMorphism {ℓ} {A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε q~ q∙
+             → MkPMonMorphism {A = A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε q~ q∙
   pmon-mor-η' refl refl refl = refl
 
   -- Now we stengthen it by showing that everything follows from UIP and funext.
-  pmon-mor-η : ∀ {ℓ} {A B : PartialMonoid ℓ}
+  pmon-mor-η : {A B : PartialMonoid ℓc ℓr}
              → (f : Carrier A → Carrier B)
              → (pε qε : f (A .ε) ≡ B .ε)
              → (p~ q~ : Monotonic₁ (A ._~_) (B ._~_) f)
              → (p∙ : PFun.Preserves₂ f p~ (A .op) (B .op))
              → (q∙ : PFun.Preserves₂ f q~ (A .op) (B .op))
-             → MkPMonMorphism {ℓ} {A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε q~ q∙
+             → MkPMonMorphism {A = A} {B} f pε p~ p∙ ≡ MkPMonMorphism f qε q~ q∙
   pmon-mor-η {A = A} {B = B} f pε qε p~ q~ p∙ q∙ = pmon-mor-η' pε≡qε p~≡q~ (p∙≡q∙ (sym p~≡q~)) where
     pε≡qε : pε ≡ qε
     pε≡qε = uip (Carrier B) pε qε
@@ -179,30 +182,37 @@ module WithUIP+Funext (uip : ∀ {a} (A : Set a) → UIP A) (ext : ∀ i j → E
                → subst (λ u → f (op A x y r) ≡ op B (f x) (f y) (u r)) eq (q∙ r))
     p∙≡q∙ refl = implicit-extensionality (ext _ _) λ {x} → implicit-extensionality (ext _ _) (λ {y} → ext _ _ (λ x~y → uip (Carrier B) (p∙ x~y) (q∙ x~y)))
 
+  -- Therefore if the underlying functions are equal, the morphisms are equal
+  eq-pmon-mor : {A B : PartialMonoid ℓc ℓr} {f g : PMonMorphism A B}
+              → f .fun ≡ g .fun
+              → f ≡ g
+  eq-pmon-mor {f = f} {g = g} refl
+    = pmon-mor-η (f .fun) (f .preserves-ε) (g .preserves-ε) (f .preserves-~) (g .preserves-~) (f .preserves-op) (g .preserves-op)
 
-  PMON : ∀ ℓ → Category ℓ
-  PMON ℓ .Obj = PartialMonoid ℓ
-  PMON ℓ .Hom = PMonMorphism
-  PMON ℓ .id = pmon-id
-  PMON ℓ .comp = pmon-comp
-  PMON ℓ .assoc {A} {B} {C} {D} {f} {g} {h} = {!!}
-  PMON ℓ .identityˡ = {!!}
-  PMON ℓ .identityʳ = {!!}
+  PMON : ∀ ℓc ℓr → Category (ℓc ⊔ ℓr)
+  PMON ℓc ℓr .Obj = PartialMonoid ℓc ℓr
+  PMON ℓc ℓr .Hom = PMonMorphism
+  PMON ℓc ℓr .id = pmon-id
+  PMON ℓc ℓr .comp = pmon-comp
+  PMON ℓc ℓr .assoc = eq-pmon-mor refl
+  PMON ℓc ℓr .identityˡ = eq-pmon-mor refl
+  PMON ℓc ℓr .identityʳ = eq-pmon-mor refl
 
-  -- Forget the category structure, and functoriality of functors.
-  Forget : ∀ ℓ → Functor (PMON (lsuc ℓ)) (GRAPH⁻ ℓ)
-  Forget ℓ .act C = {!!}
-  Forget ℓ .fmap F = {!!}
-  Forget ℓ .identity = {!!}
-  Forget ℓ .homomorphism = {!!}
+  -- Forget the partial monoid structure, and that of their morphisms.
+  -- (AKA sunce partial monoid = category, take the object set of the cat and forget that functors are functorial)
+  Forget : ∀ ℓc ℓr → Functor (PMON (lsuc (ℓc ⊔ ℓr)) (ℓc ⊔ ℓr)) (GRAPH⁻ (ℓc ⊔ ℓr))
+  Forget ℓc ℓr .act C = (Carrier C) , C .R
+  Forget ℓc ℓr .fmap F = F .fun
+  Forget ℓc ℓr .identity = refl
+  Forget ℓc ℓr .homomorphism = refl
 
 
   -- The left-adjoint free functor is, in some sense, fresh lists?
-  Free : ∀ ℓ → Functor (GRAPH⁻ ℓ) (PMON (lsuc ℓ))
-  Free ℓ .act (X , R) = {!!}
-  Free ℓ .fmap = {!!}
-  Free ℓ .identity = {!!}
-  Free ℓ .homomorphism = {!!}
+  Free : ∀ ℓc ℓr → Functor (GRAPH⁻ (ℓc ⊔ ℓr)) (PMON (lsuc (ℓc ⊔ ℓr)) (ℓc ⊔ ℓr))
+  Free ℓc ℓr .act (X , R) = {!!}
+  Free ℓc ℓr .fmap = {!!}
+  Free ℓc ℓr .identity = {!!}
+  Free ℓc ℓr .homomorphism = {!!}
 
   -- Idea:
   --
