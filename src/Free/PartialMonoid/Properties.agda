@@ -12,10 +12,6 @@ private variable
   X : Set ℓx
   R : X → X → Set ℓr
 
-------------------------
--- Gluable and Concat --
-------------------------
-
 -- Gluable is propositional when R is too.
 Gluable-prop : ({x y : X} → Irrelevant (R x y))
              → {xs ys : List# R} → Irrelevant (Gluable xs ys)
@@ -23,6 +19,45 @@ Gluable-prop R-prop [] [] = refl
 Gluable-prop {R = R} R-prop (p ∷ ps) (q ∷ qs)
   = cong₂ _∷_ (#-irrelevant p q) (Gluable-prop R-prop ps qs)
   where open WithIrr R R-prop
+
+-- `Gluable-[]ʳ` is unique, even when R is not propositional
+Gluable-[]ʳ-prop : {xs : List# R} → Irrelevant (Gluable xs [])
+Gluable-[]ʳ-prop [] [] = refl
+Gluable-[]ʳ-prop ([] ∷ ps) ([] ∷ qs) = cong ([] ∷_) (Gluable-[]ʳ-prop ps qs)
+
+
+concat-cong : {x y x' y' : List# R} {xy : Gluable x y} {xy' : Gluable x' y'}
+            → ({x y : X} → Irrelevant (R x y))
+            → x ≡ x'
+            → y ≡ y'
+            → concat x y xy ≡ concat x' y' xy'
+concat-cong {x = x} {y = y} {xy = xy} {xy' = xy'} R-prop refl refl = cong (concat x y) (Gluable-prop R-prop xy xy')
+
+---------------------------
+-- Proofs about `concat` --
+---------------------------
+
+concat-idˡ : {xs : List# R} {p : Gluable [] xs}
+           → concat [] xs p ≡ xs
+concat-idˡ {p = []} = refl
+
+concat-idʳ : {xs : List# R} {p : Gluable xs []}
+           → concat xs [] p ≡ xs
+concat-idʳ {p = []} = refl
+concat-idʳ {p = p ∷ ps} = cons-dcong refl concat-idʳ {!!}
+
+concat-assoc : {x y z : List# R}
+              → (yz : Gluable y z)
+              → (x[yz] : Gluable x ∙[ yz ])
+              → (xy : Gluable x y)
+              → ([xy]z : Gluable ∙[ xy ] z)
+              → (∙[ x[yz] ] ≡ ∙[ [xy]z ])
+concat-assoc yz [] xy [xy]z = {!!}
+concat-assoc yz (x ∷ x[yz]) xy [xy]z = {!!}
+
+-----------------------------
+-- Proofs about gluability --
+-----------------------------
 
 -- Identity --
 
@@ -33,15 +68,6 @@ Gluable-[]ˡ = []
 Gluable-[]ʳ : {xs : List# R} → Gluable xs []
 Gluable-[]ʳ {xs = []} = []
 Gluable-[]ʳ {xs = cons x xs x#xs} = [] ∷ Gluable-[]ʳ
-
-concat-idˡ : {xs : List# R} {p : Gluable [] xs}
-           → concat [] xs p ≡ xs
-concat-idˡ = {!!}
-
-concat-idʳ : {xs : List# R} {p : Gluable xs []}
-           → concat xs [] p ≡ xs
-concat-idʳ = {!!}
-
 
 -- Splitting freshness and gluability proofs along a concatenation
 -- (crucial for associativity)
@@ -88,13 +114,6 @@ Gluable-associateʳ {z = z} (x#y ∷ xy) (x#z ∷ [xy]z) [] = x#z ∷ subst (λ 
 Gluable-associateʳ (x#y ∷ xy) (x#z ∷ [xy]z) (y#z ∷ yz) = {!!} ∷ {!!}
 
 -- Finally, associativty of concatenation.
-concat-assoc : {x y z : List# R}
-              → (yz : Gluable y z)
-              → (x[yz] : Gluable x ∙[ yz ])
-              → (xy : Gluable x y)
-              → ([xy]z : Gluable ∙[ xy ] z)
-              → (∙[ x[yz] ] ≡ ∙[ [xy]z ])
-concat-assoc = {!!}
 
 -- Other properties of gluable
 -- * transitivity
