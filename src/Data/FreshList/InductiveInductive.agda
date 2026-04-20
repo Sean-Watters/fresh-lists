@@ -7,9 +7,9 @@ open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product
 open import Data.Empty
 open import Function
-open import Relation.Nullary
+open import Relation.Nullary renaming (map′ to dec-map)
 open import Relation.Unary using (Decidable)
-open import Relation.Binary hiding (Decidable; Irrelevant)
+open import Relation.Binary hiding (Irrelevant) renaming (Decidable to Decidable₂)
 open import Relation.Binary.PropositionalEquality renaming (sym to ≡-sym)
 open import Relation.Binary.Isomorphism
 
@@ -73,6 +73,9 @@ module _
     all→fresh [] = []
     all→fresh (rx ∷ as) = rx ∷ all→fresh as
 
+    fresh? : Decidable₂ R → (x : X) (xs : List# R) → Dec (x # xs)
+    fresh? _R?_ x xs = dec-map all→fresh fresh→all (all? (x R?_) xs)
+
     here≢there : ∀ {o} {P : X → Set o} {x : X} {xs : List# R} {x#xs : x # xs}
                → {px : P x} {q : Any P xs}
                → here {x#xs = x#xs} px ≢ there q
@@ -97,6 +100,14 @@ module _
       ≡⟨ (≡-sym $ step x xs x#xs) ⟩
         h (cons x xs x#xs)
       ∎ where open ≡-Reasoning
+
+    -- The dependent version of cong for cons.
+    cons-dcong : {x y : X} {xs ys : List# R} {x#xs : x # xs} {y#ys : y # ys}
+              → (x≡y : x ≡ y) → (xs≡ys : xs ≡ ys)
+              → subst₂ _#_ x≡y xs≡ys x#xs ≡ y#ys
+              → cons x xs x#xs ≡ cons y ys y#ys
+    cons-dcong refl refl refl = refl
+
 
 {-
     snoc : (xs : List# R) (x : X) → All (λ a → R a x) xs → List# R
@@ -126,6 +137,11 @@ module _
                         → cons x xs x#xs ≡ cons y ys y#ys → xs ≡ ys
     cons-injective-tail refl = refl
 
+    cons-injective-proof : {x y : X} {xs ys : List# R} {x#xs : x # xs} {y#ys : y # ys}
+                         → (eq : cons x xs x#xs ≡ cons y ys y#ys)
+                         → subst₂ _#_ (cons-injective-head eq) (cons-injective-tail eq) x#xs ≡ y#ys
+    cons-injective-proof refl = refl
+
     ∷-injective-head : ∀ {x y : X}{xs : List# R}{y#xs : y # xs} →
                        {p q : R x y} → {ps qs : x # xs} →
                        _#_._∷_ {x#xs = y#xs} p ps ≡ q ∷ qs → p ≡ q
@@ -142,6 +158,7 @@ module _
     toListAll : ∀ {k} → {P : X → Set k} → {xs : List# R} → All P xs → L.All P (toList xs)
     toListAll [] = L.[]
     toListAll (p ∷ ps) = p L.∷ toListAll ps
+
 
 -- Fix a proof-irrelevant R
 module WithIrr
@@ -162,13 +179,11 @@ module WithIrr
     #-irrelevant-unique [] = refl
     #-irrelevant-unique (x ∷ p) rewrite R-irr-unique x rewrite #-irrelevant-unique p = refl
 
-    -- Depenedent cong₂ doesn't exist in general, so here's the version specialised to cons.
-    -- There will also exist a ternery version which takes a proof that the freshness proofs
-    -- are equal without assuming R to be propositional, but we never use that.
     cons-cong : {x y : X} {xs ys : List# R} {x#xs : x # xs} {y#ys : y # ys}
               → x ≡ y → xs ≡ ys
               → cons x xs x#xs ≡ cons y ys y#ys
-    cons-cong refl refl = cong (cons _ _) (#-irrelevant _ _)
+    cons-cong x≡y xs≡ys = cons-dcong x≡y xs≡ys (#-irrelevant _ _)
+
 
     -- Pulling a proof apart then putting it back together is identity,
     -- as long as X is a set.
