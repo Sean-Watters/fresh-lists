@@ -83,7 +83,7 @@ module _ {X : Set} where
 
   decodeEncodeRefl : (xs : List X) → decode (encodeRefl xs) ≡ refl
   decodeEncodeRefl [] = refl
-  decodeEncodeRefl (cons x xs x#xs) rewrite decodeEncodeRefl xs = cong (cong (cons x xs)) (lemma x#xs)
+  decodeEncodeRefl (cons x xs x#xs) rewrite decodeEncodeRefl xs = cong (cons-dcong refl refl) (lemma (subst₂ _#_ refl refl x#xs))
     where
       lemma : ∀ {x : X}{xs : List X} (x#xs : x # xs) → WithIrr.#-irrelevant (λ _ _ → ⊤) (λ _ _ → refl) x#xs x#xs ≡ refl
       lemma {x} {.[]} [] = refl
